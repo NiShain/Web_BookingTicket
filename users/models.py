@@ -29,8 +29,9 @@ class EmailVerification(models.Model):
             from django.conf import settings
             expire_hours = getattr(settings, 'EMAIL_VERIFICATION_EXPIRE_HOURS', 24)
             self.expires_at = timezone.now() + timezone.timedelta(hours=expire_hours)
-        if self.expires_at <= self.created_at:
-            raise ValidationError("Thời gian hết hạn phải sau thời gian tạo.")
+        if self.expires_at and self.created_at:
+            if self.expires_at <= self.created_at:
+                raise ValidationError("Thời gian hết hạn phải sau thời gian tạo.")
         super().save(*args, **kwargs)
 
     def is_expired(self):
@@ -55,8 +56,9 @@ class PasswordReset(models.Model):
             from django.conf import settings
             expire_hours = getattr(settings, 'PASSWORD_RESET_EXPIRE_HOURS', 1)
             self.expires_at = timezone.now() + timezone.timedelta(hours=expire_hours)
-        if self.expires_at <= self.created_at:
-            raise ValidationError("Thời gian hết hạn phải sau thời gian tạo.")
+        if self.expires_at and self.created_at:
+            if self.expires_at <= self.created_at:
+                raise ValidationError("Thời gian hết hạn phải sau thời gian tạo.")
         super().save(*args, **kwargs)
 
     def is_expired(self):

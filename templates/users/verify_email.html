@@ -1,0 +1,21 @@
+<h3 style="color: #0056b3;">Xác thực tài khoản BookingTicket</h3>
+<p>Xin chào <b>{{ ten }}</b>,</p>
+<p>Cảm ơn bạn đã đăng ký tài khoản tại BookingTicket System!</p>
+<p>Để hoàn tất quá trình đăng ký và bắt đầu sử dụng dịch vụ, vui lòng xác thực địa chỉ email của bạn bằng cách nhấp vào nút bên dưới:</p>
+
+<a href="{{ verify_url }}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+    Vào Xác thực Email
+</a>
+
+<div style="background-color: #fffbe6; border: 1px solid #ffe58f; padding: 12px; margin-top: 20px; border-radius: 5px;">
+    <p style="margin: 0;"><b>⚠️ Lưu ý quan trọng:</b></p>
+    <ul style="padding-left: 20px; margin-top: 10px;">
+        <li>Link xác thực này sẽ hết hạn sau <b>24 giờ</b></li>
+        <li>Bạn không thể đăng nhập cho đến khi xác thực email.</li>
+    </ul>
+</div>
+
+<p style="margin-top: 20px; font-size: 0.9em; color: #555;">
+    Nếu nút không hoạt động, bạn có thể copy và paste link sau vào trình duyệt:<br>
+    <a href="{{ verify_url }}">{{ verify_url }}</a>
+</p>

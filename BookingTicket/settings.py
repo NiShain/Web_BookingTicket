@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'booking',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -54,10 +56,11 @@ ROOT_URLCONF = 'BookingTicket.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -74,8 +77,16 @@ WSGI_APPLICATION = 'BookingTicket.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',   # vẫn để mysql vì Django không có backend riêng cho MariaDB
+        'NAME': 'bookingticket',                 # schema bạn đã tạo
+        'USER': 'root',                        # user của MariaDB (mặc định là root)
+        'PASSWORD': '03062005',                 # mật khẩu root (thay bằng mật khẩu thực của bạn)
+        'HOST': '127.0.0.1',                   # localhost
+        'PORT': '3307',                        # port MariaDB (có thể là 3306 hoặc 3307)
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     }
 }
 
@@ -110,13 +121,49 @@ USE_I18N = True
 
 USE_TZ = True
 
+AUTH_USER_MODEL = 'users.Account'
 
+LOGIN_URL = 'login'
+
+SESSION_COOKIE_AGE = 300
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_SECURE = False  # Set True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True  # Prevent XSS attacks
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+SESSION_SAVE_EVERY_REQUEST = True 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+AUTO_LOGOUT_DELAY = 300
+
 STATIC_URL = 'static/'
 
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Email configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+#EMAIL_USE_SSL = False
+EMAIL_HOST_USER = 'thaibinh03062005@gmail.com'
+EMAIL_HOST_PASSWORD = 'hpwa swyw zwcu bjbe'
+DEFAULT_FROM_EMAIL = f'BookingTicket System <{EMAIL_HOST_USER}>'
+
+AUTHENTICATION_BACKENDS = [
+    'users.backends.EmailBackend', # Backend tùy chỉnh của chúng ta
+    'django.contrib.auth.backends.ModelBackend', # Giữ lại backend mặc định
+]
+
+#Email Timeout
+EMAIL_TIMEOUT = 60
+
+# Email verification settings
+EMAIL_VERIFICATION_EXPIRE_HOURS = 1  # Token expires after 24 hours
+PASSWORD_RESET_EXPIRE_HOURS = 1

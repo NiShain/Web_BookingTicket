@@ -1,0 +1,5 @@
+<h2>Đăng ký tài khoản</h2>
+<form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.as_p }}  <button type="submit">Đăng ký</button>
+</form>
