@@ -1,19 +1,222 @@
-<h2>Đăng nhập</h2>
-{% if messages %}
-    <ul class="messages">
-        {% for message in messages %}
-            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
-{% if form.errors %}
-    <p style="color: red;">Tên đăng nhập hoặc mật khẩu không đúng.</p>
-{% endif %}
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng Nhập - Hệ Thống Đặt Vé Xe</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-<form method="post" action="{% url 'login' %}">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Đăng nhập</button>
-</form>
-<p><a href="{% url 'password_reset_request' %}">Quên mật khẩu?</a></p>
-<p>Chưa có tài khoản? <a href="{% url 'register' %}">Đăng ký ngay</a></p>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #1e3c72 0%,
+          #2a5298 50%,
+          #3b82f6 100%
+        );
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .login-container {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+        margin: 20px;
+      }
+
+      .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .login-header h1 {
+        color: #333;
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+
+      .login-header p {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        color: #333;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e1e8ed;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s ease;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .login-btn {
+        width: 100%;
+        background: linear-gradient(
+          135deg,
+          #1e3c72 0%,
+          #2a5298 50%,
+          #3b82f6 100%
+        );
+        color: white;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      }
+
+      .login-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+      }
+
+      .auth-links {
+        text-align: center;
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #e1e8ed;
+      }
+
+      .auth-links a {
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .auth-links a:hover {
+        text-decoration: underline;
+      }
+
+      .back-home {
+        text-align: center;
+        margin-top: 20px;
+      }
+
+      .back-home a {
+        color: #666;
+        text-decoration: none;
+        font-size: 14px;
+      }
+
+      .messages {
+        margin-bottom: 20px;
+      }
+
+      .messages .alert {
+        padding: 10px 15px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+
+      .messages .alert-error {
+        background-color: #fee;
+        color: #c33;
+        border: 1px solid #fcc;
+      }
+
+      .messages .alert-success {
+        background-color: #efe;
+        color: #3c3;
+        border: 1px solid #cfc;
+      }
+
+      .messages .alert-info {
+        background-color: #eef;
+        color: #33c;
+        border: 1px solid #ccf;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-header">
+        <h1>Đăng Nhập</h1>
+        <p>Truy cập vào hệ thống đặt vé xe</p>
+      </div>
+
+      {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="username">Tên đăng nhập:</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            required
+            value="{{ request.POST.username|default:'' }}"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Mật khẩu:</label>
+          <input type="password" id="password" name="password" required />
+        </div>
+
+        <button type="submit" class="login-btn">Đăng Nhập</button>
+      </form>
+
+      <div class="auth-links">
+        <p>
+          Chưa có tài khoản? <a href="{% url 'register' %}">Đăng ký ngay</a>
+        </p>
+        <p style="margin-top: 10px">
+          <a href="{% url 'password_reset_request' %}" style="color: #e74c3c">
+            🔐 Quên mật khẩu?
+          </a>
+        </p>
+        {% if show_resend %}
+        <p style="margin-top: 10px">
+          <a href="{% url 'resend_verification' %}" style="color: #f39c12">
+            📧 Gửi lại email xác thực
+          </a>
+        </p>
+        {% endif %}
+      </div>
+
+      <div class="back-home">
+        <a href="{% url 'home' %}">← Quay về trang chủ</a>
+      </div>
+    </div>
+  </body>
+</html>

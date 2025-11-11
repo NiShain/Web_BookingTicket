@@ -14,7 +14,7 @@ import time # Import time để quản lý session
 
 # Import các form và model của bạn
 from .forms import RegistrationForm, CustomPasswordResetRequestForm
-from .models import Account, KhachHang, EmailVerification, PasswordReset, Ve
+from .models import Account, KhachHang, EmailVerification, PasswordReset
 
 # ===============================================
 # === HELPER: CÁC HÀM GỬI EMAIL (TỪ AUTH_VIEWS.PY)
@@ -192,11 +192,11 @@ def login_view(request):
             if next_url:
                 return redirect(next_url)
             elif user.is_staff or user.is_superuser:
-                # Giả sử bạn có URL tên 'dashboard'
-                return redirect('dashboard') 
+                # Staff/superuser -> admin dashboard
+                return redirect('admin_dashboard')
             else:
-                # Giả sử bạn có URL tên 'home'
-                return redirect('home')
+                # Regular users -> user dashboard
+                return redirect('dashboard')
         else:
             messages.error(request, 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.')
     else:
@@ -214,7 +214,7 @@ def logout_view(request):
     logout(request)
     messages.info(request, 'Đã đăng xuất thành công!')
     # Giả sử bạn có URL tên 'home'
-    return redirect('home')
+    return redirect('/')
 
 # ===============================================
 # === 4. XÁC THỰC EMAIL (MERGE LOGIC)
@@ -359,6 +359,8 @@ def user_profile(request):
             so_dien_thoai="",
         )
     
+    # Import Ve lazily here to avoid circular import at module import time
+    from booking.models import Ve
     ve_da_dat = Ve.objects.filter(khach=khach_hang).order_by('-thoi_gian_dat')[:10]
     
     if request.method == 'POST':
@@ -393,3 +395,36 @@ def user_profile(request):
     }
     # Dùng template path của bạn (nếu có)
     return render(request, 'users/profile.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+def admin_dashboard(request):
+    """Simple admin dashboard view for staff/superuser.
+
+    Renders a minimal dashboard template. Protected by user_passes_test so
+    non-staff users cannot access it.
+    """
+    # You can expand this to show statistics, recent bookings, etc.
+    return render(request, 'users/admin_dashboard.html', {})
+
+
+@login_required
+def user_dashboard(request):
+    """Simple user dashboard for regular authenticated users.
+
+    Shows basic customer info and recent bookings.
+    """
+    try:
+        khach_hang = request.user.khachhang
+    except KhachHang.DoesNotExist:
+        khach_hang = None
+
+    # Import Ve lazily to avoid circular imports
+    from booking.models import Ve
+    recent_ves = Ve.objects.filter(khach__account=request.user).order_by('-thoi_gian_dat')[:10]
+
+    context = {
+        'khach_hang': khach_hang,
+        'recent_ves': recent_ves,
+    }
+    return render(request, 'users/user_dashboard.html', context)

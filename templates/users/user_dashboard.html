@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+  <div class="container">
+    <h1>Trang cá nhân</h1>
+    {% if khach_hang %}
+      <p>Xin chào, <strong>{{ khach_hang.ten }}</strong></p>
+    {% else %}
+      <p>Xin chào, <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></p>
+    {% endif %}
+
+    <h3>Đơn đặt gần đây</h3>
+    {% if recent_ves and recent_ves.exists %}
+      <ul>
+        {% for ve in recent_ves %}
+          <li>{{ ve.chuyen }} — {{ ve.so_luong }} vé — {{ ve.trang_thai }} — {{ ve.thoi_gian_dat|date:'d/m/Y H:i' }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Chưa có đặt vé nào.</p>
+    {% endif %}
+
+    <p><a href="{% url 'profile' %}">Chỉnh sửa thông tin</a></p>
+  </div>
+{% endblock %}

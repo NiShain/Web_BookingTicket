@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+  <div class="container">
+    <h1>Admin Dashboard</h1>
+    <p>Welcome, {{ request.user.get_full_name|default:request.user.username }}. This is a placeholder dashboard.</p>
+    <p>You can add stats and admin links here (recent bookings, revenue, system health, etc.).</p>
+  </div>
+{% endblock %}
