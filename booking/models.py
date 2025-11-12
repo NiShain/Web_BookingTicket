@@ -3,9 +3,6 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from users.models import KhachHang  # import từ app users
 
-# -------------------------
-# 2. Tuyến
-# -------------------------
 class Tuyen(models.Model):
     diem_di = models.CharField(max_length=100)
     diem_den = models.CharField(max_length=100)
@@ -19,16 +16,13 @@ class Tuyen(models.Model):
     def clean(self):
         if self.diem_di == self.diem_den:
             raise ValidationError("Điểm đi và điểm đến không được trùng nhau.")
-        if self.khoang_cach is not None and self.khoang_cach < 0:
-            raise ValidationError("Khoảng cách phải lớn hơn hoặc bằng 0.")
+        if self.khoang_cach is not None and self.khoang_cach <= 0:
+            raise ValidationError("Khoảng cách phải lớn hơn 0.")
 
     def __str__(self):
         return f"{self.diem_di} → {self.diem_den}"
 
 
-# -------------------------
-# 3. Xe
-# -------------------------
 class Xe(models.Model):
     bien_so = models.CharField(max_length=20, unique=True)
     loai_xe = models.CharField(max_length=50)
@@ -41,14 +35,7 @@ class Xe(models.Model):
     def __str__(self):
         return f"{self.loai_xe} - {self.bien_so}"
 
-    class Meta:
-        verbose_name = "Xe"
-        verbose_name_plural = "Xe"
 
-
-# -------------------------
-# 4. Chuyến
-# -------------------------
 class Chuyen(models.Model):
     tuyen = models.ForeignKey(Tuyen, on_delete=models.CASCADE, related_name="chuyens")
     xe = models.ForeignKey(Xe, on_delete=models.CASCADE, related_name="chuyens")
@@ -78,14 +65,7 @@ class Chuyen(models.Model):
     def __str__(self):
         return f"Chuyến {self.tuyen} - {self.ngay_gio_khoi_hanh.strftime('%d/%m/%Y %H:%M')}"
 
-    class Meta:
-        verbose_name = "Chuyến xe"
-        verbose_name_plural = "Chuyến xe"
 
-
-# -------------------------
-# 5. Vé
-# -------------------------
 class Ve(models.Model):
     TRANG_THAI_CHOICES = [
         ("CHO_THANH_TOAN", "Chờ thanh toán"),
