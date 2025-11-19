@@ -1,21 +1,105 @@
-<h3 style="color: #0056b3;">Xác thực tài khoản BookingTicket</h3>
-<p>Xin chào <b>{{ ten }}</b>,</p>
-<p>Cảm ơn bạn đã đăng ký tài khoản tại BookingTicket System!</p>
-<p>Để hoàn tất quá trình đăng ký và bắt đầu sử dụng dịch vụ, vui lòng xác thực địa chỉ email của bạn bằng cách nhấp vào nút bên dưới:</p>
-
-<a href="{{ verify_url }}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
-    Vào Xác thực Email
-</a>
-
-<div style="background-color: #fffbe6; border: 1px solid #ffe58f; padding: 12px; margin-top: 20px; border-radius: 5px;">
-    <p style="margin: 0;"><b>⚠️ Lưu ý quan trọng:</b></p>
-    <ul style="padding-left: 20px; margin-top: 10px;">
-        <li>Link xác thực này sẽ hết hạn sau <b>24 giờ</b></li>
-        <li>Bạn không thể đăng nhập cho đến khi xác thực email.</li>
-    </ul>
-</div>
-
-<p style="margin-top: 20px; font-size: 0.9em; color: #555;">
-    Nếu nút không hoạt động, bạn có thể copy và paste link sau vào trình duyệt:<br>
-    <a href="{{ verify_url }}">{{ verify_url }}</a>
-</p>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác thực tài khoản BookingTicket</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📧 Xác thực tài khoản BookingTicket</h1>
+        </div>
+        
+        <div class="content">
+            <p>Xin chào <strong>{{ user.first_name|default:user.username }}</strong>,</p>
+            
+            <p>Cảm ơn bạn đã đăng ký tài khoản tại <strong>BookingTicket System</strong>!</p>
+            
+            <p>Để hoàn tất quá trình đăng ký và bắt đầu sử dụng dịch vụ, vui lòng xác thực địa chỉ email của bạn bằng cách nhấp vào nút bên dưới:</p>
+            
+            <div style="text-align: center;">
+                <a href="{{ verification_url }}" class="btn">✅ Xác thực Email</a>
+            </div>
+            
+            <div class="highlight">
+                <strong>⚠️ Lưu ý quan trọng:</strong>
+                <ul>
+                    <li>Link xác thực này sẽ hết hạn sau <strong>{{ expire_hours }} giờ</strong></li>
+                    <li>Bạn không thể đăng nhập cho đến khi xác thực email</li>
+                    <li>Nếu link hết hạn, bạn có thể yêu cầu gửi lại email xác thực</li>
+                </ul>
+            </div>
+            
+            <p>Nếu nút không hoạt động, bạn có thể copy và paste link sau vào trình duyệt:</p>
+            <p style="word-break: break-all; background-color: #f8f9fa; padding: 10px; border-radius: 5px;">
+                {{ verification_url }}
+            </p>
+            
+            <p>Nếu bạn không đăng ký tài khoản này, vui lòng bỏ qua email này.</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>BookingTicket System</strong></p>
+            <p>Email này được gửi tự động, vui lòng không trả lời.</p>
+            <p>Nếu bạn gặp vấn đề, hãy liên hệ với chúng tôi qua website.</p>
+        </div>
+    </div>
+</body>
+</html>

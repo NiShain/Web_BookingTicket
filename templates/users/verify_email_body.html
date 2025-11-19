@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <title>Xác thực email</title>
+  </head>
+  <body>
+    <p>Chào {{ ten }},</p>
+    <p>Cảm ơn bạn đã đăng ký tài khoản trên BookingTicket.</p>
+    <p>Vui lòng nhấp vào đường dẫn sau để xác thực email và kích hoạt tài khoản (link này sẽ hết hạn sau {{ expire_hours }} giờ):</p>
+    <p><a href="{{ verify_url }}">Xác thực tài khoản</a></p>
+    <p>Nếu bạn không yêu cầu đăng ký, bạn có thể bỏ qua email này.</p>
+    <hr>
+    <p>Trân trọng,<br>BookingTicket Team</p>
+  </body>
+</html>

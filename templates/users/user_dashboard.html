@@ -2,25 +2,50 @@
 {% load static %}
 
 {% block content %}
-  <div class="container">
-    <h1>Trang cá nhân</h1>
-    {% if khach_hang %}
-      <p>Xin chào, <strong>{{ khach_hang.ten }}</strong></p>
-    {% else %}
-      <p>Xin chào, <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></p>
-    {% endif %}
+  <div class="container dashboard">
+    <div class="dashboard-grid">
+      <div>
+        <h1 class="page-title">Trang cá nhân</h1>
+        <div class="card">
+          {% if khach_hang %}
+            <p class="intro">Xin chào, <strong>{{ khach_hang.ten }}</strong></p>
+          {% else %}
+            <p class="intro">Xin chào, <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></p>
+          {% endif %}
+          <div style="margin-top:12px">
+            <a class="btn" href="{% url 'profile' %}">Chỉnh sửa thông tin</a>
+          </div>
+        </div>
 
-    <h3>Đơn đặt gần đây</h3>
-    {% if recent_ves and recent_ves.exists %}
-      <ul>
-        {% for ve in recent_ves %}
-          <li>{{ ve.chuyen }} — {{ ve.so_luong }} vé — {{ ve.trang_thai }} — {{ ve.thoi_gian_dat|date:'d/m/Y H:i' }}</li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p>Chưa có đặt vé nào.</p>
-    {% endif %}
+        <div class="card" style="margin-top:16px">
+          <h2>Đơn đặt gần đây</h2>
+          {% if recent_ves and recent_ves.exists %}
+            <ul class="recent-list">
+              {% for ve in recent_ves %}
+                <li>
+                  <div><strong>{{ ve.chuyen }}</strong></div>
+                  <div style="color:#666; font-size:0.95rem">{{ ve.so_luong }} vé — {{ ve.trang_thai }} — {{ ve.thoi_gian_dat|date:'d/m/Y H:i' }}</div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>Chưa có đặt vé nào.</p>
+          {% endif %}
+        </div>
+      </div>
 
-    <p><a href="{% url 'profile' %}">Chỉnh sửa thông tin</a></p>
+      <aside>
+        <div class="card">
+          <h2>Thông tin</h2>
+          {% if khach_hang %}
+            <p><strong>{{ khach_hang.ten }}</strong></p>
+            <p>{{ khach_hang.so_dien_thoai }}</p>
+            <p>{{ khach_hang.email }}</p>
+          {% else %}
+            <p>{{ request.user.get_full_name|default:request.user.username }}</p>
+          {% endif %}
+        </div>
+      </aside>
+    </div>
   </div>
 {% endblock %}

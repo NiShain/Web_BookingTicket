@@ -1,6 +1,7 @@
 # users/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+import logging
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -11,6 +12,7 @@ from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from datetime import datetime
 import time # Import time để quản lý session
+from django.db import transaction
 
 # Import các form và model của bạn
 from .forms import RegistrationForm, CustomPasswordResetRequestForm
@@ -22,6 +24,7 @@ from .models import Account, KhachHang, EmailVerification, PasswordReset
 
 def send_verification_email(request, account, verification):
     """Gửi email xác thực (Logic từ auth_views.py)"""
+    logger = logging.getLogger(__name__)
     try:
         # Đã bỏ 'src:' namespace
         verification_url = request.build_absolute_uri(
@@ -32,7 +35,7 @@ def send_verification_email(request, account, verification):
         # Dùng template path cũ của bạn
         html_message = render_to_string('users/verify_email_body.html', {
             'user': account,
-            'ten': account.khachhang.ten,
+            'ten': getattr(account.khachhang, 'ten', account.get_full_name() or account.username),
             'verify_url': verification_url,
             'expire_hours': getattr(settings, 'EMAIL_VERIFICATION_EXPIRE_HOURS', 24),
         })
@@ -46,10 +49,10 @@ def send_verification_email(request, account, verification):
             html_message=html_message,
             fail_silently=False,
         )
-        print(f"Email verification sent to {account.email}")
+        logger.info('Email verification sent to %s', account.email)
     except Exception as e:
-        print(f"Error sending email: {str(e)}")
-        pass
+        # Log full exception trace so it's visible in server logs
+        logger.exception('Error sending verification email to %s: %s', getattr(account, 'email', '<no-email>'), e)
 
 def send_password_reset_email(request, account, reset_token):
     """Gửi email khôi phục mật khẩu (Logic từ auth_views.py)"""
@@ -103,31 +106,37 @@ def register_view(request):
             first_name = ten_parts[0]
             last_name = ' '.join(ten_parts[1:]) if len(ten_parts) > 1 else ''
 
-            account = Account.objects.create_user(
-                username=cd['email'], 
-                email=cd['email'],
-                password=cd['password'],
-                first_name=first_name,
-                last_name=last_name,
-                is_active=False,
-                email_verified=False
-            )
+            try:
+                # Create account and khachhang atomically but DO NOT create or send
+                # an EmailVerification. New accounts are active and treated as
+                # email-verified so users can log in immediately.
+                with transaction.atomic():
+                    account = Account.objects.create_user(
+                        username=cd['email'], 
+                        email=cd['email'],
+                        password=cd['password'],
+                        first_name=first_name,
+                        last_name=last_name,
+                        is_active=True,
+                        email_verified=True,
+                    )
 
-            KhachHang.objects.create(
-                account=account,
-                ten=cd['ten'],
-                so_dien_thoai=cd['so_dien_thoai'],
-                cccd=cd['cccd'],
-                email=cd['email'] # Thêm email nếu model KhachHang của bạn có
-            )
+                    KhachHang.objects.create(
+                        account=account,
+                        ten=cd['ten'],
+                        so_dien_thoai=cd['so_dien_thoai'],
+                        cccd=cd['cccd'],
+                        email=cd['email']
+                    )
 
-            # Tạo token và GỌI HELPER
-            verification = EmailVerification.objects.create(account=account)
-            send_verification_email(request, account, verification)
-            
-            messages.success(request, f'Đăng ký thành công! Vui lòng kiểm tra email {cd["email"]} để xác thực tài khoản.')
-            # Redirect về trang login (không có namespace 'src:')
-            return redirect('login')
+                # Do not create or send verification email on signup. Redirect to login.
+                messages.success(request, 'Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.')
+                return redirect('login')
+            except Exception as e:
+                # Any error will rollback the transaction; show a user-friendly message
+                messages.error(request, 'Đã có lỗi khi tạo tài khoản. Vui lòng thử lại sau.')
+                # Log the error for server-side debugging
+                logging.exception('Error during registration creation: %s', e)
     else:
         form = RegistrationForm()
         
@@ -281,66 +290,58 @@ def password_reset_request_view(request):
         form = CustomPasswordResetRequestForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
-            account = Account.objects.get(email=email, is_active=True)
-            
-            # Vô hiệu hóa token cũ (Logic từ auth_views.py)
+            try:
+                account = Account.objects.get(email=email, is_active=True)
+            except Account.DoesNotExist:
+                messages.error(request, 'Email không tồn tại hoặc tài khoản chưa được kích hoạt.')
+                return render(request, 'users/password_reset_request.html', {'form': form})
+
+            # Vô hiệu hóa token cũ
             PasswordReset.objects.filter(account=account, is_used=False).update(is_used=True)
-            
+
             # Tạo token mới
             reset_token = PasswordReset.objects.create(account=account)
-            
-            # GỌI HELPER
-            send_password_reset_email(request, account, reset_token)
-            
-            messages.success(request, f'Email khôi phục đã được gửi tới {email}.')
+
+            # Gửi email khôi phục sau khi transaction commit để tránh gửi khi rollback
+            transaction.on_commit(lambda: send_password_reset_email(request, account, reset_token))
+
+            messages.success(request, 'Email khôi phục mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn.')
             return redirect('login')
     else:
         form = CustomPasswordResetRequestForm()
-        
-    # Dùng template path cũ
-    return render(request, 'users/password_reset_form.html', {'form': form})
+
+    return render(request, 'users/password_reset_request.html', {'form': form})
 
 
 def password_reset_confirm_view(request, token):
-    """
-    Trang đặt lại MK (Giữ SetPasswordForm, merge logic kiểm tra token)
-    """
+    """Xác nhận reset mật khẩu: kiểm tra token, cho phép đặt mật khẩu mới."""
     try:
-        # Logic kiểm tra token (từ auth_views.py)
-        reset_obj = get_object_or_404(PasswordReset, token=token)
-        
-        if reset_obj.is_used:
-            messages.error(request, 'Link khôi phục đã được sử dụng!')
-            return redirect('login')
-        
-        if reset_obj.is_expired():
-            messages.error(request, 'Link khôi phục đã hết hạn!')
-            return redirect('password_reset_request') # Dùng tên URL cũ
-            
-        account = reset_obj.account
-
-        if request.method == 'POST':
-            # Giữ nguyên logic dùng SetPasswordForm (tốt hơn)
-            form = SetPasswordForm(user=account, data=request.POST) 
-            if form.is_valid():
-                form.save() 
-                reset_obj.is_used = True 
-                reset_obj.save()
-                messages.success(request, 'Đổi mật khẩu thành công! Bạn có thể đăng nhập.')
-                return redirect('login')
-        else:
-            form = SetPasswordForm(user=account)
-            
-        # Dùng template path cũ
-        return render(request, 'users/password_reset_confirm.html', {
-            'form': form,
-            'token': token,
-            'account': account
-        })
-
+        reset_token = get_object_or_404(PasswordReset, token=token, is_used=False)
     except PasswordReset.DoesNotExist:
-        messages.error(request, 'Token không hợp lệ hoặc không tồn tại.')
-        return redirect('login')
+        messages.error(request, 'Liên kết khôi phục mật khẩu không hợp lệ hoặc đã được sử dụng.')
+        return redirect('password_reset_request')
+
+    if reset_token.is_expired():
+        messages.error(request, 'Liên kết khôi phục mật khẩu đã hết hạn. Vui lòng yêu cầu gửi lại.')
+        return redirect('password_reset_request')
+
+    user = reset_token.account
+
+    if request.method == 'POST':
+        form = SetPasswordForm(user, request.POST)
+        if form.is_valid():
+            form.save()
+            # đánh dấu token đã dùng
+            reset_token.is_used = True
+            reset_token.save()
+            messages.success(request, 'Mật khẩu của bạn đã được cập nhật. Vui lòng đăng nhập.')
+            return redirect('login')
+        else:
+            messages.error(request, 'Vui lòng sửa các lỗi bên dưới.')
+    else:
+        form = SetPasswordForm(user)
+
+    return render(request, 'users/password_reset_confirm.html', {'form': form})
 
 # ===============================================
 # === 6. PROFILE & ADMIN (TỪ AUTH_VIEWS.PY)

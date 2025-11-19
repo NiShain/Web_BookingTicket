@@ -1,0 +1,72 @@
+/* Minimal placeholder stylesheet so templates referencing static/css/main.css stop 404s.
+   You can replace with your full stylesheet later. */
+:root{--primary:#1e3c72;--accent:#3b82f6}
+body{font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;background:#f8f9fa;color:#333}
+.container{max-width:1200px;margin:0 auto;padding:0 20px}
+.btn{background:var(--primary);color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none}
+
+/* Dashboard and user/admin pages */
+.dashboard {
+   padding: 24px 0;
+}
+.dashboard-grid {
+   display: grid;
+   grid-template-columns: 1fr 320px;
+   gap: 24px;
+   align-items: start;
+}
+.card {
+   background: #fff;
+   border-radius: 10px;
+   padding: 18px;
+   box-shadow: 0 6px 18px rgba(25, 25, 40, 0.06);
+}
+.card h2 {
+   margin: 0 0 12px 0;
+   font-size: 1.2rem;
+   color: var(--primary);
+}
+.recent-list {
+   list-style: none;
+   margin: 0;
+   padding: 0;
+}
+.recent-list li {
+   padding: 10px 0;
+   border-bottom: 1px solid #eee;
+   font-size: 0.95rem;
+}
+.recent-list li:last-child { border-bottom: none; }
+
+.profile-form label { display:block; font-weight:600; margin:8px 0 6px; }
+.profile-form input { width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; }
+
+.stats-grid {
+   display: grid;
+   grid-template-columns: repeat(3, 1fr);
+   gap: 12px;
+}
+.stat {
+   background: linear-gradient(180deg, #fff, #fbfdff);
+   border: 1px solid #eef6ff;
+   padding: 14px;
+   text-align: center;
+   border-radius: 8px;
+}
+.stat .number { font-size: 1.4rem; font-weight:700; color:var(--primary); }
+.stat .label { color:#666; font-size:0.85rem; }
+
+.admin-panel { display:flex; gap:12px; flex-direction:column; }
+
+/* Buttons */
+.btn-secondary { background:#f3f4f6; color:#111; padding:8px 12px; border-radius:6px; text-decoration:none; display:inline-block }
+
+/* Responsive */
+@media (max-width: 900px) {
+   .dashboard-grid { grid-template-columns: 1fr; }
+   .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+   .stats-grid { grid-template-columns: 1fr; }
+}

@@ -569,8 +569,8 @@
             <a href="{% url 'profile' %}">Sửa thông tin</a>
             <a href="{% url 'logout' %}">Đăng xuất</a>
             {% else %}
-            <a href="{% url 'home' %}">Tuyến xe</a>
-            <a href="{% url 'home' %}">Chuyến xe</a>
+            <a href="{% url 'src:danh_sach_tuyens' %}">Tuyến xe</a>
+            <a href="{% url 'src:danh_sach_chuyen_xe' %}">Chuyến xe</a>
             <a href="{% url 'login' %}">Đăng nhập</a>
             <a href="{% url 'register' %}">Đăng ký</a>
             {% endif %}

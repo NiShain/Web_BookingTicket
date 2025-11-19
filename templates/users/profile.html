@@ -1,34 +1,50 @@
-<h2>Hồ sơ cá nhân</h2>
-{% if messages %}
-  <ul class="messages">
-    {% for message in messages %}
-      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
+{% extends "base.html" %}
+{% load static %}
 
-<form method="post">
-  {% csrf_token %}
-  <label>Họ tên</label>
-  <input name="ten" value="{{ khach_hang.ten }}" />
+{% block content %}
+  <div class="container">
+    <h2>Hồ sơ cá nhân</h2>
 
-  <label>Số điện thoại</label>
-  <input name="so_dien_thoai" value="{{ khach_hang.so_dien_thoai }}" />
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
 
-  <label>CCCD</label>
-  <input name="cccd" value="{{ khach_hang.cccd }}" />
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-row">
+        <label>Họ tên</label>
+        <input name="ten" value="{{ khach_hang.ten }}" />
+      </div>
 
-  <label>Email</label>
-  <input name="email" value="{{ khach_hang.email }}" />
+      <div class="form-row">
+        <label>Số điện thoại</label>
+        <input name="so_dien_thoai" value="{{ khach_hang.so_dien_thoai }}" />
+      </div>
 
-  <button type="submit">Lưu</button>
-</form>
+      <div class="form-row">
+        <label>CCCD</label>
+        <input name="cccd" value="{{ khach_hang.cccd }}" />
+      </div>
 
-<h3>Vé đã đặt</h3>
-<ul>
-  {% for ve in ve_da_dat %}
-    <li>{{ ve }} - trạng thái: {{ ve.trang_thai }}</li>
-  {% empty %}
-    <li>Chưa có vé</li>
-  {% endfor %}
-</ul>
+      <div class="form-row">
+        <label>Email</label>
+        <input name="email" value="{{ khach_hang.email }}" />
+      </div>
+
+      <button class="btn" type="submit">Lưu</button>
+    </form>
+
+    <h3 style="margin-top:1.5rem">Vé đã đặt</h3>
+    <ul>
+      {% for ve in ve_da_dat %}
+        <li>{{ ve }} - trạng thái: {{ ve.trang_thai }}</li>
+      {% empty %}
+        <li>Chưa có vé</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endblock %}
