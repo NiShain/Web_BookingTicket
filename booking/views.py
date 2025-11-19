@@ -86,8 +86,26 @@ class AdminChuyenDeleteView(LoginRequiredMixin, StaffRequiredMixins, DeleteView)
     
 class AdminXeDeleteView(LoginRequiredMixin, StaffRequiredMixins, DeleteView):
     
-#================== USERS ==================================
-
     model = Xe
     template_name = "bookingticket/admin/xe_confirm_delete.html"
     success_url = reverse_lazy('xe-list')
+    
+#============== END ADMIN ==================
+
+#============== USERS ======================
+class UserTuyenListView(LoginRequiredMixin,ListView):
+    model = Tuyen
+    template_name = "bookingticket/users/tuyen_list.html"
+    context_object_name = "danh_sach_tuyen"
+    paginate_by = 10
+
+class UserChuyenListView(LoginRequiredMixin,ListView):
+    model = Chuyen
+    template_name = "bookingticket/users/chuyen_list.html"
+    context_object_name = "danh_sach_chuyen"
+    paginate_by = 10
+    def get_queryset(self):
+        from django.utils import timezone
+        
+        return Chuyen.objects.filter(ngay_gio_khoi_hanh__gte=timezone.now()).order_by('ngay_gio_khoi_hanh')
+    

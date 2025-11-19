@@ -27,4 +27,8 @@ urlpatterns = [
     
     path('payment/', AdminPaymentListView.as_view(), name='payment-list'),
     path('ve/', AdminVeListView.as_view(), name='ve-list'),
+    
+    
+    #======================== User URLs =======================#
+    
 ]
