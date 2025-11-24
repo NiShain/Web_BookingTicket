@@ -138,32 +138,72 @@ def chon_ghe(request, chuyen_id):
 
 
 def generate_seat_layout(so_ghe):
-	"""Generate seat layout structure based on total seats.
+	"""Generate seat layout structure based on total seats and vehicle type.
 	
 	Returns list of rows, each row contains seat objects with position labels.
-	Example: [['A1', 'A2'], ['B1', 'B2'], ...]
+	Different layouts for different vehicle capacities:
+	- 16 seats: Limousine 1+1 layout (single seat left, aisle, single seat right) + last row with remaining seats
+	- 29 seats: Standard bus 2+1 layout (2 seats left, aisle, 1 seat right) + last row with remaining seats
+	- 40 seats: Sleeper bus 2+2 layout (2 seats left, aisle, 2 seats right) + last row with remaining seats
 	"""
 	rows = []
-	seats_per_row = 4  # Standard bus layout: 2-2 configuration
 	row_labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+	
+	# Determine layout based on seat count
+	if so_ghe <= 16:
+		# Limousine: 1+1 layout (2 seats per row)
+		seats_per_row = 2
+		layout_pattern = [0, None, 1]  # Left 1, aisle, right 1
+		last_row_seats = min(4, so_ghe)  # Last row can have up to 4 seats
+	elif so_ghe <= 30:
+		# Standard bus 29 seats: 2+1 layout (3 seats per row)
+		seats_per_row = 3
+		layout_pattern = [0, 1, None, 2]  # Left 2, aisle, right 1
+		last_row_seats = min(4, so_ghe)  # Last row can have up to 4 seats
+	else:
+		# Sleeper bus: 2+2 layout (4 seats per row)
+		seats_per_row = 4
+		layout_pattern = [0, 1, None, 2, 3]  # Left 2, aisle, right 2
+		last_row_seats = min(4, so_ghe)  # Last row can have up to 4 seats
+	
+	# Calculate how many seats for normal rows and last row
+	normal_rows_seats = (so_ghe - last_row_seats) if so_ghe > last_row_seats else 0
+	normal_rows_count = normal_rows_seats // seats_per_row
+	remaining_for_last = so_ghe - (normal_rows_count * seats_per_row)
 	
 	row_index = 0
 	seat_index = 0
 	
-	while seat_index < so_ghe:
+	# Generate normal rows
+	while seat_index < normal_rows_count * seats_per_row:
 		row = []
 		row_label = row_labels[row_index] if row_index < len(row_labels) else f'R{row_index}'
 		
-		for col in range(1, seats_per_row + 1):
-			if seat_index >= so_ghe:
-				break
-			seat_label = f'{row_label}{col}'
-			row.append(seat_label)
-			seat_index += 1
+		for pos in layout_pattern:
+			if pos is None:
+				row.append(None)  # Aisle marker
+			elif seat_index < normal_rows_count * seats_per_row:
+				seat_label = f'{row_label}{pos + 1}'
+				row.append(seat_label)
+				seat_index += 1
+			else:
+				row.append(None)
 		
-		if row:
+		if any(seat for seat in row if seat):
 			rows.append(row)
 		row_index += 1
+	
+	# Generate last row with remaining seats (centered layout)
+	if remaining_for_last > 0:
+		last_row = []
+		row_label = row_labels[row_index] if row_index < len(row_labels) else f'R{row_index}'
+		
+		# Create a full-width layout for last row
+		for col in range(1, remaining_for_last + 1):
+			seat_label = f'{row_label}{col}'
+			last_row.append(seat_label)
+		
+		rows.append(last_row)
 	
 	return rows
 
