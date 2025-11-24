@@ -388,7 +388,7 @@ def user_profile(request):
                 
         khach_hang.save()
         messages.success(request, 'Cập nhật thông tin thành công!')
-        return redirect('profile') # Đổi 'src:profile' thành 'profile'
+        # Stay on the same page, don't redirect to avoid re-rendering
     
     context = {
         'khach_hang': khach_hang,
@@ -400,32 +400,48 @@ def user_profile(request):
 
 @user_passes_test(lambda u: u.is_staff or u.is_superuser)
 def admin_dashboard(request):
-    """Simple admin dashboard view for staff/superuser.
+    """Admin dashboard view for staff/superuser.
 
-    Renders a minimal dashboard template. Protected by user_passes_test so
-    non-staff users cannot access it.
+    Renders admin_dashboard.html template with admin content.
+    Protected by user_passes_test so non-staff users cannot access it.
     """
-    # You can expand this to show statistics, recent bookings, etc.
-    return render(request, 'users/admin_dashboard.html', {})
+    return render(request, 'admin/admin_dashboard.html', {})
 
 
 @login_required
 def user_dashboard(request):
-    """Simple user dashboard for regular authenticated users.
+    """User dashboard - renders user_dashboard.html with dashboard content.
 
-    Shows basic customer info and recent bookings.
+    Shows customer info, quick actions, and recent bookings.
     """
     try:
         khach_hang = request.user.khachhang
     except KhachHang.DoesNotExist:
         khach_hang = None
 
-    # Import Ve lazily to avoid circular imports
-    from booking.models import Ve
-    recent_ves = Ve.objects.filter(khach__account=request.user).order_by('-thoi_gian_dat')[:10]
+    # Import Ve, Chuyen, Tuyen lazily to avoid circular imports
+    from booking.models import Ve, Chuyen, Tuyen
+    from django.utils import timezone
+    from django.db.models import Count
+    
+    recent_ves = Ve.objects.filter(khach__account=request.user).order_by('-thoi_gian_dat')[:10] if khach_hang else []
+    
+    # Chuyến xe sắp tới (upcoming trips)
+    upcoming_chuyens = Chuyen.objects.filter(
+        ngay_gio_khoi_hanh__gte=timezone.now()
+    ).order_by('ngay_gio_khoi_hanh')[:8]
+    
+    # Chuyến xe hot (popular routes by trip count)
+    hot_chuyens = Chuyen.objects.filter(
+        ngay_gio_khoi_hanh__gte=timezone.now()
+    ).select_related('tuyen', 'xe').annotate(
+        route_trip_count=Count('tuyen__chuyens')
+    ).order_by('-route_trip_count', 'ngay_gio_khoi_hanh')[:8]
 
     context = {
         'khach_hang': khach_hang,
         'recent_ves': recent_ves,
+        'upcoming_chuyens': upcoming_chuyens,
+        'hot_chuyens': hot_chuyens,
     }
     return render(request, 'users/user_dashboard.html', context)

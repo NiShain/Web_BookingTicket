@@ -1,50 +1,320 @@
-{% extends "base.html" %}
+{% extends "users/base_user.html" %}
 {% load static %}
 
+{% block title %}Sửa Thông Tin - Hệ Thống Đặt Vé{% endblock %}
+
+{% block extra_head %}
+<style>
+  .profile-page {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+  }
+
+  .page-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .page-header h2 {
+    font-size: 2.2rem;
+    color: #2c3e50;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-header p {
+    color: #7f8c8d;
+    font-size: 1rem;
+  }
+
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+  }
+
+  .card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+    border: 1px solid rgba(52, 152, 219, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+  }
+
+  .card h3 {
+    color: #2c3e50;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 3px solid #3498db;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .card h3::before {
+    font-size: 1.5rem;
+  }
+
+  .card:first-child h3::before {
+    content: "✏️";
+  }
+
+  .profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-row label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .form-row label::before {
+    font-size: 1rem;
+  }
+
+  .form-row:nth-child(1) label::before {
+    content: "👤";
+  }
+
+  .form-row:nth-child(2) label::before {
+    content: "📱";
+  }
+
+  .form-row:nth-child(3) label::before {
+    content: "🆔";
+  }
+
+  .form-row:nth-child(4) label::before {
+    content: "📧";
+  }
+
+  .form-row input {
+    padding: 0.85rem 1rem;
+    border: 2px solid #e8ecf0;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+  }
+
+  .form-row input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+    transform: translateY(-2px);
+    background: white;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: white;
+    padding: 0.9rem 2.5rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+    margin-top: 0.5rem;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .info-card h3::before {
+    content: "🎫";
+  }
+
+  .ticket-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .ticket-item {
+    padding: 1.2rem;
+    border-bottom: 1px solid #ecf0f1;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ticket-item:last-child {
+    border-bottom: none;
+  }
+
+  .ticket-item:hover {
+    background: linear-gradient(90deg, rgba(52, 152, 219, 0.05), rgba(46, 204, 113, 0.05));
+    transform: translateX(5px);
+  }
+
+  .ticket-info {
+    flex: 1;
+  }
+
+  .ticket-route {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .ticket-details {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+  }
+
+  .ticket-status {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  .status-confirmed {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    color: #155724;
+    border: 1px solid #b1dfbb;
+  }
+
+  .status-pending {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    color: #856404;
+    border: 1px solid #ffd93d;
+  }
+
+  .status-cancelled {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    color: #721c24;
+    border: 1px solid #f1b0b7;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2.5rem;
+    color: #7f8c8d;
+    background: #f8f9fa;
+    border-radius: 10px;
+    font-size: 1rem;
+  }
+
+  .empty-state::before {
+    content: "📭";
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 992px) {
+    .profile-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .profile-page {
+      padding: 1rem;
+    }
+
+    .card {
+      padding: 1.5rem;
+    }
+
+    .page-header h2 {
+      font-size: 1.8rem;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-  <div class="container">
-    <h2>Hồ sơ cá nhân</h2>
+  <div class="container profile-page">
+    <div class="page-header">
+      <h2>Hồ sơ cá nhân</h2>
+      <p>Cập nhật thông tin tài khoản của bạn</p>
+    </div>
 
-    {% if messages %}
-      <ul class="messages">
-        {% for message in messages %}
-          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
+    <div class="profile-grid">
+      <div class="card">
+        <h3>Thông tin cá nhân</h3>
+        <form method="post" class="profile-form">
+          {% csrf_token %}
+          <div class="form-row">
+            <label for="ten">Họ tên</label>
+            <input type="text" id="ten" name="ten" value="{{ khach_hang.ten }}" required />
+          </div>
 
-    <form method="post">
-      {% csrf_token %}
-      <div class="form-row">
-        <label>Họ tên</label>
-        <input name="ten" value="{{ khach_hang.ten }}" />
+          <div class="form-row">
+            <label for="so_dien_thoai">Số điện thoại</label>
+            <input type="tel" id="so_dien_thoai" name="so_dien_thoai" value="{{ khach_hang.so_dien_thoai }}" required />
+          </div>
+
+          <div class="form-row">
+            <label for="cccd">CCCD</label>
+            <input type="text" id="cccd" name="cccd" value="{{ khach_hang.cccd }}" required />
+          </div>
+
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="{{ khach_hang.email }}" required />
+          </div>
+
+          <button class="btn-primary" type="submit">💾 Lưu thay đổi</button>
+        </form>
       </div>
 
-      <div class="form-row">
-        <label>Số điện thoại</label>
-        <input name="so_dien_thoai" value="{{ khach_hang.so_dien_thoai }}" />
+      <div class="card info-card">
+        <h3>Vé đã đặt</h3>
+        {% if ve_da_dat %}
+          <ul class="ticket-list">
+            {% for ve in ve_da_dat %}
+              <li class="ticket-item">
+                <div class="ticket-info">
+                  <div class="ticket-route">{{ ve.chuyen.tuyen.diem_di }} → {{ ve.chuyen.tuyen.diem_den }}</div>
+                  <div class="ticket-details">
+                    {{ ve.chuyen.ngay_gio_khoi_hanh|date:"d/m/Y H:i" }} • {{ ve.so_luong }} vé
+                  </div>
+                </div>
+                <span class="ticket-status status-{{ ve.trang_thai|lower }}">{{ ve.trang_thai }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="empty-state">
+            Chưa có vé đặt nào
+          </div>
+        {% endif %}
       </div>
-
-      <div class="form-row">
-        <label>CCCD</label>
-        <input name="cccd" value="{{ khach_hang.cccd }}" />
-      </div>
-
-      <div class="form-row">
-        <label>Email</label>
-        <input name="email" value="{{ khach_hang.email }}" />
-      </div>
-
-      <button class="btn" type="submit">Lưu</button>
-    </form>
-
-    <h3 style="margin-top:1.5rem">Vé đã đặt</h3>
-    <ul>
-      {% for ve in ve_da_dat %}
-        <li>{{ ve }} - trạng thái: {{ ve.trang_thai }}</li>
-      {% empty %}
-        <li>Chưa có vé</li>
-      {% endfor %}
-    </ul>
+    </div>
   </div>
 {% endblock %}

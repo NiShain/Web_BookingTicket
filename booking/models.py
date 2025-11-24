@@ -96,6 +96,11 @@ class Ve(models.Model):
     chuyen = models.ForeignKey(Chuyen, on_delete=models.CASCADE, related_name="ves")
     khach = models.ForeignKey(KhachHang, on_delete=models.CASCADE, related_name="ves")
     so_luong = models.PositiveIntegerField()
+    vi_tri_ghe = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='Danh sách vị trí ghế đã chọn, ví dụ: ["A1", "A2", "B3"]'
+    )
     trang_thai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default="CHO_THANH_TOAN")
     thoi_gian_dat = models.DateTimeField(auto_now_add=True)
 
@@ -104,9 +109,27 @@ class Ve(models.Model):
             raise ValidationError("Số lượng vé phải lớn hơn 0.")
         if self.so_luong > self.chuyen.so_ve_con_lai:
             raise ValidationError("Số lượng vé vượt quá số vé còn lại của chuyến.")
+        # Validate seat positions if provided
+        if self.vi_tri_ghe:
+            if not isinstance(self.vi_tri_ghe, list):
+                raise ValidationError("Vị trí ghế phải là danh sách.")
+            if len(self.vi_tri_ghe) != self.so_luong:
+                raise ValidationError(f"Số lượng vị trí ghế ({len(self.vi_tri_ghe)}) phải bằng số lượng vé ({self.so_luong}).")
+            # Check for duplicate seats in this booking
+            if len(self.vi_tri_ghe) != len(set(self.vi_tri_ghe)):
+                raise ValidationError("Không được chọn trùng vị trí ghế.")
+    
+    def get_ghe_da_dat(self):
+        """Trả về danh sách các ghế đã được đặt cho chuyến xe này"""
+        booked_seats = []
+        for ve in self.chuyen.ves.filter(trang_thai="DA_THANH_TOAN").exclude(id=self.id):
+            if ve.vi_tri_ghe:
+                booked_seats.extend(ve.vi_tri_ghe)
+        return booked_seats
 
     def __str__(self):
-        return f"Vé {self.id} - {self.khach.ten}"
+        seats_info = f" - Ghế: {', '.join(self.vi_tri_ghe)}" if self.vi_tri_ghe else ""
+        return f"Vé {self.id} - {self.khach.ten}{seats_info}"
 
     class Meta:
         verbose_name = "Vé"
