@@ -47,6 +47,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Auto-logout middleware: checks last activity and logs out inactive users
+    'users.middleware.AutoLogoutMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -80,7 +82,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',   # vẫn để mysql vì Django không có backend riêng cho MariaDB
         'NAME': 'bookingticket',                 # schema bạn đã tạo
         'USER': 'root',                        # user của MariaDB (mặc định là root)
-        'PASSWORD': '03062005',                 # mật khẩu root (thay bằng mật khẩu thực của bạn)
+        'PASSWORD': '24042005',                 # mật khẩu root (đã cập nhật theo HelixSQL)
         'HOST': '127.0.0.1',                   # localhost
         'PORT': '3307',                        # port MariaDB (có thể là 3306 hoặc 3307)
         'OPTIONS': {
@@ -147,7 +149,8 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Email configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True

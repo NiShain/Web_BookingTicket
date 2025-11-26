@@ -30,9 +30,12 @@ urlpatterns = [
          name='password_reset_confirm'),
 
     # --- 4. Profile & Dashboard ---
-    # THÊM: Đường dẫn cho trang profile
-    path('profile/', views.user_profile, name='profile'),
-    
-    # THÊM: Đường dẫn cho trang dashboard (admin)
-    path('dashboard/', views.admin_dashboard, name='dashboard'),
+     # THÊM: Đường dẫn cho trang profile
+     path('profile/', views.user_profile, name='profile'),
+
+     # User dashboard (regular authenticated users)
+     path('dashboard/', views.user_dashboard, name='dashboard'),
+
+     # Admin dashboard (staff / superuser)
+     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
 ]
