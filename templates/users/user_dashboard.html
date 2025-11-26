@@ -1,51 +1,389 @@
-{% extends "base.html" %}
+{% extends "users/base_user.html" %}
 {% load static %}
 
+{% block extra_head %}
+<style>
+  .dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .page-title {
+    font-size: 2.2rem;
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    font-weight: 800;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 2rem;
+  }
+
+  .card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(52, 152, 219, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+  }
+
+  .card h2 {
+    color: #2c3e50;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 3px solid #3498db;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .card h2::before {
+    font-size: 1.5rem;
+  }
+
+  .welcome-card h2::before {
+    content: "👤";
+  }
+
+  .upcoming-card h2::before {
+    content: "🚌";
+  }
+
+  .hot-card h2::before {
+    content: "🔥";
+  }
+
+  .recent-card h2::before {
+    content: "📋";
+  }
+
+  .trips-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .user-info .intro {
+    font-size: 1.3rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+  }
+
+  .user-info strong {
+    color: #3498db;
+    font-weight: 700;
+  }
+
+  .muted {
+    color: #7f8c8d;
+    font-size: 0.95rem;
+  }
+
+  .quick-actions-card {
+    margin-top: 1.5rem;
+  }
+
+  .card-content strong {
+    display: block;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .quick-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn,
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.8rem 1.8rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    display: inline-block;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+  }
+
+  .btn-secondary {
+    background: white;
+    color: #3498db;
+    border: 2px solid #3498db;
+  }
+
+  .btn-secondary:hover {
+    background: #3498db;
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  .btn {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.25);
+    padding: 0.6rem 1.3rem;
+    font-size: 0.9rem;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(52, 152, 219, 0.35);
+  }
+
+  .recent-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .recent-list li {
+    padding: 1.2rem;
+    border-bottom: 1px solid #ecf0f1;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+  }
+
+  .recent-list li:last-child {
+    border-bottom: none;
+  }
+
+  .recent-list li:hover {
+    background: linear-gradient(90deg, rgba(52, 152, 219, 0.05), rgba(46, 204, 113, 0.05));
+    transform: translateX(5px);
+  }
+
+  .recent-list strong {
+    color: #2c3e50;
+    font-size: 1.05rem;
+  }
+
+  .badge {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
+    color: white;
+    letter-spacing: 0.3px;
+  }
+
+  aside .card {
+    position: sticky;
+    top: 100px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e8ecf0 100%);
+  }
+
+  aside .card h2::before {
+    content: "👤";
+  }
+
+  aside .card p {
+    padding: 0.6rem 0;
+    color: #555;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #dfe6e9;
+  }
+
+  aside .card p:last-child {
+    border-bottom: none;
+  }
+
+  aside .card p strong {
+    color: #2c3e50;
+    font-size: 1.1rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2.5rem;
+    color: #7f8c8d;
+    background: #f8f9fa;
+    border-radius: 10px;
+    font-size: 1rem;
+  }
+
+  @media (max-width: 992px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .trips-grid {
+      grid-template-columns: 1fr;
+    }
+
+    aside .card {
+      position: static;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .dashboard {
+      padding: 1rem;
+    }
+
+    .page-title {
+      font-size: 1.8rem;
+    }
+
+    .card {
+      padding: 1.5rem;
+    }
+
+    .quick-actions {
+      flex-direction: column;
+    }
+
+    .btn,
+    .btn-primary,
+    .btn-secondary {
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-  <div class="container dashboard">
-    <div class="dashboard-grid">
-      <div>
-        <h1 class="page-title">Trang cá nhân</h1>
-        <div class="card">
-          {% if khach_hang %}
-            <p class="intro">Xin chào, <strong>{{ khach_hang.ten }}</strong></p>
-          {% else %}
-            <p class="intro">Xin chào, <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></p>
-          {% endif %}
-          <div style="margin-top:12px">
-            <a class="btn" href="{% url 'profile' %}">Chỉnh sửa thông tin</a>
+<div class="container dashboard">
+  <h1 class="page-title">Trang cá nhân</h1>
+  
+  <div class="dashboard-grid">
+    <div>
+      <div class="card welcome-card">
+        <div class="card-header">
+          <h2>Chào mừng trở lại</h2>
+          <div class="user-info">
+            {% if khach_hang %}
+              <p class="intro">Xin chào, <strong>{{ khach_hang.ten }}</strong></p>
+            {% else %}
+              <p class="intro">Xin chào, <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></p>
+            {% endif %}
+            <p class="muted">Thành viên từ: {{ request.user.date_joined|date:'d/m/Y' }}</p>
           </div>
         </div>
+      </div>
 
-        <div class="card" style="margin-top:16px">
-          <h2>Đơn đặt gần đây</h2>
-          {% if recent_ves and recent_ves.exists %}
+      <div class="trips-grid">
+        <div class="card upcoming-card">
+          <h2>Chuyến xe sắp tới</h2>
+          {% if upcoming_chuyens %}
             <ul class="recent-list">
-              {% for ve in recent_ves %}
+              {% for ch in upcoming_chuyens|slice:":4" %}
                 <li>
-                  <div><strong>{{ ve.chuyen }}</strong></div>
-                  <div style="color:#666; font-size:0.95rem">{{ ve.so_luong }} vé — {{ ve.trang_thai }} — {{ ve.thoi_gian_dat|date:'d/m/Y H:i' }}</div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+                    <div style="flex:1;">
+                      <div><strong>{{ ch.tuyen.diem_di }} → {{ ch.tuyen.diem_den }}</strong></div>
+                      <div class="muted">{{ ch.ngay_gio_khoi_hanh|date:'d/m/Y H:i' }}</div>
+                      <div class="muted">{{ ch.xe.loai_xe }}</div>
+                    </div>
+                    <div>
+                      <a class="btn" href="{% url 'src:danh_sach_chuyen_xe' %}?tuyen_id={{ ch.tuyen.id }}">Đặt vé</a>
+                    </div>
+                  </div>
                 </li>
               {% endfor %}
             </ul>
           {% else %}
-            <p>Chưa có đặt vé nào.</p>
+            <div class="empty-state">🚌 Không có chuyến sắp tới.</div>
+          {% endif %}
+        </div>
+
+        <div class="card hot-card">
+          <h2>Chuyến xe hot</h2>
+          {% if hot_chuyens %}
+            <ul class="recent-list">
+              {% for ch in hot_chuyens|slice:":4" %}
+                <li>
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+                    <div style="flex:1;">
+                      <div><strong>{{ ch.tuyen.diem_di }} → {{ ch.tuyen.diem_den }}</strong></div>
+                      <div class="muted">{{ ch.ngay_gio_khoi_hanh|date:'d/m/Y H:i' }}</div>
+                      <div class="muted">{{ ch.xe.loai_xe }}</div>
+                    </div>
+                    <div>
+                      <a class="btn" href="{% url 'src:chon_ghe' ch.id %}">Đặt vé</a>
+                    </div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="empty-state">🔥 Không có chuyến hot.</div>
           {% endif %}
         </div>
       </div>
 
-      <aside>
-        <div class="card">
-          <h2>Thông tin</h2>
-          {% if khach_hang %}
-            <p><strong>{{ khach_hang.ten }}</strong></p>
-            <p>{{ khach_hang.so_dien_thoai }}</p>
-            <p>{{ khach_hang.email }}</p>
-          {% else %}
-            <p>{{ request.user.get_full_name|default:request.user.username }}</p>
-          {% endif %}
-        </div>
-      </aside>
+      <div class="card recent-card">
+        <h2>Đơn đặt gần đây</h2>
+        {% if recent_ves %}
+          <ul class="recent-list">
+            {% for ve in recent_ves %}
+              <li>
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+                  <div style="flex:1;">
+                    <div><strong>{{ ve.chuyen }}</strong></div>
+                    <div class="muted">{{ ve.so_luong }} vé — {{ ve.thoi_gian_dat|date:'d/m/Y H:i' }}</div>
+                  </div>
+                  <div>
+                    <span class="badge">{{ ve.trang_thai }}</span>
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="empty-state">📭 Chưa có đặt vé nào.</div>
+        {% endif %}
+      </div>
     </div>
+
+    <aside>
+      <div class="card">
+        <h2>Thông tin</h2>
+        {% if khach_hang %}
+          <p><strong>{{ khach_hang.ten }}</strong></p>
+          <p>📱 {{ khach_hang.so_dien_thoai }}</p>
+          <p>📧 {{ khach_hang.email }}</p>
+        {% else %}
+          <p><strong>{{ request.user.get_full_name|default:request.user.username }}</strong></p>
+        {% endif %}
+      </div>
+    </aside>
   </div>
+</div>
 {% endblock %}

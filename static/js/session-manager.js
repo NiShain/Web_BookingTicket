@@ -1,48 +1,140 @@
-/* Minimal session-manager placeholder to avoid 404. Real implementation lives elsewhere. */
-// session-manager.js
-// Sends a logout request when the page is unloaded to ensure server-side logout.
-// Uses navigator.sendBeacon when available to avoid blocking unload.
-
+/* Session manager - Auto logout when browser closes completely */
 (function(){
-  // If template didn't set window.USER_LOGGED_IN, assume false
-  if (!window.USER_LOGGED_IN) {
-    console.debug('session-manager: user not logged in, no action');
+  console.debug('session-manager: Monitoring browser close for auto-logout');
+  
+  // Check if user is authenticated
+  const isAuthenticated = document.body.dataset.userAuthenticated === 'true';
+  
+  if (!isAuthenticated) {
+    console.debug('session-manager: User not authenticated, skipping');
     return;
   }
 
-  function getCsrfToken() {
-    var match = document.cookie.match(new RegExp('(^|; )' + 'csrftoken' + '=([^;]+)'));
-    return match ? match[2] : null;
-  }
-
-  function sendLogout() {
+  // Use sessionStorage to track if any tab is still open
+  // sessionStorage is cleared when the last tab closes
+  const TAB_ID = 'tab_' + Date.now() + '_' + Math.random();
+  const ACTIVE_TABS_KEY = 'active_tabs';
+  
+  // Get current active tabs from sessionStorage
+  function getActiveTabs() {
     try {
-      var url = window.LOGOUT_URL || '/accounts/logout/';
-      var csrf = getCsrfToken();
-
-      if (navigator.sendBeacon) {
-        // send a simple form-encoded payload; include csrf as query param (best-effort)
-        var body = new Blob([new URLSearchParams({logout: '1'}).toString()], {type: 'application/x-www-form-urlencoded'});
-        var beaconUrl = url;
-        if (csrf) {
-          beaconUrl = url + (url.indexOf('?') === -1 ? '?' : '&') + 'csrfmiddlewaretoken=' + encodeURIComponent(csrf);
-        }
-        navigator.sendBeacon(beaconUrl, body);
-      } else {
-        // Fallback: synchronous XHR during unload (may be blocked by browsers)
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', url, false);
-        if (csrf) xhr.setRequestHeader('X-CSRFToken', csrf);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.send('logout=1');
-      }
+      const tabs = sessionStorage.getItem(ACTIVE_TABS_KEY);
+      return tabs ? JSON.parse(tabs) : [];
     } catch (e) {
-      console.warn('session-manager logout failed', e);
+      return [];
     }
   }
-
-  window.addEventListener('beforeunload', function(){
-    sendLogout();
+  
+  // Save active tabs to sessionStorage
+  function setActiveTabs(tabs) {
+    try {
+      sessionStorage.setItem(ACTIVE_TABS_KEY, JSON.stringify(tabs));
+    } catch (e) {
+      console.error('session-manager: Failed to save tabs', e);
+    }
+  }
+  
+  // Register this tab as active
+  function registerTab() {
+    const tabs = getActiveTabs();
+    if (!tabs.includes(TAB_ID)) {
+      tabs.push(TAB_ID);
+      setActiveTabs(tabs);
+      console.debug('session-manager: Tab registered', TAB_ID);
+    }
+  }
+  
+  // Unregister this tab
+  function unregisterTab() {
+    const tabs = getActiveTabs();
+    const index = tabs.indexOf(TAB_ID);
+    if (index > -1) {
+      tabs.splice(index, 1);
+      setActiveTabs(tabs);
+      console.debug('session-manager: Tab unregistered', TAB_ID, 'Remaining tabs:', tabs.length);
+    }
+    return tabs.length;
+  }
+  
+  // Send logout request
+  function sendLogout() {
+    const logoutUrl = window.LOGOUT_URL || '/logout/';
+    console.debug('session-manager: Sending logout request to', logoutUrl);
+    
+    // Use sendBeacon for reliable delivery even when page is closing
+    if (navigator.sendBeacon) {
+      // Get CSRF token
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                       document.querySelector('meta[name="csrf-token"]')?.content ||
+                       getCookie('csrftoken');
+      
+      const formData = new FormData();
+      formData.append('csrfmiddlewaretoken', csrfToken);
+      
+      navigator.sendBeacon(logoutUrl, formData);
+    } else {
+      // Fallback for older browsers
+      fetch(logoutUrl, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        keepalive: true
+      }).catch(err => console.error('session-manager: Logout failed', err));
+    }
+  }
+  
+  // Get cookie value
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+  }
+  
+  // Register this tab on page load
+  registerTab();
+  
+  // Update tab registry on page show (back/forward navigation)
+  window.addEventListener('pageshow', function(event) {
+    registerTab();
   });
-
+  
+  // Handle tab/browser close
+  window.addEventListener('beforeunload', function(event) {
+    const remainingTabs = unregisterTab();
+    
+    // If this is the last tab, logout
+    if (remainingTabs === 0) {
+      console.debug('session-manager: Last tab closing, triggering logout');
+      sendLogout();
+    }
+  });
+  
+  // Handle page hide (mobile browsers, background tabs)
+  window.addEventListener('pagehide', function(event) {
+    if (event.persisted) {
+      // Page is going into bfcache, don't logout
+      console.debug('session-manager: Page cached, not logging out');
+    } else {
+      // Page is being unloaded
+      const remainingTabs = unregisterTab();
+      if (remainingTabs === 0) {
+        console.debug('session-manager: Last tab closing (pagehide), triggering logout');
+        sendLogout();
+      }
+    }
+  });
+  
+  // Cleanup on visibility change (optional - keep tab registry updated)
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      console.debug('session-manager: Tab hidden');
+    } else {
+      console.debug('session-manager: Tab visible, re-registering');
+      registerTab();
+    }
+  });
+  
+  console.debug('session-manager: Initialized for tab', TAB_ID);
 })();

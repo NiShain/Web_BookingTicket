@@ -1,0 +1,404 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hệ Thống Đặt Vé Xe Khách{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block extra_head %}{% endblock %}
+    <style>
+      .header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%);
+        color: white;
+        padding: 0;
+        box-shadow: 0 4px 20px rgba(30, 60, 114, 0.3);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        opacity: 0.3;
+      }
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.2rem 0;
+        position: relative;
+        z-index: 1;
+        gap: 1rem;
+      }
+
+      .header-left,
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .header-right {
+        gap: 0.5rem;
+      }
+
+      .user-greeting {
+        color: white;
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        background: rgba(255, 255, 255, 0.12);
+        padding: 0.6rem 1.2rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .user-greeting::before {
+        content: '👤';
+        font-size: 1.3rem;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      }
+
+      .user-name {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .user-links {
+        display: flex;
+        gap: 0.4rem;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.08);
+        padding: 0.35rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+      }
+
+      .user-links a {
+        color: white;
+        text-decoration: none;
+        padding: 0.65rem 1.2rem;
+        border-radius: 9px;
+        font-weight: 500;
+        font-size: 0.88rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent;
+        background: transparent;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .user-links a::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+        transition: left 0.5s;
+      }
+
+      .user-links a:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .user-links a:hover::before {
+        left: 100%;
+      }
+
+      .user-links a.active {
+        background: rgba(59, 130, 246, 0.35);
+        border-color: rgba(59, 130, 246, 0.5);
+        font-weight: 600;
+        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+      }
+
+      .user-links a:last-child {
+        background: linear-gradient(135deg, rgba(231, 76, 60, 0.25), rgba(192, 57, 43, 0.25));
+        border-color: rgba(231, 76, 60, 0.4);
+        font-weight: 600;
+      }
+
+      .user-links a:last-child:hover {
+        background: linear-gradient(135deg, rgba(231, 76, 60, 0.4), rgba(192, 57, 43, 0.4));
+        border-color: rgba(231, 76, 60, 0.6);
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+      }
+
+      .logo {
+        font-size: 1.8rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+      }
+
+      .logo::before {
+        content: "🚌";
+        font-size: 1.8rem;
+        filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+        -webkit-text-fill-color: initial;
+      }
+
+      .logo:hover {
+        transform: scale(1.05);
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 0.3rem;
+        align-items: center;
+        margin-left: 1.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50px;
+        padding: 0.4rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .nav-links a {
+        color: rgba(255, 255, 255, 0.95);
+        text-decoration: none;
+        padding: 0.7rem 1.4rem;
+        border-radius: 25px;
+        font-weight: 500;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.3px;
+      }
+
+      .nav-links a::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+      }
+
+      .nav-links a:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+      }
+
+      .nav-links a:hover::before {
+        left: 100%;
+      }
+
+      .nav-links a.active {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+      }
+
+      .nav-links a:active {
+        transform: translateY(0);
+      }
+
+      .footer {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        padding: 2rem 0 1.5rem;
+        margin-top: 4rem;
+      }
+
+      .footer::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+      }
+
+      .footer-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+      }
+
+      .footer-section h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.8rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .footer-section p {
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.6;
+      }
+
+      .footer-section p:last-child {
+        margin-bottom: 0;
+      }
+
+      @media (max-width: 768px) {
+        .header-content {
+          flex-direction: column;
+          gap: 0.8rem;
+          padding: 1rem 0;
+        }
+
+        .header-left,
+        .header-right {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .nav-links {
+          border-left: none;
+          padding-left: 0;
+          margin-left: 0;
+        }
+
+        .footer-content {
+          grid-template-columns: 1fr;
+          text-align: center;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .nav-links {
+          flex-direction: column;
+          width: 100%;
+          max-width: 300px;
+        }
+
+        .nav-links a {
+          text-align: center;
+          width: 100%;
+        }
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+    </style>
+</head>
+<body>
+    <header class="header">
+      <div class="container">
+        <div class="header-content">
+          <div class="header-left">
+            <a href="{% url 'home' %}" class="logo">Futa Bus</a>
+            <nav class="nav-links">
+              {% if request.resolver_match.url_name != 'home' %}
+              <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Trang chủ</a>
+              {% endif %}
+              {% if request.resolver_match.url_name != 'danh_sach_tuyens' %}
+              <a href="{% url 'src:danh_sach_tuyens' %}" {% if request.resolver_match.url_name == 'danh_sach_tuyens' %}class="active"{% endif %}>Tuyến xe</a>
+              {% endif %}
+              {% if request.resolver_match.url_name != 'danh_sach_chuyen_xe' %}
+              <a href="{% url 'src:danh_sach_chuyen_xe' %}" {% if request.resolver_match.url_name == 'danh_sach_chuyen_xe' %}class="active"{% endif %}>Chuyến xe</a>
+              {% endif %}
+            </nav>
+          </div>
+
+          <div class="header-right">
+            {% if user.is_authenticated %}
+              <span class="user-greeting">
+                <span class="user-name">{% if user.khachhang %}{{ user.khachhang.ten }}{% else %}{{ user.get_full_name|default:user.username }}{% endif %}</span>
+              </span>
+              <nav class="user-links">
+                {% if request.resolver_match.url_name != 'dashboard' %}
+                <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>Trang cá nhân</a>
+                {% endif %}
+                {% if request.resolver_match.url_name != 'profile' %}
+                <a href="{% url 'profile' %}" {% if request.resolver_match.url_name == 'profile' %}class="active"{% endif %}>Sửa thông tin</a>
+                {% endif %}
+                <a href="{% url 'logout' %}">Đăng xuất</a>
+              </nav>
+            {% else %}
+              <nav class="user-links">
+                <a href="{% url 'login' %}">Đăng nhập</a>
+                <a href="{% url 'register' %}">Đăng ký</a>
+              </nav>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      {% if messages %}
+        <div class="container">
+          <ul class="messages">
+            {% for message in messages %}
+              <li class="message {{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      {% block content %}
+      <!-- Content will be provided by child templates -->
+      {% endblock %}
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h3>📍 Địa chỉ</h3>
+            <p>08 Hà Văn Tính, Hòa Khánh</p>
+            <p>Liên Chiểu, Đà Nẵng</p>
+          </div>
+          <div class="footer-section">
+            <h3>📞 Liên hệ</h3>
+            <p><strong>SĐT:</strong> 0377041741</p>
+            <p><strong>Email:</strong> Dongocle2404@gmail.com</p>
+          </div>
+          <div class="footer-section">
+            <h3>🚌 Hệ thống đặt vé</h3>
+            <p>&copy; 2025 Đặt Vé Xe Khách Online</p>
+            <p>Phát triển bởi Tom - Django Framework</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="{% static 'js/session-manager.js' %}"></script>
+    <script>
+      window.USER_LOGGED_IN = {{ user.is_authenticated|yesno:"true,false" }};
+      window.LOGOUT_URL = "{% url 'logout' %}";
+    </script>
+</body>
+</html>

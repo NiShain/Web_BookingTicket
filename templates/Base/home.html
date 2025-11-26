@@ -1,0 +1,731 @@
+{% extends 'Base/base.html' %}
+{% load static %}
+
+{% block title %}Trang Chủ - Đặt Vé Xe Khách{% endblock %}
+
+{% block extra_head %}
+<style>
+      body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf0 100%);
+      }
+
+      .hero {
+        background: linear-gradient(
+            135deg,
+            rgba(44, 62, 80, 0.95) 0%,
+            rgba(52, 73, 94, 0.92) 50%,
+            rgba(41, 128, 185, 0.9) 100%
+          ),
+          url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%232c3e50" width="1200" height="600"/><circle cx="150" cy="100" r="80" fill="rgba(52,152,219,0.15)"/><circle cx="900" cy="150" r="100" fill="rgba(52,152,219,0.12)"/><circle cx="300" cy="400" r="60" fill="rgba(52,152,219,0.18)"/><circle cx="1000" cy="450" r="90" fill="rgba(52,152,219,0.1)"/><path d="M0,450 Q300,350 600,400 T1200,380 L1200,600 L0,600 Z" fill="rgba(52,152,219,0.08)"/></svg>');
+        background-size: cover;
+        background-attachment: fixed;
+        padding: 6rem 0;
+        text-align: center;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #3498db, #2ecc71, #3498db);
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 2;
+        animation: fadeInUp 0.8s ease-out;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .hero h1 {
+        font-size: 3.8rem;
+        margin-bottom: 1.5rem;
+        font-weight: 800;
+        color: white;
+        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+      }
+
+      .hero h1 .emoji {
+        font-size: 4rem;
+        display: inline-block;
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+
+      .hero p {
+        font-size: 1.4rem;
+        margin-bottom: 2.5rem;
+        opacity: 0.95;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        max-width: 650px;
+        margin-left: auto;
+        margin-right: auto;
+        font-weight: 400;
+      }
+
+      .search-form {
+        background: white;
+        backdrop-filter: blur(20px);
+        padding: 2.5rem;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+        margin: -3.5rem auto 3rem;
+        max-width: 950px;
+        border: 1px solid rgba(52, 152, 219, 0.2);
+        position: relative;
+        z-index: 10;
+        animation: slideUp 0.6s ease-out 0.3s both;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .search-form::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #2c3e50, #3498db, #2ecc71, #3498db, #2c3e50);
+        border-radius: 20px 20px 0 0;
+        background-size: 200% 100%;
+        animation: gradientShift 3s ease infinite;
+      }
+
+      @keyframes gradientShift {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+      }
+
+      .search-form h3 {
+        text-align: center;
+        color: #2c3e50;
+        font-size: 1.6rem;
+        margin-bottom: 1.8rem;
+        font-weight: 700;
+      }
+
+      .search-form h3::before {
+        content: "🔍 ";
+      }
+
+      .search-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr auto;
+        gap: 1.2rem;
+        align-items: end;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .form-group label {
+        margin-bottom: 0.6rem;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      .form-group label::before {
+        font-size: 1.1rem;
+      }
+
+      .form-group:nth-child(1) label::before {
+        content: "📍";
+      }
+
+      .form-group:nth-child(2) label::before {
+        content: "🎯";
+      }
+
+      .form-group:nth-child(3) label::before {
+        content: "📅";
+      }
+
+      .form-group input {
+        padding: 0.85rem 1rem;
+        border: 2px solid #e8ecf0;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+        transform: translateY(-2px);
+        background: white;
+      }
+
+      .form-group input::placeholder {
+        color: #95a5a6;
+      }
+
+      .btn-search {
+        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        color: white;
+        border: none;
+        padding: 0.85rem 2.8rem;
+        border-radius: 12px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 6px 20px rgba(52, 152, 219, 0.35);
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.3px;
+      }
+
+      .btn-search::before {
+        content: "🚀 ";
+        position: relative;
+        z-index: 2;
+      }
+
+      .btn-search::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s;
+      }
+
+      .btn-search:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(52, 152, 219, 0.45);
+      }
+
+      .btn-search:hover::after {
+        left: 100%;
+      }
+
+      .btn-search:active {
+        transform: translateY(-1px);
+      }
+
+      .section {
+        padding: 4rem 0;
+      }
+
+      .section h2 {
+        text-align: center;
+        margin-bottom: 3rem;
+        font-size: 2.8rem;
+        color: #2c3e50;
+        font-weight: 800;
+        position: relative;
+        padding-bottom: 1rem;
+      }
+
+      .section h2::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 5px;
+        background: linear-gradient(90deg, #3498db, #2ecc71);
+        border-radius: 3px;
+      }
+
+      .tuyens-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+      }
+
+      .tuyen-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .tuyen-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #3498db, #2ecc71);
+        transform: scaleX(0);
+        transition: transform 0.4s ease;
+      }
+
+      .tuyen-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        border-color: rgba(52, 152, 219, 0.2);
+      }
+
+      .tuyen-card:hover::before {
+        transform: scaleX(1);
+      }
+
+      .tuyen-card h3 {
+        color: #2c3e50;
+        margin-bottom: 1.2rem;
+        font-size: 1.4rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .tuyen-card h3::before {
+        content: "🚌";
+        font-size: 1.5rem;
+      }
+
+      .tuyen-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+
+      .tuyen-info span {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #555;
+        font-size: 0.95rem;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .tuyen-info span:hover {
+        background: #e8ecf0;
+        transform: translateX(5px);
+      }
+
+      .tuyen-info span strong {
+        color: #2c3e50;
+      }
+
+      .chuyens-table {
+        background: white;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.1);
+        border: 2px solid rgba(52, 152, 219, 0.15);
+      }
+
+      .chuyens-table table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .chuyens-table th {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+        color: white;
+        padding: 1.3rem 1.5rem;
+        text-align: left;
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+        position: relative;
+      }
+
+      .chuyens-table th::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #3498db, #2ecc71, #3498db);
+      }
+
+      .chuyens-table td,
+      .search-results-table td {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid #f0f0f0;
+        text-align: left;
+        color: #555;
+        font-size: 0.95rem;
+      }
+
+      .chuyens-table tbody tr,
+      .search-results-table tbody tr {
+        transition: all 0.3s ease;
+      }
+
+      .chuyens-table tbody tr:hover,
+      .search-results-table tbody tr:hover {
+        background: linear-gradient(90deg, rgba(52, 152, 219, 0.05), rgba(46, 204, 113, 0.05));
+        transform: scale(1.01);
+      }
+
+      .search-results-table {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        margin-top: 1.5rem;
+        border: 2px solid rgba(52, 152, 219, 0.15);
+      }
+
+      .search-results-table th {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        padding: 1.2rem 1.5rem;
+        text-align: left;
+        font-weight: 700;
+        position: relative;
+      }
+
+      .search-results-table th::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #3498db, #2ecc71);
+      }
+
+      .btn-book {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        color: white;
+        padding: 0.6rem 1.3rem;
+        border: none;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-block;
+        box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+      }
+
+      .btn-book:hover {
+        background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(46, 204, 113, 0.4);
+      }
+
+      .price {
+        font-weight: 800;
+        color: #e74c3c;
+        font-size: 1.05rem;
+      }
+
+      .seats-available {
+        color: #2ecc71;
+        font-weight: 600;
+      }
+
+      .status-badge {
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        display: inline-block;
+        letter-spacing: 0.3px;
+      }
+
+      .status-available {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border: 1px solid #b1dfbb;
+      }
+
+      .status-full {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+        border: 1px solid #f1b0b7;
+      }
+
+      @media (max-width: 768px) {
+        .search-row {
+          grid-template-columns: 1fr;
+        }
+
+        .hero h1 {
+          font-size: 2.5rem;
+        }
+
+        .hero p {
+          font-size: 1.1rem;
+        }
+
+        .search-form {
+          margin: -2.5rem auto 2rem;
+          padding: 1.8rem;
+          border-radius: 15px;
+        }
+
+        .section h2 {
+          font-size: 2rem;
+        }
+
+        .tuyens-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .chuyens-table {
+          overflow-x: auto;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hero h1 {
+          font-size: 2rem;
+        }
+
+        .btn-search {
+          padding: 0.75rem 2rem;
+        }
+      }
+</style>
+{% endblock %}
+
+{% block content %}
+    <section class="hero">
+      <div class="container">
+        <div class="hero-content">
+          <h1><span class="emoji">🚌</span> Đặt Vé Xe Khách Online</h1>
+          <p>Hệ thống đặt vé xe khách hiện đại, nhanh chóng và tiện lợi - Kết nối mọi hành trình!</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="container">
+      <div class="search-form">
+        <h3>Tìm Chuyến Xe Của Bạn</h3>
+        <form method="GET" action="{% url 'home' %}">
+          <div class="search-row">
+            <div class="form-group">
+              <label for="diem_di">Điểm đi</label>
+              <input
+                type="text"
+                id="diem_di"
+                name="diem_di"
+                placeholder="Nhập điểm đi"
+              />
+            </div>
+            <div class="form-group">
+              <label for="diem_den">Điểm đến</label>
+              <input
+                type="text"
+                id="diem_den"
+                name="diem_den"
+                placeholder="Nhập điểm đến"
+              />
+            </div>
+            <div class="form-group">
+              <label for="ngay_di">Ngày đi</label>
+              <input type="date" id="ngay_di" name="ngay_di" />
+            </div>
+            <button type="submit" class="btn-search">Tìm kiếm</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Kết quả tìm kiếm -->
+    <section class="section" id="search-results" style="display: none">
+      <div class="container">
+        <h2>Kết Quả Tìm Kiếm</h2>
+        <div class="search-results-table">
+          <table id="results-table">
+            <thead>
+              <tr>
+                <th>Tuyến xe</th>
+                <th>Loại xe</th>
+                <th>Ngày đi</th>
+                <th>Giờ đi</th>
+                <th>Giá vé</th>
+                <th>Số ghế trống</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="results-tbody">
+            </tbody>
+          </table>
+          <div
+            id="no-results"
+            style="display: none; text-align: center; padding: 2.5rem; color: #7f8c8d;"
+          >
+            <p style="font-size: 1.1rem;">❌ Không tìm thấy chuyến xe phù hợp với yêu cầu của bạn.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2>🔥 Tuyến Xe Phổ Biến</h2>
+        <div class="tuyens-grid">
+          {% for tuyen in tuyen_popular %}
+          <div class="tuyen-card">
+            <h3>{{ tuyen.diem_di }} → {{ tuyen.diem_den }}</h3>
+            <div class="tuyen-info">
+              <span>📏 <strong>Khoảng cách:</strong> {{ tuyen.khoang_cach }} km</span>
+              <span>🚌 <strong>Số chuyến:</strong> {{ tuyen.chuyen_count }}</span>
+            </div>
+          </div>
+          {% empty %}
+          <div style="text-align: center; padding: 2rem; color: #7f8c8d; grid-column: 1/-1;">
+            <p style="font-size: 1.1rem;">Chưa có tuyến xe nào.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="background: linear-gradient(135deg, #f8f9fa 0%, #e8ecf0 100%); padding: 4rem 0;">
+      <div class="container">
+        <h2>⏰ Chuyến Xe Sắp Tới</h2>
+        <div class="chuyens-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Tuyến xe</th>
+                <th>Loại xe</th>
+                <th>Thời gian</th>
+                <th>Giá vé</th>
+                <th>Còn lại</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for chuyen in upcoming_chuyen %}
+              <tr>
+                <td><strong>{{ chuyen.tuyen.diem_di }} → {{ chuyen.tuyen.diem_den }}</strong></td>
+                <td>{{ chuyen.xe.loai_xe }}</td>
+                <td>{{ chuyen.ngay_gio_khoi_hanh|date:"d/m/Y H:i" }}</td>
+                <td class="price">{{ chuyen.gia_ve|floatformat:0 }}đ</td>
+                <td class="seats-available">{{ chuyen.tong_so_ve }} chỗ</td>
+                <td><span class="status-badge status-available">✅ Còn vé</span></td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 2.5rem; color: #7f8c8d;">
+                  <p style="font-size: 1.1rem;">Chưa có chuyến xe nào sắp tới.</p>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      document.getElementById("ngay_di").valueAsDate = new Date();
+
+      document.querySelector(".search-form form").addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(this);
+          const params = new URLSearchParams(formData);
+
+          const searchResults = document.getElementById("search-results");
+          const resultsTable = document.getElementById("results-tbody");
+          const noResults = document.getElementById("no-results");
+
+          resultsTable.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">🔍 Đang tìm kiếm...</td></tr>';
+          searchResults.style.display = "block";
+          noResults.style.display = "none";
+          document.getElementById("results-table").style.display = "table";
+
+          searchResults.scrollIntoView({ behavior: "smooth" });
+
+          fetch(`/api/tim-chuyen-xe/?${params}`)
+            .then((response) => response.json())
+            .then((data) => {
+              resultsTable.innerHTML = "";
+
+              if (data.chuyens && data.chuyens.length > 0) {
+                data.chuyens.forEach((chuyen) => {
+                  const row = document.createElement("tr");
+                  row.innerHTML = `
+                                <td><strong>${chuyen.tuyen_text}</strong></td>
+                                <td>${chuyen.loai_xe}</td>
+                                <td>${formatDate(chuyen.ngay_di)}</td>
+                                <td>${chuyen.gio_di}</td>
+                                <td class="price">${formatPrice(chuyen.gia_ve)}đ</td>
+                                <td class="seats-available">${chuyen.so_ghe_trong} chỗ trống</td>
+                                <td><a href="/chuyen/${chuyen.id}/" class="btn-book">Đặt vé</a></td>
+                            `;
+                  resultsTable.appendChild(row);
+                });
+              } else {
+                noResults.style.display = "block";
+                document.getElementById("results-table").style.display = "none";
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              resultsTable.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #e74c3c; padding: 2rem;">⚠️ Có lỗi xảy ra khi tìm kiếm.</td></tr>';
+            });
+        });
+
+      function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("vi-VN");
+      }
+
+      function formatPrice(price) {
+        return new Intl.NumberFormat("vi-VN").format(price);
+      }
+    </script>
+
+    <script src="{% static 'js/session-manager.js' %}"></script>
+    <script>
+      document.body.dataset.userAuthenticated = {% if user.is_authenticated %}'true'{% else %}'false'{% endif %};
+    </script>
+{% endblock %}

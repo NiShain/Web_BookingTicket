@@ -1,0 +1,192 @@
+/* Profile page specific stylesheet
+   This file contains styles scoped to the profile page only.
+*/
+
+:root{--profile-card-bg:#ffffff;--profile-border:#e6eefc;--muted:#6b7280}
+
+.profile-page {
+  padding: 40px 0;
+  display: flex;
+  margin: 0 auto 14px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 20px 60px rgba(11,18,32,0.06);
+  width: 100%;
+
+  border: 1px solid rgba(255,255,255,0.6);
+}
+
+/* gradient top accent like home search form */
+.profile-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(90deg,#1e3c72,#2a5298,#3b82f6);
+}
+.profile-card {
+  background: var(--profile-card-bg);
+  border: 1px solid var(--profile-border);
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 12px 30px rgba(11,18,32,0.06);
+}
+
+.profile-page h2 {
+  text-align: center;
+  font-size: 1.45rem;
+  color: #0b1220;
+  margin-bottom: 6px;
+}
+
+.profile-intro {
+  text-align: center;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.profile-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.profile-form .form-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.profile-form label {
+  font-weight: 700;
+  color: #10203a;
+  font-size: 0.95rem;
+}
+
+.profile-form input[type="text"],
+.profile-form input[type="email"],
+.profile-form input[type="tel"],
+.profile-form input[type="date"] {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(30,60,114,0.06);
+  background: #fff;
+  font-size: 0.95rem;
+  box-shadow: inset 0 1px 0 rgba(15,40,80,0.02);
+}
+
+.profile-form .actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.btn-primary {
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  background: linear-gradient(180deg,#1e3c72,#16407a);
+  color: #fff;
+  border: none;
+  box-shadow: 0 10px 22px rgba(15,40,80,0.08);
+  width: 100%;
+}
+
+.btn-cancel {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid #e6eefc;
+  color: #0b1220;
+}
+
+.bookings-list {
+  max-width: 780px;
+  margin: 6px auto 0 auto;
+  background: transparent;
+}
+
+.bookings-list ul { list-style: none; padding: 0; margin: 0; }
+.bookings-list li {
+  padding: 12px 14px; 
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+  margin-bottom: 8px;
+  background: linear-gradient(180deg,#fff,#fbfdff);
+  display:flex; justify-content:space-between; gap:12px; align-items:center;
+}
+
+.booking-meta { color: var(--muted); font-size:0.92rem }
+
+.messages {
+  max-width: 980px;
+  margin: 12px auto;
+  padding-left: 0; /* remove default list indent */
+  list-style: none;
+}
+
+.messages li { list-style: none; }
+
+.message {
+  display: block;
+  padding: 12px 18px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 6px 18px rgba(11,18,32,0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.message.success {
+  background: linear-gradient(180deg,#f0fff6,#e9fff2);
+  color: #064e3b;
+  border: 1px solid #bbf7d0;
+}
+
+.message.error {
+  background: linear-gradient(180deg,#fff5f6,#fff0f2);
+  color: #881337;
+  border: 1px solid #fecaca;
+}
+
+.message.info {
+  background: linear-gradient(180deg,#eef7ff,#e6f0ff);
+  color: #0f172a;
+  border: 1px solid #dbeafe;
+}
+
+/* Add a subtle icon on the left of each message */
+.message::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 2px 6px rgba(11,18,32,0.06);
+}
+
+.message.success::before { background: #10b981; }
+.message.error::before { background: #ef4444; }
+.message.info::before { background: #3b82f6; }
+
+/* Make the message content align nicely (with left padding to account for the dot) */
+.message { padding-left: 44px; }
+
+@media (max-width: 720px) {
+  .profile-form .form-row { grid-template-columns: 1fr; }
+  .profile-form label { margin-bottom: 4px }
+  .profile-card { padding: 16px }
+}

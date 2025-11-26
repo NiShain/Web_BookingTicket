@@ -1,0 +1,562 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hệ Thống Đặt Vé Xe Khách{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block extra_head %}{% endblock %}
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf0 100%);
+        min-height: 100vh;
+      }
+
+      /* Modern Header Styling */
+      .header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%);
+        color: white;
+        box-shadow: 0 6px 30px rgba(30, 60, 114, 0.4);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        border-bottom: 3px solid rgba(59, 130, 246, 0.5);
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        opacity: 0.3;
+      }
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.2rem 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+      }
+
+      .logo {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: white;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
+      }
+
+      .logo::before {
+        content: '🚌';
+        font-size: 1.8rem;
+        filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+        -webkit-text-fill-color: initial;
+      }
+
+      .logo:hover {
+        transform: scale(1.05);
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 0.3rem;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50px;
+        padding: 0.4rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .nav-links a {
+        color: rgba(255, 255, 255, 0.95);
+        text-decoration: none;
+        padding: 0.7rem 1.4rem;
+        border-radius: 25px;
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        letter-spacing: 0.3px;
+      }
+
+      .nav-links a::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+      }
+
+      .nav-links a:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+      }
+
+      .nav-links a:hover::before {
+        left: 100%;
+      }
+
+      .nav-links a.active {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+      }
+
+      .user-greeting {
+        color: white;
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        background: rgba(255, 255, 255, 0.12);
+        padding: 0.6rem 1.2rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .user-greeting::before {
+        content: '👤';
+        font-size: 1.3rem;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      }
+
+      .user-name {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .user-links {
+        display: flex;
+        gap: 0.4rem;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.08);
+        padding: 0.35rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+      }
+
+      .user-links a {
+        color: white;
+        text-decoration: none;
+        padding: 0.65rem 1.2rem;
+        border-radius: 9px;
+        font-weight: 500;
+        font-size: 0.88rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent;
+        background: transparent;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .user-links a::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+        transition: left 0.5s;
+      }
+
+      .user-links a:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .user-links a:hover::before {
+        left: 100%;
+      }
+
+      .user-links a.active {
+        background: rgba(59, 130, 246, 0.35);
+        border-color: rgba(59, 130, 246, 0.5);
+        font-weight: 600;
+        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+      }
+
+      .user-links a:last-child {
+        background: linear-gradient(135deg, rgba(231, 76, 60, 0.25), rgba(192, 57, 43, 0.25));
+        border-color: rgba(231, 76, 60, 0.4);
+        font-weight: 600;
+      }
+
+      .user-links a:last-child:hover {
+        background: linear-gradient(135deg, rgba(231, 76, 60, 0.4), rgba(192, 57, 43, 0.4));
+        border-color: rgba(231, 76, 60, 0.6);
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+      }
+
+      /* Main Content Area */
+      main {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 2rem;
+        min-height: calc(100vh - 300px);
+      }
+
+      .container {
+        max-width: 100%;
+      }
+
+      /* Modern Footer */
+      .footer {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        padding: 3rem 0 2rem;
+        margin-top: 4rem;
+        border-top: 3px solid #3498db;
+      }
+
+      .footer-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 2rem;
+      }
+
+      .footer-section h3 {
+        color: #3498db;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+
+      .footer-section p {
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.8;
+        margin-bottom: 0.5rem;
+      }
+
+      .footer-section p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* Messages - Modern Alert System */
+      .messages {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 450px;
+        width: calc(100% - 40px);
+      }
+
+      .message {
+        padding: 1.2rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .message::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+      }
+
+      @keyframes slideInRight {
+        from {
+          opacity: 0;
+          transform: translateX(100px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .message::before {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        line-height: 1;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      }
+
+      .message-content {
+        flex: 1;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        font-weight: 500;
+      }
+
+      .message.success {
+        background: linear-gradient(135deg, rgba(212, 237, 218, 0.98) 0%, rgba(195, 230, 203, 0.98) 100%);
+        color: #155724;
+      }
+
+      .message.success::after {
+        background: linear-gradient(180deg, #28a745, #20c997);
+      }
+
+      .message.success::before {
+        content: '✅';
+      }
+
+      .message.error {
+        background: linear-gradient(135deg, rgba(248, 215, 218, 0.98) 0%, rgba(245, 198, 203, 0.98) 100%);
+        color: #721c24;
+      }
+
+      .message.error::after {
+        background: linear-gradient(180deg, #dc3545, #c82333);
+      }
+
+      .message.error::before {
+        content: '❌';
+      }
+
+      .message.warning {
+        background: linear-gradient(135deg, rgba(255, 243, 205, 0.98) 0%, rgba(255, 236, 179, 0.98) 100%);
+        color: #856404;
+      }
+
+      .message.warning::after {
+        background: linear-gradient(180deg, #ffc107, #e0a800);
+      }
+
+      .message.warning::before {
+        content: '⚠️';
+      }
+
+      .message.info {
+        background: linear-gradient(135deg, rgba(209, 236, 241, 0.98) 0%, rgba(190, 229, 235, 0.98) 100%);
+        color: #0c5460;
+      }
+
+      .message.info::after {
+        background: linear-gradient(180deg, #17a2b8, #138496);
+      }
+
+      .message.info::before {
+        content: 'ℹ️';
+      }
+
+      /* Auto-hide animation */
+      .message.fade-out {
+        animation: fadeOut 0.4s ease forwards;
+      }
+
+      @keyframes fadeOut {
+        to {
+          opacity: 0;
+          transform: translateX(100px);
+        }
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .header-content {
+          flex-direction: column;
+          gap: 1rem;
+          padding: 1rem;
+        }
+
+        .header-left {
+          flex-direction: column;
+          gap: 1rem;
+          width: 100%;
+        }
+
+        .nav-links {
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+
+        .header-right {
+          flex-direction: column;
+          width: 100%;
+        }
+
+        .user-links {
+          width: 100%;
+          justify-content: center;
+        }
+
+        main {
+          padding: 0 1rem;
+          margin: 1rem auto;
+        }
+
+        .footer-content {
+          grid-template-columns: 1fr;
+          text-align: center;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .logo {
+          font-size: 1.5rem;
+        }
+
+        .nav-links a,
+        .user-links a {
+          padding: 0.5rem 0.8rem;
+          font-size: 0.85rem;
+        }
+      }
+    </style>
+</head>
+<body>
+    <header class="header">
+      <div class="header-content">
+        <div class="header-left">
+          <a href="{% url 'home' %}" class="logo">
+            Futa Bus
+          </a>
+          <nav class="nav-links">
+            {% if request.resolver_match.url_name != 'home' %}
+            <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Trang chủ</a>
+            {% endif %}
+            {% if request.resolver_match.url_name != 'danh_sach_tuyens' %}
+            <a href="{% url 'src:danh_sach_tuyens' %}" {% if request.resolver_match.url_name == 'danh_sach_tuyens' %}class="active"{% endif %}>Tuyến xe</a>
+            {% endif %}
+            {% if request.resolver_match.url_name != 'danh_sach_chuyen_xe' %}
+            <a href="{% url 'src:danh_sach_chuyen_xe' %}" {% if request.resolver_match.url_name == 'danh_sach_chuyen_xe' %}class="active"{% endif %}>Chuyến xe</a>
+            {% endif %}
+          </nav>
+        </div>
+
+        <div class="header-right">
+          <span class="user-greeting">
+            <span class="user-name">{% if user.khachhang %}{{ user.khachhang.ten }}{% else %}{{ user.get_full_name|default:user.username }}{% endif %}</span>
+          </span>
+          <nav class="user-links">
+            {% if request.resolver_match.url_name != 'dashboard' %}
+            <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>Trang cá nhân</a>
+            {% endif %}
+            {% if request.resolver_match.url_name != 'profile' %}
+            <a href="{% url 'profile' %}" {% if request.resolver_match.url_name == 'profile' %}class="active"{% endif %}>Sửa thông tin</a>
+            {% endif %}
+            <a href="{% url 'logout' %}">Đăng xuất</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      {% if messages %}
+        <div class="container">
+          <ul class="messages">
+            {% for message in messages %}
+              <li class="message {{ message.tags }}">
+                <div class="message-content">{{ message }}</div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      {% block content %}
+      <!-- Content will be provided by child templates -->
+      {% endblock %}
+    </main>
+
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>📍 Địa chỉ</h3>
+          <p>08 Hà Văn Tính, Hòa Khánh</p>
+          <p>Liên Chiểu, Đà Nẵng</p>
+        </div>
+        <div class="footer-section">
+          <h3>📞 Liên hệ</h3>
+          <p><strong>SĐT:</strong> 0377041741</p>
+          <p><strong>Email:</strong> Dongocle2404@gmail.com</p>
+        </div>
+        <div class="footer-section">
+          <h3>🚌 Hệ thống đặt vé</h3>
+          <p>&copy; 2025 Đặt Vé Xe Khách Online</p>
+          <p>Phát triển bởi Tom - Django Framework</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="{% static 'js/session-manager.js' %}"></script>
+    <script>
+      window.USER_LOGGED_IN = true;
+      window.LOGOUT_URL = "{% url 'logout' %}";
+      
+      // Auto-hide messages after 5 seconds
+      document.addEventListener('DOMContentLoaded', function() {
+        const messages = document.querySelectorAll('.message');
+        messages.forEach(function(message) {
+          setTimeout(function() {
+            message.classList.add('fade-out');
+            setTimeout(function() {
+              message.remove();
+            }, 400);
+          }, 5000);
+        });
+      });
+    </script>
+</body>
+</html>

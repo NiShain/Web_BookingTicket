@@ -3,6 +3,9 @@ from django.contrib.auth import logout
 from django.shortcuts import redirect
 from django.urls import reverse
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AutoLogoutMiddleware:
@@ -42,26 +45,37 @@ class AutoLogoutMiddleware:
 
                 last_activity = request.session.get('last_activity')
                 now = time.time()
-
-                if last_activity is not None:
+                
+                logger.info(f"[MIDDLEWARE] Path: {request.path}, User: {request.user.username}, last_activity: {last_activity}")
+                
+                # Initialize if None (first request after login)
+                if last_activity is None:
+                    logger.info(f"[INIT] Initializing last_activity for user {request.user.username}")
+                    request.session['last_activity'] = now
+                    request.session.modified = True
+                else:
+                    # Check for timeout
                     elapsed = now - float(last_activity)
+                    logger.info(f"[CHECK] Elapsed: {elapsed:.2f}s, Timeout: {self.timeout}s")
+                    
                     if elapsed > self.timeout:
-                        # expire session and redirect to login with a flag
+                        logger.warning(f"[LOGOUT] Session timeout for user {request.user.username}")
                         logout(request)
                         login_url = login_path or getattr(settings, 'LOGIN_URL', '/login/')
-                        # If LOGIN_URL is a named URL, reverse may have given full path.
                         if not login_url.startswith('/'):
                             try:
                                 login_url = reverse(login_url)
                             except Exception:
                                 login_url = '/'
                         return redirect(f"{login_url}?expired=1&reason=Timeout")
-
-                # update last activity timestamp
-                request.session['last_activity'] = now
-        except Exception:
-            # Don't break the site on middleware errors; just continue.
-            pass
+                    
+                    # Update last activity for this request
+                    logger.info(f"[UPDATE] Updating last_activity from {last_activity} to {now}")
+                    request.session['last_activity'] = now
+                    request.session.modified = True
+        except Exception as e:
+            # Log the exception but don't break the site
+            logger.exception(f"[ERROR] Middleware error: {e}")
 
         response = self.get_response(request)
         return response

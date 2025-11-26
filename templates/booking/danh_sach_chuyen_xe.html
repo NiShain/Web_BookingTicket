@@ -1,352 +1,245 @@
-<!DOCTYPE html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Danh Sách Chuyến Xe - Hệ Thống Đặt Vé Xe</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+{% extends "booking/base_booking.html" %}
+{% load static %}
 
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: #f5f7fa;
-        min-height: 100vh;
-      }
+{% block extra_head %}
+<style>
+  .page-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #3b82f6 100%);
+    color: white;
+    padding: 60px 0 40px;
+    text-align: center;
+    margin-bottom: 40px;
+  }
 
-      .header {
-        background: linear-gradient(
-          135deg,
-          #1e3c72 0%,
-          #2a5298 50%,
-          #3b82f6 100%
-        );
-        color: white;
-        padding: 0;
-        box-shadow: 0 4px 20px rgba(30, 60, 114, 0.3);
-        position: relative;
-        overflow: hidden;
-      }
+  .page-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
 
-      .header::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-        opacity: 0.3;
-      }
+  .page-header p {
+    font-size: 1.1rem;
+    opacity: 0.95;
+  }
 
-      .header-content {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 1.2rem 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        position: relative;
-        z-index: 1;
-      }
+  .filter-info {
+    background: #e0f2fe;
+    padding: 16px 24px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-      .logo {
-        font-size: 2rem;
-        font-weight: 700;
-        background: linear-gradient(45deg, #ffffff, #e0f2fe);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
+  .filter-info strong {
+    color: #0c4a6e;
+    font-size: 1.1rem;
+  }
 
-      .logo::before {
-        content: "🚌";
-        font-size: 1.5rem;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-      }
+  .btn-clear {
+    padding: 8px 16px;
+    background: white;
+    color: #0c4a6e;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    border: 2px solid #0c4a6e;
+    transition: all 0.3s ease;
+  }
 
-      .nav-links {
-        display: flex;
-        gap: 0;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 50px;
-        padding: 0.5rem;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-      }
+  .btn-clear:hover {
+    background: #0c4a6e;
+    color: white;
+  }
 
-      .nav-links a {
-        color: white;
-        text-decoration: none;
-        font-weight: 500;
-        padding: 0.75rem 1.5rem;
-        border-radius: 25px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-        font-size: 0.9rem;
-        letter-spacing: 0.5px;
-      }
+  .trips-table {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    overflow-x: auto;
+    margin-bottom: 32px;
+  }
 
-      .nav-links a.active {
-        background: rgba(255, 255, 255, 0.2);
-        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
-      }
+  .trips-table table {
+    width: 100%;
+    border-collapse: collapse;
+  }
 
-      .nav-links a:hover {
-        background: rgba(255, 255, 255, 0.15);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
-      }
+  .trips-table th {
+    background: linear-gradient(135deg, #1e3c72, #3b82f6);
+    color: white;
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
 
-      .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 30px 20px;
-      }
+  .trips-table th:first-child {
+    border-top-left-radius: 8px;
+  }
 
-      .page-title {
-        font-size: 28px;
-        color: #333;
-        margin-bottom: 30px;
-        text-align: center;
-      }
+  .trips-table th:last-child {
+    border-top-right-radius: 8px;
+  }
 
-      .trips-table {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        margin-bottom: 30px;
-      }
+  .trips-table td {
+    padding: 16px;
+    border-bottom: 1px solid #e5e7eb;
+  }
 
-      .trips-table table {
-        width: 100%;
-        border-collapse: collapse;
-      }
+  .trips-table tr:last-child td {
+    border-bottom: none;
+  }
 
-      .trips-table th {
-        background: #667eea;
-        color: white;
-        padding: 15px;
-        text-align: left;
-        font-weight: 600;
-      }
+  .trips-table tr:hover {
+    background: #f9fafb;
+  }
 
-      .trips-table td {
-        padding: 15px;
-        border-bottom: 1px solid #eee;
-        text-align: left;
-      }
+  .route {
+    font-weight: 600;
+    color: #1e3c72;
+    font-size: 1.05rem;
+  }
 
-      .trips-table tr:hover {
-        background-color: #f8f9fa;
-      }
+  .vehicle-type {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #dbeafe;
+    color: #1e40af;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
 
-      .route {
-        font-weight: bold;
-        color: #333;
-      }
+  .datetime {
+    color: #374151;
+    font-size: 0.95rem;
+  }
 
-      .vehicle-type {
-        background: #e8f4fd;
-        color: #0066cc;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 500;
-      }
+  .price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #059669;
+  }
 
-      .datetime {
-        color: #666;
-        font-size: 14px;
-      }
+  .seats {
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
 
-      .price {
-        font-weight: bold;
-        color: #dc3545;
-        font-size: 16px;
-      }
+  .btn-book {
+    display: inline-block;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
 
-      .seats {
-        color: #28a745;
-        font-weight: 500;
-      }
+  .btn-book:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  }
 
-      .btn-book {
-        background: #28a745;
-        color: white;
-        padding: 8px 16px;
-        border: none;
-        border-radius: 6px;
-        text-decoration: none;
-        font-weight: 500;
-        transition: background-color 0.3s;
-      }
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 32px;
+  }
 
-      .btn-book:hover {
-        background: #218838;
-        color: white;
-      }
+  .pagination a,
+  .pagination .current {
+    padding: 10px 16px;
+    background: white;
+    color: #1e3c72;
+    text-decoration: none;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
 
-      .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        margin: 20px 0;
-      }
+  .pagination a:hover {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
 
-      .pagination a {
-        padding: 8px 12px;
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        text-decoration: none;
-        color: #333;
-        transition: background-color 0.3s;
-      }
+  .pagination .current {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
 
-      .pagination a:hover {
-        background: #667eea;
-        color: white;
-      }
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7280;
+  }
 
-      .pagination .current {
-        padding: 8px 12px;
-        background: #667eea;
-        color: white;
-        border-radius: 5px;
-        font-weight: bold;
-      }
+  @media (max-width: 768px) {
+    .page-header h1 {
+      font-size: 1.8rem;
+    }
 
-      .no-results {
-        text-align: center;
-        padding: 40px;
-        color: #666;
-      }
+    .trips-table {
+      padding: 16px;
+    }
 
-      @media (max-width: 768px) {
-        .header-content {
-          flex-direction: column;
-          text-align: center;
-        }
+    .trips-table th,
+    .trips-table td {
+      padding: 12px 8px;
+      font-size: 0.9rem;
+    }
 
-        .nav-links {
-          margin-top: 15px;
-        }
+    .filter-info {
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+    }
+  }
+</style>
+{% endblock %}
 
-        .nav-links a {
-          margin: 0 10px;
-        }
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <h1>🚌 Danh Sách Chuyến Xe</h1>
+    <p>Chọn chuyến xe phù hợp và đặt vé ngay</p>
+  </div>
+</section>
 
-        .trips-table {
-          overflow-x: auto;
-        }
-
-        .trips-table table {
-          min-width: 800px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="header">
-      <div class="header-content">
-        <div class="logo">🚌 Đặt Vé Xe Khách</div>
-        <div class="nav-links">
-          {% if user.is_authenticated %}
-          <a href="{% url 'home' %}">Trang chủ</a>
-          <a href="{% url 'src:danh_sach_tuyens' %}">Tuyến xe</a>
-          <a href="{% url 'src:danh_sach_chuyen_xe' %}" class="active">Chuyến xe</a>
-          <a href="{% url 'profile' %}">Sửa thông tin</a>
-          <a href="{% url 'logout' %}">Đăng xuất</a>
-          {% else %}
-          <a href="{% url 'home' %}">Trang chủ</a>
-          <a href="{% url 'src:danh_sach_tuyens' %}">Tuyến xe</a>
-          <a href="{% url 'src:danh_sach_chuyen_xe' %}" class="active">Chuyến xe</a>
-          <a href="{% url 'login' %}">Đăng nhập</a>
-          <a href="{% url 'register' %}">Đăng ký</a>
-          {% endif %}
-        </div>
+<div class="container">
+  {% if selected_tuyen %}
+    <div class="filter-info">
+      <div>
+        <strong>Tuyến: {{ selected_tuyen.diem_di }} → {{ selected_tuyen.diem_den }}</strong>
       </div>
+      <a href="{% url 'src:danh_sach_chuyen_xe' %}" class="btn-clear">Xem tất cả</a>
     </div>
+  {% endif %}
 
-    <div class="container">
-      {% if selected_tuyen %}
-      <div
-        style="
-          background: linear-gradient(
-            135deg,
-            rgba(30, 60, 114, 0.1) 0%,
-            rgba(59, 130, 246, 0.1) 100%
-          );
-          padding: 2rem;
-          border-radius: 15px;
-          margin: 2rem 0;
-          border: 1px solid rgba(59, 130, 246, 0.2);
-        "
-      >
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-          "
-        >
-          <h2 style="color: #1e3c72; margin: 0; font-size: 1.8rem">
-            🎯 Chuyến xe tuyến: {{ selected_tuyen.diem_di }} → {{
-            selected_tuyen.diem_den }}
-          </h2>
-          <a
-            href="{% url 'src:danh_sach_chuyen_xe' %}"
-            style="
-              background: rgba(59, 130, 246, 0.1);
-              color: #3b82f6;
-              padding: 0.5rem 1rem;
-              border-radius: 10px;
-              text-decoration: none;
-              font-size: 0.9rem;
-              border: 1px solid rgba(59, 130, 246, 0.3);
-              transition: all 0.3s;
-            "
-          >
-            ✕ Xem tất cả
-          </a>
-        </div>
-        <p style="color: #64748b; margin: 0">
-          Hiển thị {{ page_obj|length }} chuyến xe cho tuyến này
-        </p>
-      </div>
-      {% endif %}
-
-      <h1 class="page-title">
-        {% if selected_tuyen %} Chuyến Xe Tuyến {{ selected_tuyen.diem_di }} -
-        {{ selected_tuyen.diem_den }} {% else %} Danh Sách Chuyến Xe {% endif %}
-      </h1>
-
-      <div class="trips-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Tuyến xe</th>
-              <th>Loại xe</th>
-              <th>Thời gian khởi hành</th>
-              <th>Giá vé</th>
-              <th>Tổng số ghế</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for chuyen in chuyens %}
+  {% if chuyens %}
+    <div class="trips-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Tuyến đường</th>
+            <th>Loại xe</th>
+            <th>Thời gian</th>
+            <th>Giá vé</th>
+            <th>Số ghế còn trống</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for chuyen in chuyens %}
             <tr>
               <td class="route">
                 {{ chuyen.tuyen.diem_di }} → {{ chuyen.tuyen.diem_den }}
@@ -357,41 +250,40 @@
               <td class="datetime">
                 {{ chuyen.ngay_gio_khoi_hanh|date:"d/m/Y H:i" }}
               </td>
-              <td class="price">{{ chuyen.gia_ve|floatformat:0 }}đ</td>
-              <td class="seats">{{ chuyen.tong_so_ve }} chỗ</td>
+              <td class="price">
+                {{ chuyen.gia_ve|floatformat:0 }}₫
+              </td>
+              <td class="seats">
+                {{ chuyen.so_ve_con_lai }}/{{ chuyen.tong_so_ve }}
+              </td>
               <td>
-                <a href="#" class="btn-book">Đặt vé</a>
+                <a href="{% url 'src:chon_ghe' chuyen.id %}" class="btn-book">Đặt vé</a>
               </td>
             </tr>
-            {% empty %}
-            <tr>
-              <td colspan="6" class="no-results">
-                Hiện tại chưa có chuyến xe nào sắp tới.
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-      <!-- Phân trang -->
-      {% if page_obj.has_other_pages %}
+    {% if page_obj.has_other_pages %}
       <div class="pagination">
         {% if page_obj.has_previous %}
-        <a href="?page=1">&laquo; Đầu</a>
-        <a href="?page={{ page_obj.previous_page_number }}">‹ Trước</a>
+          <a href="?page=1{% if selected_tuyen %}&tuyen_id={{ selected_tuyen.id }}{% endif %}">« Đầu</a>
+          <a href="?page={{ page_obj.previous_page_number }}{% if selected_tuyen %}&tuyen_id={{ selected_tuyen.id }}{% endif %}">‹ Trước</a>
         {% endif %}
 
-        <span class="current">
-          Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
-        </span>
+        <span class="current">{{ page_obj.number }}</span>
 
         {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}">Sau ›</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}">Cuối &raquo;</a>
+          <a href="?page={{ page_obj.next_page_number }}{% if selected_tuyen %}&tuyen_id={{ selected_tuyen.id }}{% endif %}">Sau ›</a>
+          <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_tuyen %}&tuyen_id={{ selected_tuyen.id }}{% endif %}">Cuối »</a>
         {% endif %}
       </div>
-      {% endif %}
+    {% endif %}
+  {% else %}
+    <div class="no-results">
+      <p>Không có chuyến xe nào phù hợp.</p>
     </div>
-  </body>
-</html>
+  {% endif %}
+</div>
+{% endblock %}
