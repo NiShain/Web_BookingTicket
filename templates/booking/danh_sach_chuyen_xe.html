@@ -234,7 +234,7 @@
             <th>Loại xe</th>
             <th>Thời gian</th>
             <th>Giá vé</th>
-            <th>Ghế trống</th>
+            <th>Số ghế còn trống</th>
             <th></th>
           </tr>
         </thead>
@@ -254,7 +254,7 @@
                 {{ chuyen.gia_ve|floatformat:0 }}₫
               </td>
               <td class="seats">
-                {{ chuyen.so_ghe_con_lai }}/{{ chuyen.tong_so_ve }}
+                {{ chuyen.so_ve_con_lai }}/{{ chuyen.tong_so_ve }}
               </td>
               <td>
                 <a href="{% url 'src:chon_ghe' chuyen.id %}" class="btn-book">Đặt vé</a>
