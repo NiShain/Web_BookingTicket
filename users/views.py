@@ -16,7 +16,7 @@ import time
 from django.db import transaction
 
 from .forms import RegistrationForm, CustomPasswordResetRequestForm
-from .models import Account, KhachHang, EmailVerification, PasswordReset
+from .models import Account, KhachHang, EmailVerification, PasswordReset, PasswordChangeVerification
 
 
 # ===============================================
@@ -80,6 +80,35 @@ def send_password_reset_email(request, account, reset_token):
 		print(f"Password reset email sent to {account.email}")
 	except Exception as e:
 		print(f"Error sending password reset email: {str(e)}")
+
+
+def send_password_change_email(request, account, change_token):
+	"""Send password change verification email (helper function)"""
+	try:
+		change_url = request.build_absolute_uri(
+			reverse('password_change_confirm', kwargs={'token': change_token.token})
+		)
+		
+		subject = 'Xác thực đổi mật khẩu - BookingTicket'
+		html_message = render_to_string('users/password_change_email.html', {
+			'user': account,
+			'username': getattr(account.khachhang, 'ten', account.username),
+			'change_url': change_url,
+			'expire_minutes': getattr(settings, 'PASSWORD_CHANGE_EXPIRE_MINUTES', 30),
+		})
+		plain_message = strip_tags(html_message)
+		
+		send_mail(
+			subject=subject,
+			message=plain_message,
+			from_email=settings.DEFAULT_FROM_EMAIL,
+			recipient_list=[account.email],
+			html_message=html_message,
+			fail_silently=False,
+		)
+		print(f"Password change verification email sent to {account.email}")
+	except Exception as e:
+		print(f"Error sending password change email: {str(e)}")
 
 
 # ===============================================
@@ -442,3 +471,67 @@ class UserDashboardView(LoginRequiredMixin, TemplateView):
 			'hot_chuyens': hot_chuyens,
 		})
 		return context
+
+
+# ===============================================
+# === PASSWORD CHANGE VIEWS (for authenticated users)
+# ===============================================
+
+class PasswordChangeRequestView(LoginRequiredMixin, View):
+	"""Request password change - sends verification email."""
+	
+	def post(self, request):
+		account = request.user
+		
+		# Invalidate old tokens
+		PasswordChangeVerification.objects.filter(account=account, is_used=False).update(is_used=True)
+		
+		# Create new token
+		change_token = PasswordChangeVerification.objects.create(account=account)
+		
+		# Send email
+		transaction.on_commit(lambda: send_password_change_email(request, account, change_token))
+		
+		messages.success(request, 'Email xác thực đã được gửi. Vui lòng kiểm tra hộp thư để tiếp tục đổi mật khẩu.')
+		return redirect('profile')
+
+
+class PasswordChangeConfirmView(LoginRequiredMixin, FormView):
+	"""Confirm password change after email verification."""
+	template_name = 'users/password_change_confirm.html'
+	form_class = SetPasswordForm
+	success_url = reverse_lazy('profile')
+	
+	def dispatch(self, request, *args, **kwargs):
+		try:
+			self.change_token = get_object_or_404(PasswordChangeVerification, token=kwargs['token'], is_used=False)
+		except PasswordChangeVerification.DoesNotExist:
+			messages.error(request, 'Link xác thực không hợp lệ hoặc đã được sử dụng.')
+			return redirect('profile')
+		
+		# Check if token belongs to logged-in user
+		if self.change_token.account != request.user:
+			messages.error(request, 'Link xác thực không hợp lệ.')
+			return redirect('profile')
+		
+		if self.change_token.is_expired():
+			messages.error(request, 'Link xác thực đã hết hạn. Vui lòng yêu cầu gửi lại.')
+			return redirect('profile')
+		
+		return super().dispatch(request, *args, **kwargs)
+	
+	def get_form_kwargs(self):
+		kwargs = super().get_form_kwargs()
+		kwargs['user'] = self.request.user
+		return kwargs
+	
+	def form_valid(self, form):
+		form.save()
+		self.change_token.is_used = True
+		self.change_token.save()
+		messages.success(self.request, 'Mật khẩu đã được thay đổi thành công!')
+		return super().form_valid(form)
+	
+	def form_invalid(self, form):
+		messages.error(self.request, 'Vui lòng sửa các lỗi bên dưới.')
+		return super().form_invalid(form)

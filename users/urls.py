@@ -35,4 +35,13 @@ urlpatterns = [
 
     # Admin dashboard (staff / superuser)
     path('admin/dashboard/', views.AdminDashboardView.as_view(), name='admin_dashboard'),
+
+    # --- 5. Password Change (for authenticated users) ---
+    path('password-change/request/', 
+         views.PasswordChangeRequestView.as_view(), 
+         name='password_change_request'),
+    
+    path('password-change/confirm/<uuid:token>/', 
+         views.PasswordChangeConfirmView.as_view(), 
+         name='password_change_confirm'),
 ]

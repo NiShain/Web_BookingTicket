@@ -150,7 +150,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Email configuration
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -168,5 +168,6 @@ AUTHENTICATION_BACKENDS = [
 EMAIL_TIMEOUT = 60
 
 # Email verification settings
-EMAIL_VERIFICATION_EXPIRE_HOURS = 1  # Token expires after 24 hours
-PASSWORD_RESET_EXPIRE_HOURS = 1
+EMAIL_VERIFICATION_EXPIRE_HOURS = 1  # Token expires after 1 hour
+PASSWORD_RESET_EXPIRE_HOURS = 1  # Password reset link expires after 1 hour
+PASSWORD_CHANGE_EXPIRE_MINUTES = 30  # Password change link expires after 30 minutes

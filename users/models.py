@@ -69,6 +69,33 @@ class PasswordReset(models.Model):
 
 
 # -------------------------
+# 0.3. Password Change Verification (for authenticated users)
+# -------------------------
+class PasswordChangeVerification(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="password_change_verifications")
+    token = models.UUIDField(default=uuid.uuid4, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            from django.conf import settings
+            expire_minutes = getattr(settings, 'PASSWORD_CHANGE_EXPIRE_MINUTES', 30)
+            self.expires_at = timezone.now() + timezone.timedelta(minutes=expire_minutes)
+        if self.expires_at and self.created_at:
+            if self.expires_at <= self.created_at:
+                raise ValidationError("Thời gian hết hạn phải sau thời gian tạo.")
+        super().save(*args, **kwargs)
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    def __str__(self):
+        return f"Password change verification for {self.account.username}"
+
+
+# -------------------------
 # 1. Khách hàng
 # -------------------------
 class KhachHang(models.Model):
