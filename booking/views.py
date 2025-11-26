@@ -2,139 +2,162 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.db.models import Count
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView, ListView, FormView
 from django.contrib import messages
+from django.urls import reverse_lazy
 import json
 
 from .models import Tuyen, Chuyen, Ve
 
 
-def home(request):
-	"""Render the site homepage with dynamic sections:
-
-	- tuyen_popular: top routes ordered by number of trips (chuyens)
-	- upcoming_chuyen: next upcoming trips ordered by departure time
-	"""
-	# If user is authenticated, redirect to their dashboard
-	if request.user.is_authenticated:
-		from django.shortcuts import redirect
-		return redirect('dashboard')
+class HomeView(TemplateView):
+	"""Homepage view with popular routes and upcoming trips."""
+	template_name = 'base/home.html'
 	
-	# For non-authenticated users, show the public home page
-	# Popular routes by number of related Chuyen objects
-	tuyen_popular = Tuyen.objects.annotate(chuyen_count=Count('chuyens')).order_by('-chuyen_count')[:6]
-
-	# Upcoming trips (from now), next 8
-	now = timezone.now()
-	upcoming_chuyen = Chuyen.objects.filter(ngay_gio_khoi_hanh__gte=now).order_by('ngay_gio_khoi_hanh')[:8]
-
-	context = {
-		'tuyen_popular': tuyen_popular,
-		'upcoming_chuyen': upcoming_chuyen,
-	}
+	def dispatch(self, request, *args, **kwargs):
+		# Redirect authenticated users to dashboard
+		if request.user.is_authenticated:
+			return redirect('dashboard')
+		return super().dispatch(request, *args, **kwargs)
 	
-	return render(request, 'base/home.html', context)
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		now = timezone.now()
+		
+		# Popular routes by number of related Chuyen objects
+		context['tuyen_popular'] = Tuyen.objects.annotate(
+			chuyen_count=Count('chuyens')
+		).order_by('-chuyen_count')[:6]
+		
+		# Upcoming trips (from now), next 8
+		context['upcoming_chuyen'] = Chuyen.objects.filter(
+			ngay_gio_khoi_hanh__gte=now
+		).order_by('ngay_gio_khoi_hanh')[:8]
+		
+		return context
 
 
-def danh_sach_tuyens(request):
-	"""View: show list of routes (Tuyen) with number of trips."""
-	tuyen_list = Tuyen.objects.annotate(chuyen_count=Count('chuyens')).order_by('diem_di', 'diem_den')
-	context = {
-		'tuyens': tuyen_list,
-	}
-	return render(request, 'booking/danh_sach_tuyens.html', context)
-
-
-def danh_sach_chuyen_xe(request):
-	"""View: show list of trips (Chuyen). Supports optional filtering by `tuyen_id` and pagination.
-
-	Context provided to template:
-	- chuyens: list of Chuyen objects for current page
-	- page_obj: Django Paginator Page instance
-	- selected_tuyen: Tuyen instance when filtered, else None
-	"""
-	now = timezone.now()
-	qs = Chuyen.objects.filter(ngay_gio_khoi_hanh__gte=now).select_related('tuyen', 'xe').order_by('ngay_gio_khoi_hanh')
-
-	# optional filter by route
-	tuyen_id = request.GET.get('tuyen_id')
-	selected_tuyen = None
-	if tuyen_id:
-		try:
-			selected_tuyen = Tuyen.objects.get(pk=int(tuyen_id))
-		except (Tuyen.DoesNotExist, ValueError, TypeError):
-			selected_tuyen = None
-		else:
-			qs = qs.filter(tuyen=selected_tuyen)
-
-	# pagination
-	from django.core.paginator import Paginator
-
-	per_page = 12
-	paginator = Paginator(qs, per_page)
-	page_number = request.GET.get('page')
-	page_obj = paginator.get_page(page_number)
-
-	context = {
-		'chuyens': page_obj.object_list,
-		'page_obj': page_obj,
-		'selected_tuyen': selected_tuyen,
-	}
-	return render(request, 'booking/danh_sach_chuyen_xe.html', context)
-
-
-@login_required
-def chon_ghe(request, chuyen_id):
-	"""View: Seat selection page for a specific trip.
+class DanhSachTuyenView(ListView):
+	"""List view for routes (Tuyen) with trip count."""
+	model = Tuyen
+	template_name = 'booking/danh_sach_tuyens.html'
+	context_object_name = 'tuyens'
 	
-	Displays seat map with booked/available seats.
-	POST: saves selected seats to session and redirects to payment.
-	"""
-	chuyen = get_object_or_404(
-		Chuyen.objects.select_related('tuyen', 'xe'),
-		pk=chuyen_id
-	)
+	def get_queryset(self):
+		return Tuyen.objects.annotate(
+			chuyen_count=Count('chuyens')
+		).order_by('diem_di', 'diem_den')
+
+
+class DanhSachChuyenXeView(ListView):
+	"""List view for trips (Chuyen) with filtering and pagination."""
+	model = Chuyen
+	template_name = 'booking/danh_sach_chuyen_xe.html'
+	context_object_name = 'chuyens'
+	paginate_by = 12
 	
-	# Check if trip is still available
-	now = timezone.now()
-	if chuyen.ngay_gio_khoi_hanh < now:
-		messages.error(request, 'Chuyến xe này đã khởi hành.')
-		return redirect('src:danh_sach_chuyen_xe')
+	def get_queryset(self):
+		now = timezone.now()
+		qs = Chuyen.objects.filter(
+			ngay_gio_khoi_hanh__gte=now
+		).select_related('tuyen', 'xe').order_by('ngay_gio_khoi_hanh')
+		
+		# Optional filter by route
+		tuyen_id = self.request.GET.get('tuyen_id')
+		if tuyen_id:
+			try:
+				selected_tuyen = Tuyen.objects.get(pk=int(tuyen_id))
+				qs = qs.filter(tuyen=selected_tuyen)
+			except (Tuyen.DoesNotExist, ValueError, TypeError):
+				pass
+		
+		return qs
 	
-	# Get booked seats for this trip
-	booked_seats = []
-	for ve in chuyen.ves.filter(trang_thai='DA_THANH_TOAN'):
-		if ve.vi_tri_ghe:
-			booked_seats.extend(ve.vi_tri_ghe)
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		
+		# Add selected_tuyen to context
+		tuyen_id = self.request.GET.get('tuyen_id')
+		selected_tuyen = None
+		if tuyen_id:
+			try:
+				selected_tuyen = Tuyen.objects.get(pk=int(tuyen_id))
+			except (Tuyen.DoesNotExist, ValueError, TypeError):
+				pass
+		
+		context['selected_tuyen'] = selected_tuyen
+		return context
+
+
+class ChonGheView(LoginRequiredMixin, TemplateView):
+	"""Seat selection view for a specific trip."""
+	template_name = 'booking/chon_ghe.html'
 	
-	if request.method == 'POST':
+	def get_chuyen(self):
+		"""Get the trip object."""
+		return get_object_or_404(
+			Chuyen.objects.select_related('tuyen', 'xe'),
+			pk=self.kwargs['chuyen_id']
+		)
+	
+	def get_booked_seats(self, chuyen):
+		"""Get list of booked seats for this trip."""
+		booked_seats = []
+		for ve in chuyen.ves.filter(trang_thai='DA_THANH_TOAN'):
+			if ve.vi_tri_ghe:
+				booked_seats.extend(ve.vi_tri_ghe)
+		return booked_seats
+	
+	def get(self, request, *args, **kwargs):
+		chuyen = self.get_chuyen()
+		
+		# Check if trip is still available
+		now = timezone.now()
+		if chuyen.ngay_gio_khoi_hanh < now:
+			messages.error(request, 'Chuyến xe này đã khởi hành.')
+			return redirect('src:danh_sach_chuyen_xe')
+		
+		return super().get(request, *args, **kwargs)
+	
+	def post(self, request, *args, **kwargs):
+		chuyen = self.get_chuyen()
+		booked_seats = self.get_booked_seats(chuyen)
 		selected_seats = request.POST.getlist('seats')
 		
 		if not selected_seats:
 			messages.error(request, 'Vui lòng chọn ít nhất một ghế.')
-		else:
-			# Check if any selected seat is already booked
-			conflict = set(selected_seats) & set(booked_seats)
-			if conflict:
-				messages.error(request, f'Ghế {", ".join(conflict)} đã được đặt.')
-			else:
-				# Save to session
-				request.session['booking_data'] = {
-					'chuyen_id': chuyen_id,
-					'selected_seats': selected_seats,
-				}
-				return redirect('src:thanh_toan')
+			return self.get(request, *args, **kwargs)
+		
+		# Check if any selected seat is already booked
+		conflict = set(selected_seats) & set(booked_seats)
+		if conflict:
+			messages.error(request, f'Ghế {", ".join(conflict)} đã được đặt.')
+			return self.get(request, *args, **kwargs)
+		
+		# Save to session
+		request.session['booking_data'] = {
+			'chuyen_id': self.kwargs['chuyen_id'],
+			'selected_seats': selected_seats,
+		}
+		return redirect('src:thanh_toan')
 	
-	# Generate seat layout based on vehicle capacity
-	so_ghe = chuyen.xe.so_ghe
-	seat_layout = generate_seat_layout(so_ghe)
-	
-	context = {
-		'chuyen': chuyen,
-		'booked_seats': booked_seats,
-		'seat_layout': seat_layout,
-		'so_ghe_con_lai': chuyen.tong_so_ve - len(booked_seats),
-	}
-	return render(request, 'booking/chon_ghe.html', context)
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		chuyen = self.get_chuyen()
+		booked_seats = self.get_booked_seats(chuyen)
+		
+		# Generate seat layout based on vehicle capacity
+		so_ghe = chuyen.xe.so_ghe
+		seat_layout = generate_seat_layout(so_ghe)
+		
+		context.update({
+			'chuyen': chuyen,
+			'booked_seats': booked_seats,
+			'seat_layout': seat_layout,
+			'so_ghe_con_lai': chuyen.tong_so_ve - len(booked_seats),
+		})
+		return context
 
 
 def generate_seat_layout(so_ghe):
@@ -208,29 +231,33 @@ def generate_seat_layout(so_ghe):
 	return rows
 
 
-@login_required
-def thanh_toan(request):
-	"""View: Payment confirmation page.
+class ThanhToanView(LoginRequiredMixin, TemplateView):
+	"""Payment confirmation and processing view."""
+	template_name = 'booking/thanh_toan.html'
 	
-	GET: Display booking summary and payment form.
-	POST: Process payment and create ticket.
-	"""
-	booking_data = request.session.get('booking_data')
+	def dispatch(self, request, *args, **kwargs):
+		# Check if booking data exists in session
+		booking_data = request.session.get('booking_data')
+		if not booking_data:
+			messages.error(request, 'Không tìm thấy thông tin đặt vé.')
+			return redirect('src:danh_sach_chuyen_xe')
+		return super().dispatch(request, *args, **kwargs)
 	
-	if not booking_data:
-		messages.error(request, 'Không tìm thấy thông tin đặt vé.')
-		return redirect('src:danh_sach_chuyen_xe')
+	def get_booking_data(self):
+		"""Get booking data from session."""
+		return self.request.session.get('booking_data')
 	
-	chuyen = get_object_or_404(
-		Chuyen.objects.select_related('tuyen', 'xe'),
-		pk=booking_data['chuyen_id']
-	)
+	def get_chuyen(self):
+		"""Get trip object from booking data."""
+		booking_data = self.get_booking_data()
+		return get_object_or_404(
+			Chuyen.objects.select_related('tuyen', 'xe'),
+			pk=booking_data['chuyen_id']
+		)
 	
-	selected_seats = booking_data['selected_seats']
-	so_luong = len(selected_seats)
-	tong_tien = chuyen.gia_ve * so_luong
-	
-	if request.method == 'POST':
+	def post(self, request, *args, **kwargs):
+		booking_data = self.get_booking_data()
+		chuyen = self.get_chuyen()
 		phuong_thuc = request.POST.get('phuong_thuc', 'CHUYEN_KHOAN')
 		
 		try:
@@ -241,8 +268,8 @@ def thanh_toan(request):
 			ve = Ve.objects.create(
 				chuyen=chuyen,
 				khach=khach_hang,
-				so_luong=so_luong,
-				vi_tri_ghe=selected_seats,
+				so_luong=len(booking_data['selected_seats']),
+				vi_tri_ghe=booking_data['selected_seats'],
 				trang_thai='DA_THANH_TOAN'  # Auto-confirm for now
 			)
 			
@@ -266,11 +293,21 @@ def thanh_toan(request):
 			
 		except Exception as e:
 			messages.error(request, f'Có lỗi xảy ra: {str(e)}')
+			return self.get(request, *args, **kwargs)
 	
-	context = {
-		'chuyen': chuyen,
-		'selected_seats': selected_seats,
-		'so_luong': so_luong,
-		'tong_tien': tong_tien,
-	}
-	return render(request, 'booking/thanh_toan.html', context)
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		booking_data = self.get_booking_data()
+		chuyen = self.get_chuyen()
+		
+		selected_seats = booking_data['selected_seats']
+		so_luong = len(selected_seats)
+		tong_tien = chuyen.gia_ve * so_luong
+		
+		context.update({
+			'chuyen': chuyen,
+			'selected_seats': selected_seats,
+			'so_luong': so_luong,
+			'tong_tien': tong_tien,
+		})
+		return context

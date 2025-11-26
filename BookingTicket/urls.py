@@ -19,7 +19,7 @@ from django.urls import include, path
 from booking import views as booking_views
 
 urlpatterns = [
-    path('', booking_views.home, name='home'),
+    path('', booking_views.HomeView.as_view(), name='home'),
     path('admin/', admin.site.urls),
     # Include booking app URLs under namespace 'src' so templates using 'src:' resolve
     path('src/', include(('booking.urls', 'booking'), namespace='src')),

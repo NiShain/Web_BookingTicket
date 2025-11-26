@@ -1,41 +1,38 @@
 # users/urls.py
 from django.urls import path
-# Bỏ import auth_views vì chúng ta đã tự viết view
 from . import views 
 
 urlpatterns = [
-    # --- 1. Đăng ký & Xác thực ---
-    path('register/', views.register_view, name='register'),
+    # --- 1. Registration & Email Verification ---
+    path('register/', views.RegisterView.as_view(), name='register'),
     
     path('verify-email/<uuid:token>/', 
-         views.verify_email_view, 
+         views.VerifyEmailView.as_view(), 
          name='verify_email'),
 
-    # THÊM: Đường dẫn để gửi lại email xác thực
     path('resend-verification/', 
-         views.resend_verification, 
+         views.ResendVerificationView.as_view(), 
          name='resend_verification'),
 
-    # --- 2. Đăng nhập & Đăng xuất (Trỏ đến view tùy chỉnh) ---
-    path('login/', views.login_view, name='login'),
-    path('logout/', views.logout_view, name='logout'),
+    # --- 2. Login & Logout ---
+    path('login/', views.LoginView.as_view(), name='login'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
 
-    # --- 3. Reset Mật khẩu ---
+    # --- 3. Password Reset ---
     path('password-reset/', 
-         views.password_reset_request_view, 
+         views.PasswordResetRequestView.as_view(), 
          name='password_reset_request'),
     
     path('password-reset/confirm/<uuid:token>/', 
-         views.password_reset_confirm_view, 
+         views.PasswordResetConfirmView.as_view(), 
          name='password_reset_confirm'),
 
     # --- 4. Profile & Dashboard ---
-     # THÊM: Đường dẫn cho trang profile
-     path('profile/', views.user_profile, name='profile'),
+    path('profile/', views.UserProfileView.as_view(), name='profile'),
 
-     # User dashboard (regular authenticated users)
-     path('dashboard/', views.user_dashboard, name='dashboard'),
+    # User dashboard (regular authenticated users)
+    path('dashboard/', views.UserDashboardView.as_view(), name='dashboard'),
 
-     # Admin dashboard (staff / superuser)
-     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    # Admin dashboard (staff / superuser)
+    path('admin/dashboard/', views.AdminDashboardView.as_view(), name='admin_dashboard'),
 ]
