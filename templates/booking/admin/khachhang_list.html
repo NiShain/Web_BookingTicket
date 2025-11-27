@@ -1,0 +1,36 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+<h2>Danh sách Khách hàng</h2>
+<div class="card shadow-sm mt-3">
+    <div class="card-body">
+        <form method="get" class="mb-3 d-flex gap-2">
+            <input type="text" name="q" class="form-control w-25" placeholder="Tìm khách hàng..." value="{{ request.GET.q }}">
+            <button class="btn btn-primary">Tìm kiếm</button>
+        </form>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Họ Tên</th>
+                    <th>Số điện thoại</th>
+                    <th>Email</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for khach in khachhangs %}
+                <tr>
+                    <td>{{ khach.ten }}</td>
+                    <td>{{ khach.sdt }}</td>
+                    <td>{{ khach.email }}</td>
+                    <td>
+                        <a href="{% url 'src:admin_khachhang_detail' khach.pk %}" class="btn btn-sm btn-info text-white">Lịch sử đặt vé</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+<div class="card shadow-sm col-md-6 mx-auto mt-5">
+    <div class="card-body text-center">
+        <h3 class="text-danger mb-4">Xác nhận xóa?</h3>
+        <p class="fs-5">Bạn có chắc chắn muốn xóa đối tượng: <strong>"{{ object }}"</strong> không?</p>
+        <p class="text-muted">Hành động này không thể hoàn tác.</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="mt-4">
+                <a href="javascript:history.back()" class="btn btn-secondary me-2">Hủy bỏ</a>
+                <button type="submit" class="btn btn-danger">Xác nhận Xóa</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

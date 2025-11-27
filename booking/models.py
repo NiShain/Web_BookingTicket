@@ -4,9 +4,9 @@ from django.core.exceptions import ValidationError
 from users.models import KhachHang  # import từ app users
 
 class Tuyen(models.Model):
-    diem_di = models.CharField(max_length=100)
-    diem_den = models.CharField(max_length=100)
-    khoang_cach = models.PositiveIntegerField(blank=True, null=True)
+    diem_di = models.CharField(max_length=100, verbose_name="Điểm đi")
+    diem_den = models.CharField(max_length=100, verbose_name="Điểm đến")
+    khoang_cach = models.PositiveIntegerField(blank=True, null=True, verbose_name="Khoảng cách (km)")
 
     class Meta:
         unique_together = ("diem_di", "diem_den")
@@ -24,9 +24,9 @@ class Tuyen(models.Model):
 
 
 class Xe(models.Model):
-    bien_so = models.CharField(max_length=20, unique=True)
-    loai_xe = models.CharField(max_length=50)
-    so_ghe = models.PositiveIntegerField()
+    bien_so = models.CharField(max_length=20, unique=True, verbose_name="Biển số")
+    loai_xe = models.CharField(max_length=50, verbose_name="Loại xe")
+    so_ghe = models.PositiveIntegerField(verbose_name="Số ghế")
 
     def clean(self):
         if self.so_ghe <= 0:
@@ -37,12 +37,12 @@ class Xe(models.Model):
 
 
 class Chuyen(models.Model):
-    tuyen = models.ForeignKey(Tuyen, on_delete=models.CASCADE, related_name="chuyens")
-    xe = models.ForeignKey(Xe, on_delete=models.CASCADE, related_name="chuyens")
-    ngay_gio_khoi_hanh = models.DateTimeField()
-    ngay_gio_den = models.DateTimeField(blank=True, null=True)
-    tong_so_ve = models.PositiveIntegerField()
-    gia_ve = models.DecimalField(max_digits=10, decimal_places=2)
+    tuyen = models.ForeignKey(Tuyen, on_delete=models.CASCADE, related_name="chuyens", verbose_name="Tuyến")
+    xe = models.ForeignKey(Xe, on_delete=models.CASCADE, related_name="chuyens", verbose_name="Xe")
+    ngay_gio_khoi_hanh = models.DateTimeField(verbose_name="Ngày giờ khởi hành")
+    ngay_gio_den = models.DateTimeField(blank=True, null=True, verbose_name="Ngày giờ đến")
+    tong_so_ve = models.PositiveIntegerField(verbose_name="Tổng số vé")
+    gia_ve = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Giá vé")
 
     def clean(self):
         now = timezone.now()
@@ -73,9 +73,9 @@ class Ve(models.Model):
         ("DA_HUY", "Đã hủy"),
     ]
 
-    chuyen = models.ForeignKey(Chuyen, on_delete=models.CASCADE, related_name="ves")
-    khach = models.ForeignKey(KhachHang, on_delete=models.CASCADE, related_name="ves")
-    so_luong = models.PositiveIntegerField()
+    chuyen = models.ForeignKey(Chuyen, on_delete=models.CASCADE, related_name="ves", verbose_name="Chuyến")
+    khach = models.ForeignKey(KhachHang, on_delete=models.CASCADE, related_name="ves", verbose_name="Khách hàng")
+    so_luong = models.PositiveIntegerField(verbose_name="Số lượng")
     vi_tri_ghe = models.JSONField(
         default=list,
         blank=True,
@@ -126,11 +126,11 @@ class ThanhToan(models.Model):
         ("CHO_XU_LY", "Chờ xử lý"),
     ]
 
-    ve = models.OneToOneField(Ve, on_delete=models.CASCADE, related_name="thanh_toan")
-    phuong_thuc = models.CharField(max_length=50)
-    trang_thai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default="CHO_XU_LY")
-    ngay_gio = models.DateTimeField(auto_now_add=True)
-    ma_giao_dich = models.CharField(max_length=100, unique=True)
+    ve = models.OneToOneField(Ve, on_delete=models.CASCADE, related_name="thanh_toan", verbose_name="Vé")
+    phuong_thuc = models.CharField(max_length=50, verbose_name="Phương thức")
+    trang_thai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default="CHO_XU_LY", verbose_name="Trạng thái")
+    ngay_gio = models.DateTimeField(auto_now_add=True, verbose_name="Ngày giờ")
+    ma_giao_dich = models.CharField(max_length=100, unique=True, verbose_name="Mã giao dịch")
 
     @property
     def so_tien(self):

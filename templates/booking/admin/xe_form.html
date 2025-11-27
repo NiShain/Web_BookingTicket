@@ -1,0 +1,16 @@
+{% extends 'admin/base_admin.html' %}
+{% block content %}
+<div class="card col-md-6 mx-auto shadow-sm">
+    <div class="card-header bg-success text-white">
+        <h4 class="mb-0">Thông tin Xe</h4>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-success mt-3">Lưu xe</button>
+            <a href="{% url 'src:admin_xe_list' %}" class="btn btn-secondary mt-3">Hủy</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
