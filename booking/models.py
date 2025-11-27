@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from users.models import KhachHang  # import từ app users
+from dataclasses import dataclass
 
 class Tuyen(models.Model):
     diem_di = models.CharField(max_length=100, verbose_name="Điểm đi")
@@ -116,9 +117,7 @@ class Ve(models.Model):
         verbose_name_plural = "Vé"
 
 
-# -------------------------
-# 6. Thanh toán
-# -------------------------
+
 class ThanhToan(models.Model):
     TRANG_THAI_CHOICES = [
         ("THANH_CONG", "Thành công"),

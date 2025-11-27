@@ -172,3 +172,15 @@ EMAIL_TIMEOUT = 60
 EMAIL_VERIFICATION_EXPIRE_HOURS = 1  # Token expires after 1 hour
 PASSWORD_RESET_EXPIRE_HOURS = 1  # Password reset link expires after 1 hour
 PASSWORD_CHANGE_EXPIRE_MINUTES = 30  # Password change link expires after 30 minutes
+
+#Payment
+VNPAY_CONFIG = {
+    "TmnCode": "LNY8EJHT",
+    "HashSecret": "HPVEG2CRW792HIIP53LGPVQP6D5XKH1S",
+    "BaseUrl": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
+    "Version": "2.1.0",
+    "Command": "pay",
+    "CurrCode": "VND",
+    "Locale": "vn",
+    "ReturnUrl": "http://localhost:8000/payment/callback_vnpay" # Sửa lại port cho đúng Django
+}
