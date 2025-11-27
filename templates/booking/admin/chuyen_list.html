@@ -1,0 +1,70 @@
+{% extends 'admin/base_admin.html' %}
+{% load humanize %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Lịch trình Chuyến xe</h2>
+    <a href="{% url 'src:admin_chuyen_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Tạo Chuyến mới</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table class="table align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Tuyến</th>
+                    <th>Xe / Biển số</th>
+                    <th>Khởi hành</th>
+                    <th>Giá vé</th>
+                    <th>Tình trạng vé</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for chuyen in chuyens %}
+                <tr>
+                    <td>{{ chuyen.tuyen }}</td>
+                    <td>{{ chuyen.xe.loai_xe }} <br> <small class="text-muted">{{ chuyen.xe.bien_so }}</small></td>
+                    <td>
+                        <span class="fw-bold">{{ chuyen.ngay_gio_khoi_hanh|date:"H:i d/m/Y" }}</span>
+                    </td>
+                    <td>{{ chuyen.gia_ve|intcomma }} VNĐ</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <span class="me-2">{{ chuyen.so_ve_da_ban }}/{{ chuyen.tong_so_ve }}</span>
+                            <div class="progress flex-grow-1" style="height: 5px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {% widthratio chuyen.so_ve_da_ban chuyen.tong_so_ve 100 %}%;"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <a href="{% url 'src:admin_chuyen_update' chuyen.pk %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                        <a href="{% url 'src:admin_chuyen_delete' chuyen.pk %}" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        {% if is_paginated %}
+        <div class="pagination justify-content-center mt-3">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1" class="btn btn-sm btn-outline-secondary">&laquo; Đầu</a>
+                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm btn-outline-secondary">Trước</a>
+                {% endif %}
+
+                <span class="current mx-2">
+                    Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm btn-outline-secondary">Sau</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-sm btn-outline-secondary">Cuối &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

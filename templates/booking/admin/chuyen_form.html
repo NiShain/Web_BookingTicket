@@ -1,0 +1,19 @@
+{% extends 'admin/base_admin.html' %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-warning text-dark">
+        <h4 class="mb-0">{% if form.instance.pk %}Sửa Chuyến Xe{% else %}Lên Lịch Chuyến Mới{% endif %}</h4>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row">
+                {{ form.as_p }}
+            </div>
+            <hr>
+            <button type="submit" class="btn btn-primary">Lưu lịch trình</button>
+            <a href="{% url 'src:admin_chuyen_list' %}" class="btn btn-secondary">Hủy</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

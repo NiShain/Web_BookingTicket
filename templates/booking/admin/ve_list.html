@@ -1,0 +1,74 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Quản lý Đặt Vé</h2>
+</div>
+
+<div class="card mb-4 bg-light">
+    <div class="card-body py-2">
+        <form method="get" class="row g-3 align-items-center">
+            <div class="col-auto">
+                <input type="text" name="q" class="form-control" placeholder="Tìm tên hoặc SĐT..." value="{{ request.GET.q }}">
+            </div>
+            <div class="col-auto">
+                <select name="status" class="form-select">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    {% for st in status_choices %}
+                        <option value="{{ st }}" {% if request.GET.status == st %}selected{% endif %}>{{ st }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Lọc</button>
+                <a href="{% url 'src:admin_ve_list' %}" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>Mã Vé</th>
+                    <th>Khách hàng</th>
+                    <th>Chuyến</th>
+                    <th>Số ghế</th>
+                    <th>Trạng thái</th>
+                    <th>Chi tiết</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ve in ves %}
+                <tr>
+                    <td>#{{ ve.id }}</td>
+                    <td>
+                        {{ ve.khach.ten }}<br>
+                        <small class="text-muted">{{ ve.khach.sdt }}</small>
+                    </td>
+                    <td>
+                        {{ ve.chuyen.tuyen.diem_di }} -> {{ ve.chuyen.tuyen.diem_den }}<br>
+                        <small>{{ ve.chuyen.ngay_gio_khoi_hanh|date:"H:i d/m" }}</small>
+                    </td>
+                    <td>{{ ve.so_luong }} vé</td>
+                    <td>
+                        {% if ve.trang_thai == 'DA_THANH_TOAN' %}
+                            <span class="badge bg-success">Đã thanh toán</span>
+                        {% elif ve.trang_thai == 'DA_HUY' %}
+                            <span class="badge bg-danger">Đã hủy</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Chờ thanh toán</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'src:admin_ve_detail' ve.pk %}" class="btn btn-sm btn-info text-white">Xem</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

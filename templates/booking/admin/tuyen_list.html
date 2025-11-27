@@ -1,0 +1,38 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Danh sách Tuyến</h2>
+    <a href="{% url 'src:admin_tuyen_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Thêm Tuyến mới</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Điểm đi</th>
+                    <th>Điểm đến</th>
+                    <th>Khoảng cách</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tuyen in tuyens %}
+                <tr>
+                    <td>{{ tuyen.diem_di }}</td>
+                    <td>{{ tuyen.diem_den }}</td>
+                    <td>{{ tuyen.khoang_cach }} km</td>
+                    <td>
+                        <a href="{% url 'src:admin_tuyen_update' tuyen.pk %}" class="btn btn-sm btn-warning">Sửa</a>
+                        <a href="{% url 'src:admin_tuyen_delete' tuyen.pk %}" class="btn btn-sm btn-danger">Xóa</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center">Chưa có tuyến nào.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

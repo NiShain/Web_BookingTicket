@@ -1,0 +1,52 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+<a href="{% url 'src:admin_ve_list' %}" class="btn btn-secondary mb-3">&larr; Quay lại</a>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Chi tiết Vé #{{ ve.id }}</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Khách hàng:</dt>
+                    <dd class="col-sm-8">{{ ve.khach.ten }} ({{ ve.khach.sdt }})</dd>
+
+                    <dt class="col-sm-4">Chuyến xe:</dt>
+                    <dd class="col-sm-8">
+                        {{ ve.chuyen.tuyen }} <br>
+                        Thời gian: {{ ve.chuyen.ngay_gio_khoi_hanh|date:"H:i d/m/Y" }}
+                    </dd>
+
+                    <dt class="col-sm-4">Số lượng vé:</dt>
+                    <dd class="col-sm-8">{{ ve.so_luong }}</dd>
+
+                    <dt class="col-sm-4">Vị trí ghế:</dt>
+                    <dd class="col-sm-8">{{ ve.vi_tri_ghe }}</dd>
+
+                    <dt class="col-sm-4">Trạng thái:</dt>
+                    <dd class="col-sm-8 fw-bold">{{ ve.get_trang_thai_display }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Thông tin giao dịch</div>
+            <div class="card-body">
+                {% if ve.thanh_toan %}
+                    <p><strong>Mã GD:</strong> {{ ve.thanh_toan.ma_giao_dich }}</p>
+                    <p><strong>Phương thức:</strong> {{ ve.thanh_toan.phuong_thuc }}</p>
+                    <p><strong>Ngày:</strong> {{ ve.thanh_toan.ngay_gio|date:"d/m/Y H:i" }}</p>
+                    <div class="alert alert-success py-1 text-center">Đã thanh toán</div>
+                {% else %}
+                    <p class="text-muted text-center">Chưa có thông tin thanh toán</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

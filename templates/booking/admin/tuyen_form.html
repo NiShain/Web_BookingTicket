@@ -1,0 +1,20 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block content %}
+<div class="card col-md-8 mx-auto shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">{% if form.instance.pk %}Cập nhật Tuyến{% else %}Thêm Tuyến Mới{% endif %}</h4>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success">Lưu lại</button>
+                <a href="{% url 'src:admin_tuyen_list' %}" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
