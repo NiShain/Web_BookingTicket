@@ -8,7 +8,51 @@
         <form method="post">
             {% csrf_token %}
             <div class="row">
-                {{ form.as_p }}
+                {{ form.non_field_errors }}
+
+                <p>
+                    <label for="{{ form.tuyen.id_for_label }}"><b>{{ form.tuyen.label }}:</b></label>
+                    {{ form.tuyen }}
+                    {{ form.tuyen.errors }}
+                </p>
+
+                <p>
+                    <label for="{{ form.xe.id_for_label }}"><b>{{ form.xe.label }}:</b></label>
+                    {{ form.xe }}
+                    {{ form.xe.errors }}
+                </p>
+
+                <p>
+                    <label for="{{ form.ngay_gio_khoi_hanh.id_for_label }}"><b>{{ form.ngay_gio_khoi_hanh.label }}:</b></label>
+                    <input type="datetime-local" 
+                           name="{{ form.ngay_gio_khoi_hanh.html_name }}" 
+                           id="{{ form.ngay_gio_khoi_hanh.id_for_label }}"
+                           {# Quan trọng: format lại giá trị để input hiểu được #}
+                           value="{{ form.ngay_gio_khoi_hanh.value|date:'Y-m-d\TH:i' }}" 
+                           class="form-control"> {{ form.ngay_gio_khoi_hanh.errors }}
+                </p>
+
+                <p>
+                    <label for="{{ form.ngay_gio_den.id_for_label }}"><b>{{ form.ngay_gio_den.label }}:</b></label>
+                    <input type="datetime-local" 
+                           name="{{ form.ngay_gio_den.html_name }}" 
+                           id="{{ form.ngay_gio_den.id_for_label }}"
+                           value="{{ form.ngay_gio_den.value|date:'Y-m-d\TH:i'|default_if_none:'' }}"
+                           class="form-control">
+                    {{ form.ngay_gio_den.errors }}
+                </p>
+                
+                <p>
+                    <label for="{{ form.tong_so_ve.id_for_label }}"><b>{{ form.tong_so_ve.label }}:</b></label>
+                    {{ form.tong_so_ve }}
+                    {{ form.tong_so_ve.errors }}
+                </p>
+
+                <p>
+                    <label for="{{ form.gia_ve.id_for_label }}"><b>{{ form.gia_ve.label }}:</b></label>
+                    {{ form.gia_ve }}
+                    {{ form.gia_ve.errors }}
+                </p>
             </div>
             <hr>
             <button type="submit" class="btn btn-primary">Lưu lịch trình</button>

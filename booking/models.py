@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from users.models import KhachHang  # import từ app users
+from dataclasses import dataclass
 
 class Tuyen(models.Model):
     diem_di = models.CharField(max_length=100, verbose_name="Điểm đi")
@@ -116,14 +117,13 @@ class Ve(models.Model):
         verbose_name_plural = "Vé"
 
 
-# -------------------------
-# 6. Thanh toán
-# -------------------------
+
 class ThanhToan(models.Model):
     TRANG_THAI_CHOICES = [
         ("THANH_CONG", "Thành công"),
         ("THAT_BAI", "Thất bại"),
         ("CHO_XU_LY", "Chờ xử lý"),
+        ("CHO_THANH_TOAN", "Chờ thanh toán"), # Thêm trạng thái này nếu chưa có
     ]
 
     ve = models.OneToOneField(Ve, on_delete=models.CASCADE, related_name="thanh_toan", verbose_name="Vé")
@@ -131,10 +131,7 @@ class ThanhToan(models.Model):
     trang_thai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default="CHO_XU_LY", verbose_name="Trạng thái")
     ngay_gio = models.DateTimeField(auto_now_add=True, verbose_name="Ngày giờ")
     ma_giao_dich = models.CharField(max_length=100, unique=True, verbose_name="Mã giao dịch")
-
-    @property
-    def so_tien(self):
-        return self.ve.so_luong * self.ve.chuyen.gia_ve
+    so_tien = models.DecimalField(max_digits=12, decimal_places=0, verbose_name="Số tiền")
 
     def __str__(self):
         return f"Thanh toán {self.ma_giao_dich} - {self.trang_thai}"
