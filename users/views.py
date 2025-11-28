@@ -15,8 +15,9 @@ from datetime import datetime
 import time
 from django.db import transaction
 
-from .forms import RegistrationForm, CustomPasswordResetRequestForm
-from .models import Account, KhachHang, EmailVerification, PasswordReset, PasswordChangeVerification
+from .forms import RegistrationForm, CustomPasswordResetRequestForm, OTPVerificationForm
+from .models import Account, KhachHang, EmailVerification, PasswordReset, PasswordChangeVerification, OTPRegistration
+from django.contrib.auth.hashers import make_password
 
 
 # ===============================================
@@ -111,15 +112,40 @@ def send_password_change_email(request, account, change_token):
 		print(f"Error sending password change email: {str(e)}")
 
 
+def send_otp_email(request, otp_registration):
+	"""Send OTP email for registration (helper function)"""
+	try:
+		subject = 'Mã xác thực đăng ký - BookingTicket'
+		html_message = render_to_string('users/otp_email.html', {
+			'ten': otp_registration.ten,
+			'email': otp_registration.email,
+			'otp_code': otp_registration.otp_code,
+			'expire_minutes': getattr(settings, 'OTP_EXPIRE_MINUTES', 10),
+		})
+		plain_message = strip_tags(html_message)
+		
+		send_mail(
+			subject=subject,
+			message=plain_message,
+			from_email=settings.DEFAULT_FROM_EMAIL,
+			recipient_list=[otp_registration.email],
+			html_message=html_message,
+			fail_silently=False,
+		)
+		print(f"OTP email sent to {otp_registration.email}: {otp_registration.otp_code}")
+	except Exception as e:
+		print(f"Error sending OTP email: {str(e)}")
+
+
 # ===============================================
 # === AUTHENTICATION VIEWS
 # ===============================================
 
 class RegisterView(FormView):
-	"""User registration view."""
+	"""User registration view - Step 1: Collect info and send OTP."""
 	template_name = 'users/register.html'
 	form_class = RegistrationForm
-	success_url = reverse_lazy('login')
+	success_url = reverse_lazy('otp_verification')
 	
 	def dispatch(self, request, *args, **kwargs):
 		if request.user.is_authenticated:
@@ -129,38 +155,159 @@ class RegisterView(FormView):
 	def form_valid(self, form):
 		cd = form.cleaned_data
 		
-		# Split full name
-		ten_parts = cd['ten'].split(' ')
-		first_name = ten_parts[0]
-		last_name = ' '.join(ten_parts[1:]) if len(ten_parts) > 1 else ''
-		
 		try:
 			with transaction.atomic():
-				account = Account.objects.create_user(
-					username=cd['email'],
-					email=cd['email'],
-					password=cd['password'],
-					first_name=first_name,
-					last_name=last_name,
-					is_active=True,
-					email_verified=True,
-				)
+				# Xóa các OTP cũ của email này (nếu có)
+				OTPRegistration.objects.filter(email=cd['email']).delete()
 				
-				KhachHang.objects.create(
-					account=account,
+				# Tạo OTPRegistration mới
+				otp_reg = OTPRegistration.objects.create(
+					email=cd['email'],
 					ten=cd['ten'],
 					so_dien_thoai=cd['so_dien_thoai'],
-					cccd=cd['cccd'],
-					email=cd['email']
+					cccd=cd.get('cccd', ''),
+					password_hash=make_password(cd['password'])
 				)
-			
-			messages.success(self.request, 'Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.')
+				
+				# Lưu email vào session để sử dụng ở trang OTP
+				self.request.session['otp_email'] = cd['email']
+				self.request.session['otp_name'] = cd['ten']
+				
+				# Gửi email OTP
+				transaction.on_commit(lambda: send_otp_email(self.request, otp_reg))
+				
+			messages.success(self.request, f'Mã xác thực OTP đã được gửi tới {cd["email"]}. Vui lòng kiểm tra hộp thư và nhập mã xác thực.')
 			return super().form_valid(form)
 			
 		except Exception as e:
-			messages.error(self.request, 'Đã có lỗi khi tạo tài khoản. Vui lòng thử lại sau.')
-			logging.exception('Error during registration creation: %s', e)
+			messages.error(self.request, 'Đã có lỗi khi gửi mã xác thực. Vui lòng thử lại sau.')
+			logging.exception('Error during OTP registration: %s', e)
 			return self.form_invalid(form)
+
+
+class OTPVerificationView(FormView):
+	"""OTP verification view - Step 2: Verify OTP and create account."""
+	template_name = 'users/otp_verification.html'
+	form_class = OTPVerificationForm
+	success_url = reverse_lazy('login')
+	
+	def dispatch(self, request, *args, **kwargs):
+		# Kiểm tra có email trong session không
+		if 'otp_email' not in request.session:
+			messages.error(request, 'Phiên xác thực đã hết hạn. Vui lòng đăng ký lại.')
+			return redirect('register')
+		
+		# Kiểm tra có OTPRegistration tồn tại không
+		email = request.session['otp_email']
+		if not OTPRegistration.objects.filter(email=email, is_verified=False).exists():
+			messages.error(request, 'Không tìm thấy thông tin xác thực. Vui lòng đăng ký lại.')
+			return redirect('register')
+		
+		return super().dispatch(request, *args, **kwargs)
+	
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		email = self.request.session.get('otp_email', '')
+		name = self.request.session.get('otp_name', '')
+		
+		try:
+			otp_reg = OTPRegistration.objects.get(email=email, is_verified=False)
+			context.update({
+				'email': email,
+				'name': name,
+				'can_resend': True,
+				'remaining_attempts': 5 - otp_reg.attempt_count,
+				'expires_at': otp_reg.expires_at,
+			})
+		except OTPRegistration.DoesNotExist:
+			context['can_resend'] = False
+		
+		return context
+	
+	def form_valid(self, form):
+		email = self.request.session['otp_email']
+		otp_input = form.cleaned_data['otp_code']
+		
+		try:
+			otp_reg = OTPRegistration.objects.get(email=email, is_verified=False)
+			success, message = otp_reg.verify_otp(otp_input)
+			
+			if success:
+				# Tạo tài khoản thực sự
+				with transaction.atomic():
+					# Split full name
+					ten_parts = otp_reg.ten.split(' ')
+					first_name = ten_parts[0]
+					last_name = ' '.join(ten_parts[1:]) if len(ten_parts) > 1 else ''
+					
+					# Tạo Account
+					account = Account.objects.create_user(
+						username=otp_reg.email,
+						email=otp_reg.email,
+						password=None,  # Sẽ set sau
+						first_name=first_name,
+						last_name=last_name,
+						is_active=True,
+						email_verified=True,
+					)
+					
+					# Set password từ hash đã lưu
+					account.password = otp_reg.password_hash
+					account.save()
+					
+					# Tạo KhachHang
+					KhachHang.objects.create(
+						account=account,
+						ten=otp_reg.ten,
+						so_dien_thoai=otp_reg.so_dien_thoai,
+						cccd=otp_reg.cccd,
+						email=otp_reg.email
+					)
+					
+					# Xóa OTP registration
+					otp_reg.delete()
+					
+					# Xóa session data
+					del self.request.session['otp_email']
+					del self.request.session['otp_name']
+				
+				messages.success(self.request, f'Đăng ký thành công! Chào mừng {otp_reg.ten}. Bạn có thể đăng nhập ngay bây giờ.')
+				return super().form_valid(form)
+			else:
+				messages.error(self.request, message)
+				return self.form_invalid(form)
+				
+		except OTPRegistration.DoesNotExist:
+			messages.error(self.request, 'Không tìm thấy thông tin xác thực. Vui lòng đăng ký lại.')
+			return redirect('register')
+	
+	def form_invalid(self, form):
+		return super().form_invalid(form)
+
+
+class ResendOTPView(View):
+	"""Resend OTP code view."""
+	
+	def post(self, request):
+		if 'otp_email' not in request.session:
+			messages.error(request, 'Phiên xác thực đã hết hạn.')
+			return redirect('register')
+		
+		email = request.session['otp_email']
+		
+		try:
+			otp_reg = OTPRegistration.objects.get(email=email, is_verified=False)
+			otp_reg.regenerate_otp()
+			
+			# Gửi email mới
+			transaction.on_commit(lambda: send_otp_email(request, otp_reg))
+			
+			messages.success(request, f'Mã OTP mới đã được gửi tới {email}. Vui lòng kiểm tra hộp thư.')
+		except OTPRegistration.DoesNotExist:
+			messages.error(request, 'Không tìm thấy thông tin đăng ký.')
+			return redirect('register')
+		
+		return redirect('otp_verification')
 
 
 class LoginView(FormView):

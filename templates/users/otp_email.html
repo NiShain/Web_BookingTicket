@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mã xác thực đăng ký</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header .icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        .content {
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .content h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .content p {
+            color: #555;
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+        .otp-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 8px;
+            letter-spacing: 8px;
+            margin: 30px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="icon">🔐</div>
+            <h1>Mã Xác Thực Đăng Ký</h1>
+        </div>
+        <div class="content">
+            <h2>Chào {{ ten }}!</h2>
+            <p>Cảm ơn bạn đã đăng ký tài khoản BookingTicket. Để hoàn tất quá trình đăng ký, vui lòng nhập mã xác thực bên dưới:</p>
+            
+            <div class="otp-box">
+                {{ otp_code }}
+            </div>
+            
+            <p>Mã xác thực này sẽ <span class="highlight">hết hiệu lực sau {{ expire_minutes }} phút</span>.</p>
+            
+            <div class="warning">
+                <p><strong>⚠️ Lưu ý bảo mật:</strong></p>
+                <p>• Không chia sẻ mã này với bất kỳ ai<br>
+                • Chỉ nhập mã trên trang web chính thức của BookingTicket<br>
+                • Nếu bạn không yêu cầu đăng ký, hãy bỏ qua email này</p>
+            </div>
+            
+            <p>Nếu mã đã hết hạn, bạn có thể yêu cầu gửi lại mã mới trên trang web.</p>
+        </div>
+        <div class="footer">
+            <p>Email này được gửi tới: <strong>{{ email }}</strong></p>
+            <p>© 2025 BookingTicket System - Hệ thống đặt vé xe khách</p>
+        </div>
+    </div>
+</body>
+</html>

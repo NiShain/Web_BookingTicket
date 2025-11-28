@@ -3,6 +3,8 @@ from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 import uuid
+import random
+import string
 
 # -------------------------
 # 0. Account
@@ -93,6 +95,72 @@ class PasswordChangeVerification(models.Model):
 
     def __str__(self):
         return f"Password change verification for {self.account.username}"
+
+
+# -------------------------
+# 0.4. OTP Registration (for new account registration)
+# -------------------------
+class OTPRegistration(models.Model):
+    email = models.EmailField(unique=True, verbose_name="Email đăng ký")
+    ten = models.CharField(max_length=100, verbose_name="Họ và tên")
+    so_dien_thoai = models.CharField(max_length=15, verbose_name="Số điện thoại")
+    cccd = models.CharField(max_length=20, blank=True, null=True, verbose_name="CCCD")
+    password_hash = models.CharField(max_length=255, verbose_name="Mật khẩu đã hash")
+    otp_code = models.CharField(max_length=6, verbose_name="Mã OTP")
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_verified = models.BooleanField(default=False)
+    attempt_count = models.PositiveIntegerField(default=0)
+    
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            from django.conf import settings
+            expire_minutes = getattr(settings, 'OTP_EXPIRE_MINUTES', 10)
+            self.expires_at = timezone.now() + timezone.timedelta(minutes=expire_minutes)
+        if not self.otp_code:
+            self.otp_code = ''.join(random.choices(string.digits, k=6))
+        super().save(*args, **kwargs)
+    
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+    
+    def can_attempt(self):
+        """Kiểm tra có thể thử OTP không (tối đa 5 lần)"""
+        return self.attempt_count < 5
+    
+    def verify_otp(self, otp_input):
+        """Xác thực mã OTP"""
+        if self.is_expired():
+            return False, "Mã OTP đã hết hạn"
+        
+        if not self.can_attempt():
+            return False, "Bạn đã nhập sai quá nhiều lần"
+        
+        if self.otp_code == otp_input:
+            self.is_verified = True
+            self.save()
+            return True, "Xác thực thành công"
+        else:
+            self.attempt_count += 1
+            self.save()
+            return False, f"Mã OTP không đúng. Còn {5 - self.attempt_count} lần thử"
+    
+    def regenerate_otp(self):
+        """Tạo lại mã OTP mới"""
+        from django.conf import settings
+        expire_minutes = getattr(settings, 'OTP_EXPIRE_MINUTES', 10)
+        self.otp_code = ''.join(random.choices(string.digits, k=6))
+        self.expires_at = timezone.now() + timezone.timedelta(minutes=expire_minutes)
+        self.attempt_count = 0
+        self.is_verified = False
+        self.save()
+    
+    def __str__(self):
+        return f"OTP Registration for {self.email}"
+
+    class Meta:
+        verbose_name = "OTP Registration"
+        verbose_name_plural = "OTP Registrations"
 
 
 # -------------------------

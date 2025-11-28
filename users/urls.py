@@ -3,8 +3,16 @@ from django.urls import path
 from . import views 
 
 urlpatterns = [
-    # --- 1. Registration & Email Verification ---
+    # --- 1. Registration & OTP Verification ---
     path('register/', views.RegisterView.as_view(), name='register'),
+    
+    path('otp-verification/', 
+         views.OTPVerificationView.as_view(), 
+         name='otp_verification'),
+    
+    path('resend-otp/', 
+         views.ResendOTPView.as_view(), 
+         name='resend_otp'),
     
     path('verify-email/<uuid:token>/', 
          views.VerifyEmailView.as_view(), 
