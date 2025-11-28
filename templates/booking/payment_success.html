@@ -1,0 +1,48 @@
+{% extends "booking/base_booking.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %}Thanh Toán Thành Công{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-sm text-center p-5">
+                <div class="mb-4">
+                    <div class="rounded-circle bg-success d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-check text-white fa-3x"></i>
+                    </div>
+                </div>
+                
+                <h2 class="text-success mb-3">Thanh Toán Thành Công!</h2>
+                <p class="text-muted mb-4">Cảm ơn bạn đã đặt vé. Thông tin vé đã được gửi đến email của bạn.</p>
+
+                {% if ve %}
+                <div class="card bg-light border-0 mb-4 text-start">
+                    <div class="card-body">
+                        <h5 class="card-title border-bottom pb-2">Thông tin vé #{{ ve.id }}</h5>
+                        <p class="mb-1"><strong>Chuyến:</strong> {{ ve.chuyen.tuyen }}</p>
+                        <p class="mb-1"><strong>Ngày đi:</strong> {{ ve.chuyen.ngay_gio_khoi_hanh|date:"H:i d/m/Y" }}</p>
+                        <p class="mb-1"><strong>Ghế:</strong> 
+                            {% for ghe in ve.vi_tri_ghe %}
+                                <span class="badge bg-secondary">{{ ghe }}</span>
+                            {% endfor %}
+                        </p>
+                        <p class="mb-0"><strong>Tổng tiền:</strong> <span class="text-danger fw-bold">{{ ve.thanh_toan.so_tien|intcomma }}đ</span></p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="d-grid gap-2">
+                    <a href="{% url 'home' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-home me-2"></i>Về Trang Chủ
+                    </a>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                        Xem Lịch Sử Đặt Vé
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -24,4 +24,5 @@ urlpatterns = [
     # Include booking app URLs under namespace 'src' so templates using 'src:' resolve
     path('src/', include(('booking.urls', 'booking'), namespace='src')),
     path('accounts/', include('users.urls')),
+    path('payment/', include('payment.urls')),
 ]

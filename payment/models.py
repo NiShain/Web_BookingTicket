@@ -7,7 +7,8 @@ class PaymentInformationModel:
     amount: float
     order_description: str
     name: str
-
+    order_id: str = None  # Added default value as None
+    
 @dataclass
 class PaymentResponseModel:
     order_description: str

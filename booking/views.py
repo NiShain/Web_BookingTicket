@@ -7,12 +7,13 @@ from django.urls import reverse_lazy
 from django.db.models import Q
 from django.contrib import messages
 from users.models import KhachHang
-
+from django.db import transaction
 import json
 import uuid  
 
 from .models import Tuyen, Chuyen, Ve, ThanhToan, Xe
-
+from payment.services import VnPayService
+from payment.models import PaymentInformationModel
 
 class HomeView(TemplateView):
     """Homepage view with popular routes and upcoming trips."""
@@ -176,6 +177,7 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
         booked_seats = self.get_booked_seats(chuyen)
         selected_seats = request.POST.getlist('seats')
 
+        # 1. Validate ghế
         if not selected_seats:
             messages.error(request, 'Vui lòng chọn ít nhất một ghế.')
             return self.get(request, *args, **kwargs)
@@ -185,18 +187,63 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
             messages.error(request, f'Ghế {", ".join(conflict)} đã được đặt.')
             return self.get(request, *args, **kwargs)
 
-        request.session['booking_data'] = {
-            'chuyen_id': self.kwargs['chuyen_id'],
-            'selected_seats': selected_seats,
-        }
-        return redirect('thanh-toan') # Sửa lại redirect name cho khớp với urls
+        # 2. Chuẩn bị dữ liệu
+        khach_hang = request.user.khachhang
+        tong_tien = chuyen.gia_ve * len(selected_seats)
+        
+        # *** CHỈ TẠO MỘT LẦN VỚI ĐỊNH DẠNG SỐ ***
+        txn_ref = str(uuid.uuid4().int)[:10]  # Ví dụ: '1764267851'
+        
+        payment_url = None
+
+        try:
+            with transaction.atomic():
+                # Tạo Vé
+                ve = Ve.objects.create(
+                    chuyen=chuyen,
+                    khach=khach_hang,
+                    so_luong=len(selected_seats),
+                    vi_tri_ghe=selected_seats,
+                    trang_thai='CHO_THANH_TOAN'
+                )
+                
+                # *** XÓA DÒNG: txn_ref = f"VE-{uuid.uuid4().hex[:8].upper()}" ***
+                
+                # Tạo Thanh Toán
+                ThanhToan.objects.create(
+                    ve=ve,
+                    phuong_thuc='VNPAY',
+                    trang_thai='CHO_THANH_TOAN',
+                    ma_giao_dich=txn_ref,  # Lưu mã số
+                    so_tien=tong_tien
+                )
+                
+                # Tạo URL VNPAY
+                payment_info = PaymentInformationModel(
+                    order_type="billpayment",
+                    amount=float(tong_tien),
+                    order_description=f"Thanh toan ve {txn_ref}",
+                    name=khach_hang.ten,
+                    order_id=txn_ref  # Gửi mã số sang VNPAY
+                )
+                
+                vnp_service = VnPayService()
+                payment_url = vnp_service.create_payment_url(payment_info, request)
+
+        except Exception as e:
+            messages.error(request, f'Lỗi khởi tạo: {str(e)}')
+            return self.get(request, *args, **kwargs)
+
+        if payment_url:
+            return redirect(payment_url)
+            
+        return self.get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         chuyen = self.get_chuyen()
         booked_seats = self.get_booked_seats(chuyen)
 
-        # [SỬA ĐỔI]: Gọi method của class thay vì hàm bên ngoài
         seat_layout = self._generate_seat_layout(chuyen.xe.so_ghe)
 
         context.update({
@@ -208,78 +255,7 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class ThanhToanView(LoginRequiredMixin, TemplateView):
-    """Payment confirmation and processing view."""
-    template_name = 'booking/thanh_toan.html'
 
-    def dispatch(self, request, *args, **kwargs):
-        if not request.session.get('booking_data'):
-            messages.error(request, 'Không tìm thấy thông tin đặt vé.')
-            return redirect('danh-sach-chuyen')
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_booking_data(self):
-        return self.request.session.get('booking_data')
-
-    def get_chuyen(self):
-        booking_data = self.get_booking_data()
-        return get_object_or_404(
-            Chuyen.objects.select_related('tuyen', 'xe'),
-            pk=booking_data['chuyen_id']
-        )
-
-    def post(self, request, *args, **kwargs):
-        booking_data = self.get_booking_data()
-        chuyen = self.get_chuyen()
-        phuong_thuc = request.POST.get('phuong_thuc', 'CHUYEN_KHOAN')
-
-        try:
-            khach_hang = request.user.khachhang
-
-            ve = Ve.objects.create(
-                chuyen=chuyen,
-                khach=khach_hang,
-                so_luong=len(booking_data['selected_seats']),
-                vi_tri_ghe=booking_data['selected_seats'], # Lưu ý: Field này cần model hỗ trợ JSON hoặc List
-                trang_thai='DA_THANH_TOAN'
-            )
-
-            # [SỬA ĐỔI]: Logic tạo thanh toán dùng biến đã import global
-            ma_giao_dich = f'TXN{uuid.uuid4().hex[:12].upper()}'
-            
-            ThanhToan.objects.create(
-                ve=ve,
-                phuong_thuc=phuong_thuc,
-                trang_thai='THANH_CONG',
-                ma_giao_dich=ma_giao_dich,
-                # so_tien=... (Nên thêm field số tiền vào đây nếu model có)
-            )
-
-            del request.session['booking_data']
-
-            messages.success(request, f'Đặt vé thành công! Mã giao dịch: {ma_giao_dich}')
-            return redirect('dashboard') # Redirect về trang user dashboard
-
-        except Exception as e:
-            messages.error(request, f'Có lỗi xảy ra: {str(e)}')
-            return self.get(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        booking_data = self.get_booking_data()
-        chuyen = self.get_chuyen()
-
-        selected_seats = booking_data['selected_seats']
-        so_luong = len(selected_seats)
-        tong_tien = chuyen.gia_ve * so_luong
-
-        context.update({
-            'chuyen': chuyen,
-            'selected_seats': selected_seats,
-            'so_luong': so_luong,
-            'tong_tien': tong_tien,
-        })
-        return context
     
 #====================== ADMIN ======================#
     
@@ -444,3 +420,23 @@ class AdminKhachHangDetailView(AdminRequiredMixin, DetailView):
             khach=self.object
         ).select_related('chuyen', 'chuyen__tuyen').order_by('-chuyen__ngay_gio_khoi_hanh')
         return context
+
+class PaymentSuccessView(LoginRequiredMixin, TemplateView):
+    template_name = 'booking/payment_success.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Lấy mã giao dịch từ URL (nếu VNPAY trả về vnp_TxnRef)
+        txn_ref = self.request.GET.get('vnp_TxnRef') or self.request.GET.get('order_id')
+        
+        if txn_ref:
+            try:
+                # Tìm vé dựa trên mã giao dịch trong bảng ThanhToan
+                thanh_toan = ThanhToan.objects.get(ma_giao_dich=txn_ref)
+                context['ve'] = thanh_toan.ve
+            except ThanhToan.DoesNotExist:
+                pass
+        return context
+
+class PaymentProcessingView(TemplateView):
+    template_name = 'booking/payment_processing.html'

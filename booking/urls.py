@@ -8,7 +8,8 @@ urlpatterns = [
     path('danh-sach-tuyens/', views.DanhSachTuyenView.as_view(), name='danh_sach_tuyens'),
     path('danh-sach-chuyen-xe/', views.DanhSachChuyenXeView.as_view(), name='danh_sach_chuyen_xe'),
     path('chuyen/<int:chuyen_id>/chon-ghe/', views.ChonGheView.as_view(), name='chon_ghe'),
-    path('thanh-toan/', views.ThanhToanView.as_view(), name='thanh_toan'),
+    path('payment/success/', views.PaymentSuccessView.as_view(), name='payment-success'),
+    path('payment/processing/', views.PaymentProcessingView.as_view(), name='payment-processing'),
 
     # --- URL ADMIN (Quản trị viên) ---
     
@@ -38,3 +39,4 @@ urlpatterns = [
     path('manage/khach-hang/', views.AdminKhachHangListView.as_view(), name='admin_khachhang_list'),
     path('manage/khach-hang/<int:pk>/', views.AdminKhachHangDetailView.as_view(), name='admin_khachhang_detail'),
 ]
+

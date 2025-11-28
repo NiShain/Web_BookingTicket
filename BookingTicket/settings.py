@@ -175,12 +175,12 @@ PASSWORD_CHANGE_EXPIRE_MINUTES = 30  # Password change link expires after 30 min
 
 #Payment
 VNPAY_CONFIG = {
-    "TmnCode": "LNY8EJHT",
-    "HashSecret": "HPVEG2CRW792HIIP53LGPVQP6D5XKH1S",
+    "TmnCode": "9HZKBNNN",
+    "HashSecret": "8HGHV2MT8QI5NLICKG28HOBLJ0AATIE6",
     "BaseUrl": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
     "Version": "2.1.0",
     "Command": "pay",
     "CurrCode": "VND",
     "Locale": "vn",
-    "ReturnUrl": "http://localhost:8000/payment/callback_vnpay" # Sửa lại port cho đúng Django
+    "ReturnUrl": "http://127.0.0.1:8000/payment/callback_vnpay" # Sửa lại port cho đúng Django
 }
