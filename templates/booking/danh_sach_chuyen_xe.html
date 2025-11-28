@@ -146,6 +146,16 @@
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
   }
 
+  .btn-book[href*="login"] {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: 1px solid #d97706;
+  }
+
+  .btn-book[href*="login"]:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  }
+
   .pagination {
     display: flex;
     justify-content: center;
@@ -257,7 +267,11 @@
                 {{ chuyen.so_ve_con_lai }}/{{ chuyen.tong_so_ve }}
               </td>
               <td>
-                <a href="{% url 'src:chon_ghe' chuyen.id %}" class="btn-book">Đặt vé</a>
+                {% if user.is_authenticated %}
+                  <a href="{% url 'src:chon_ghe' chuyen.id %}" class="btn-book">Đặt vé</a>
+                {% else %}
+                  <a href="{% url 'login' %}?next={% url 'src:chon_ghe' chuyen.id %}" class="btn-book">Đăng nhập để đặt</a>
+                {% endif %}
               </td>
             </tr>
           {% endfor %}

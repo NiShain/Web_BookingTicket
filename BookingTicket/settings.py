@@ -83,13 +83,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',   # vẫn để mysql vì Django không có backend riêng cho MariaDB
         'NAME': 'bookingticket',                 # schema bạn đã tạo
         'USER': 'root',                        # user của MariaDB (mặc định là root)
-        'PASSWORD': '03062005',                 # mật khẩu root (đã cập nhật theo HelixSQL)
+        'PASSWORD': '24042005',                 # mật khẩu root (đã cập nhật theo HelixSQL)
         'HOST': '127.0.0.1',                   # localhost
         'PORT': '3307',                        # port MariaDB (có thể là 3306 hoặc 3307)
         'OPTIONS': {
             'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",        },
     }
 }
 
@@ -172,6 +171,7 @@ EMAIL_TIMEOUT = 60
 EMAIL_VERIFICATION_EXPIRE_HOURS = 1  # Token expires after 1 hour
 PASSWORD_RESET_EXPIRE_HOURS = 1  # Password reset link expires after 1 hour
 PASSWORD_CHANGE_EXPIRE_MINUTES = 30  # Password change link expires after 30 minutes
+OTP_EXPIRE_MINUTES = 10  # OTP expires after 10 minutes
 
 #Payment
 VNPAY_CONFIG = {

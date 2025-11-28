@@ -45,13 +45,23 @@ class Command(BaseCommand):
                     created_customers += 1
 
 
-        # Sample routes
+        # Sample routes - More comprehensive list
         routes = [
             ("Hà Nội", "Hải Phòng", 120),
             ("Hà Nội", "Quảng Ninh", 250),
             ("Hà Nội", "Thanh Hóa", 160),
+            ("Hà Nội", "Vinh", 300),
+            ("Hà Nội", "Đà Nẵng", 760),
             ("Hồ Chí Minh", "Vũng Tàu", 120),
+            ("Hồ Chí Minh", "Đà Lạt", 300),
+            ("Hồ Chí Minh", "Nha Trang", 450),
+            ("Hồ Chí Minh", "Cần Thơ", 180),
             ("Đà Nẵng", "Huế", 100),
+            ("Đà Nẵng", "Hội An", 30),
+            ("Đà Nẵng", "Quy Nhon", 180),
+            ("Hải Phòng", "Quảng Ninh", 150),
+            ("Thanh Hóa", "Vinh", 140),
+            ("Nha Trang", "Đà Lạt", 220),
         ]
 
         created_routes = []
@@ -62,11 +72,16 @@ class Command(BaseCommand):
             )
             created_routes.append(tuyen)
 
-        # Sample vehicles
+        # Sample vehicles - More variety
         vehicles = [
             ("29A-11111", "Limousine 16 chỗ", 16),
             ("30B-22222", "Giường nằm 40 chỗ", 40),
             ("43C-33333", "Ghế ngồi 29 chỗ", 29),
+            ("51D-44444", "Limousine 24 chỗ", 24),
+            ("61E-55555", "Giường nằm 34 chỗ", 34),
+            ("72F-66666", "Ghế ngồi 45 chỗ", 45),
+            ("29G-77777", "Limousine 20 chỗ", 20),
+            ("30H-88888", "Giường nằm 36 chỗ", 36),
         ]
 
         created_vehicles = []
@@ -81,21 +96,22 @@ class Command(BaseCommand):
                 xe.save()
             created_vehicles.append(xe)
 
-        # Create trips for each route (2-3 upcoming trips)
+        # Create multiple trips for each route (5-7 upcoming trips)
         created_trips = []
         for i, tuyen in enumerate(created_routes):
-            # pick a vehicle in round-robin
-            xe = created_vehicles[i % len(created_vehicles)]
-            # create 2 trips: tomorrow morning and day after afternoon
-            trip_times = [now + timedelta(days=1, hours=9 + i), now + timedelta(days=2, hours=15 + i)]
-            for j, start in enumerate(trip_times):
-                # ensure start is in the future (clean enforces)
-                ngay_gio_khoi_hanh = start.replace(minute=0, second=0, microsecond=0)
-                ngay_gio_den = ngay_gio_khoi_hanh + timedelta(hours=3)
-                tong_so_ve = min(xe.so_ghe, 40)
-                gia_ve = 150000 + (i * 20000) + (j * 5000)
+            # Create multiple trips for each route with different vehicles
+            for trip_day in range(1, 8):  # Next 7 days
+                # pick a vehicle in round-robin
+                xe = created_vehicles[(i + trip_day) % len(created_vehicles)]
+                
+                # Morning trip (8-11 AM)
+                morning_time = now + timedelta(days=trip_day, hours=8 + (i % 4))
+                ngay_gio_khoi_hanh = morning_time.replace(minute=0, second=0, microsecond=0)
+                ngay_gio_den = ngay_gio_khoi_hanh + timedelta(hours=3 + (tuyen.khoang_cach // 100))
+                tong_so_ve = min(xe.so_ghe, 50)
+                gia_ve = 120000 + (i * 15000) + (trip_day * 2000)
 
-                chuyen, created = Chuyen.objects.get_or_create(
+                chuyen_morning, created = Chuyen.objects.get_or_create(
                     tuyen=tuyen,
                     xe=xe,
                     ngay_gio_khoi_hanh=ngay_gio_khoi_hanh,
@@ -105,7 +121,28 @@ class Command(BaseCommand):
                         "gia_ve": gia_ve,
                     }
                 )
-                created_trips.append(chuyen)
+                created_trips.append(chuyen_morning)
+                
+                # Evening trip (2-6 PM) for popular routes
+                if i < 10:  # Only for first 10 routes
+                    xe_evening = created_vehicles[(i + trip_day + 1) % len(created_vehicles)]
+                    evening_time = now + timedelta(days=trip_day, hours=14 + (i % 4))
+                    ngay_gio_khoi_hanh_evening = evening_time.replace(minute=0, second=0, microsecond=0)
+                    ngay_gio_den_evening = ngay_gio_khoi_hanh_evening + timedelta(hours=3 + (tuyen.khoang_cach // 100))
+                    tong_so_ve_evening = min(xe_evening.so_ghe, 50)
+                    gia_ve_evening = 140000 + (i * 15000) + (trip_day * 2000)
+
+                    chuyen_evening, created = Chuyen.objects.get_or_create(
+                        tuyen=tuyen,
+                        xe=xe_evening,
+                        ngay_gio_khoi_hanh=ngay_gio_khoi_hanh_evening,
+                        defaults={
+                            "ngay_gio_den": ngay_gio_den_evening,
+                            "tong_so_ve": tong_so_ve_evening,
+                            "gia_ve": gia_ve_evening,
+                        }
+                    )
+                    created_trips.append(chuyen_evening)
 
         summary = (
             f"Seeded: {len(created_routes)} routes, {len(created_vehicles)} vehicles, {len(created_trips)} trips.\n"
