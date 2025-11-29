@@ -152,8 +152,6 @@ class Voucher(models.Model):
     
     loai_giam_gia = models.CharField(max_length=20, choices=LOAI_GIAM_GIA_CHOICES, default='PHAN_TRAM')
     gia_tri_giam = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="Giá trị giảm")
-    # Nếu loai_giam_gia = PHAN_TRAM: gia_tri_giam = 20 (tức 20%)
-    # Nếu loai_giam_gia = SO_TIEN: gia_tri_giam = 50000 (tức 50,000đ)
     
     giam_toi_da = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True, verbose_name="Giảm tối đa (đ)")
     gia_tri_don_toi_thieu = models.DecimalField(max_digits=10, decimal_places=0, default=0, verbose_name="Giá trị đơn tối thiểu")
@@ -163,9 +161,9 @@ class Voucher(models.Model):
     
     so_luong = models.IntegerField(default=100, verbose_name="Số lượng voucher")
     da_su_dung = models.IntegerField(default=0, verbose_name="Đã sử dụng")
+    so_lan_su_dung_toi_da_moi_user = models.IntegerField(default=1, verbose_name="Số lần dùng/user")
     
     khach_hang_duoc_su_dung = models.ManyToManyField(KhachHang, blank=True, related_name='vouchers_nhan', verbose_name="Khách hàng được sử dụng")
-    # Nếu để trống = tất cả user đều dùng được
     
     trang_thai = models.BooleanField(default=True, verbose_name="Đang hoạt động")
     ngay_tao = models.DateTimeField(auto_now_add=True)
@@ -177,6 +175,21 @@ class Voucher(models.Model):
     
     def __str__(self):
         return f"{self.ma_voucher} - {self.ten_voucher}"
+    
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        
+        if self.ngay_bat_dau >= self.ngay_ket_thuc:
+            raise ValidationError("Ngày bắt đầu phải trước ngày kết thúc.")
+        
+        if self.gia_tri_giam <= 0:
+            raise ValidationError("Giá trị giảm phải lớn hơn 0.")
+        
+        if self.loai_giam_gia == 'PHAN_TRAM' and self.gia_tri_giam > 100:
+            raise ValidationError("Giảm giá theo phần trăm không được vượt quá 100%.")
+        
+        if self.so_luong <= 0:
+            raise ValidationError("Số lượng voucher phải lớn hơn 0.")
     
     @staticmethod
     def tao_ma_voucher(length=8, prefix="FUTA"):
@@ -192,20 +205,30 @@ class Voucher(models.Model):
                 self.ngay_bat_dau <= now <= self.ngay_ket_thuc and 
                 self.da_su_dung < self.so_luong)
     
+    def user_da_dung_bao_nhieu_lan(self, khach_hang):
+        """Kiểm tra user đã dùng voucher này bao nhiêu lần"""
+        return self.lich_su_su_dung.filter(khach_hang=khach_hang).count()
+    
+    def user_con_duoc_dung(self, khach_hang):
+        """Kiểm tra user còn được dùng voucher không"""
+        return self.user_da_dung_bao_nhieu_lan(khach_hang) < self.so_lan_su_dung_toi_da_moi_user
+    
     def tinh_giam_gia(self, tong_tien):
         """Tính số tiền được giảm"""
+        from decimal import Decimal
+        
         if not self.con_hieu_luc():
-            return 0
+            return Decimal('0')
         
         if tong_tien < self.gia_tri_don_toi_thieu:
-            return 0
+            return Decimal('0')
         
         if self.loai_giam_gia == 'PHAN_TRAM':
             giam = tong_tien * (self.gia_tri_giam / 100)
             if self.giam_toi_da:
                 giam = min(giam, self.giam_toi_da)
-            return giam
-        else:  # SO_TIEN
+            return giam.quantize(Decimal('1'))
+        else:
             return min(self.gia_tri_giam, tong_tien)
 
 
@@ -217,6 +240,11 @@ class VoucherSuDung(models.Model):
     so_tien_giam = models.DecimalField(max_digits=10, decimal_places=0)
     ngay_su_dung = models.DateTimeField(auto_now_add=True)
     
+    def __str__(self):
+        return f"{self.voucher.ma_voucher} - {self.khach_hang.ten} - {self.so_tien_giam}đ"
+    
     class Meta:
         verbose_name = "Lịch sử voucher"
         verbose_name_plural = "Lịch sử vouchers"
+        ordering = ['-ngay_su_dung']
+        # unique_together = ('voucher', 'khach_hang')  # Bỏ comment nếu muốn mỗi user chỉ dùng 1 lần

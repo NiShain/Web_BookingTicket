@@ -1,0 +1,113 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if object %}Sửa{% else %}Tạo{% endif %} Voucher</h2>
+    
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Tên voucher *</label>
+                    {{ form.ten_voucher }}
+                </div>
+                
+                <div class="form-group">
+                    <label>Mô tả</label>
+                    {{ form.mo_ta }}
+                </div>
+                
+                <div class="form-group">
+                    <label>Loại giảm giá *</label>
+                    {{ form.loai_giam_gia }}
+                </div>
+                
+                <div class="form-group">
+                    <label>Giá trị giảm *</label>
+                    {{ form.gia_tri_giam }}
+                    <small class="form-text text-muted">
+                        Nếu chọn "Phần trăm": nhập 20 = giảm 20%. Nếu chọn "Số tiền": nhập 50000 = giảm 50,000đ
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Giảm tối đa (đ)</label>
+                    {{ form.giam_toi_da }}
+                    <small class="form-text text-muted">Chỉ áp dụng khi loại giảm = Phần trăm</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Giá trị đơn tối thiểu (đ)</label>
+                    {{ form.gia_tri_don_toi_thieu }}
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Ngày bắt đầu *</label>
+                    {{ form.ngay_bat_dau }}
+                </div>
+                
+                <div class="form-group">
+                    <label>Ngày kết thúc *</label>
+                    {{ form.ngay_ket_thuc }}
+                </div>
+                
+                <div class="form-group">
+                    <label>Số lượng voucher *</label>
+                    {{ form.so_luong }}
+                </div>
+                
+                <div class="form-group">
+                    <label>Số lần dùng tối đa/user *</label>
+                    {{ form.so_lan_su_dung_toi_da_moi_user }}
+                    <small class="form-text text-muted">Mỗi user có thể dùng voucher này bao nhiêu lần</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Trạng thái</label>
+                    <div class="form-check">
+                        {{ form.trang_thai }}
+                        <label class="form-check-label">Đang hoạt động</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PHẦN QUAN TRỌNG: CHỌN KHÁCH HÀNG -->
+        <div class="form-group mt-3">
+            <label>👥 Khách hàng được sử dụng</label>
+            {{ form.khach_hang_duoc_su_dung }}
+            <small class="form-text text-muted">
+                <strong>Để trống</strong> = Tất cả khách hàng đều dùng được.<br>
+                <strong>Chọn user</strong> = Chỉ những user được chọn mới dùng được.
+            </small>
+        </div>
+        
+        <hr>
+        
+        <button type="submit" class="btn btn-primary">
+            {% if object %}💾 Cập nhật{% else %}➕ Tạo voucher{% endif %}
+        </button>
+        <a href="{% url 'admin_panel:voucher_list' %}" class="btn btn-secondary">❌ Hủy</a>
+    </form>
+</div>
+
+<!-- Script để hiển thị form đẹp hơn -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Thêm class Bootstrap cho tất cả input
+    document.querySelectorAll('input, select, textarea').forEach(function(element) {
+        element.classList.add('form-control');
+    });
+    
+    // Checkbox đặc biệt
+    document.querySelectorAll('input[type="checkbox"]').forEach(function(element) {
+        element.classList.remove('form-control');
+        element.classList.add('form-check-input');
+    });
+});
+</script>
+{% endblock %}

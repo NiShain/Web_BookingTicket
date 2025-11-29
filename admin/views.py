@@ -207,15 +207,20 @@ class AdminVoucherListView(AdminRequiredMixin, ListView):
 class AdminVoucherCreateView(AdminRequiredMixin, CreateView):
     model = Voucher
     template_name = 'admin/voucher_form.html'
-    fields = ['ten_voucher', 'mo_ta', 'loai_giam_gia', 'gia_tri_giam', 'giam_toi_da', 
-              'gia_tri_don_toi_thieu', 'ngay_bat_dau', 'ngay_ket_thuc', 'so_luong', 
-              'khach_hang_duoc_su_dung', 'trang_thai']
+    fields = [
+        'ten_voucher', 'mo_ta', 'loai_giam_gia', 'gia_tri_giam', 
+        'giam_toi_da', 'gia_tri_don_toi_thieu', 'ngay_bat_dau', 
+        'ngay_ket_thuc', 'so_luong', 'so_lan_su_dung_toi_da_moi_user',
+        'khach_hang_duoc_su_dung',  # Trường này cho phép admin chọn user
+        'trang_thai'
+    ]
     success_url = reverse_lazy('admin_panel:voucher_list')
     
     def form_valid(self, form):
-        # Tự động tạo mã voucher
+        # Tự động tạo mã voucher ngẫu nhiên
         form.instance.ma_voucher = Voucher.tao_ma_voucher()
-        messages.success(self.request, f"Đã tạo voucher: {form.instance.ma_voucher}")
+        
+        messages.success(self.request, f"✅ Đã tạo voucher: {form.instance.ma_voucher}")
         return super().form_valid(form)
 
 class AdminVoucherUpdateView(AdminRequiredMixin, UpdateView):

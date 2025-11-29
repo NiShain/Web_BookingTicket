@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView, ListView
 from django.contrib import messages
@@ -201,21 +201,35 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
         if ma_voucher:
             try:
                 voucher = Voucher.objects.get(ma_voucher=ma_voucher)
-                if voucher.con_hieu_luc():
-                    # Kiểm tra user có quyền dùng không
-                    khach_hang = request.user.khachhang
-                    if (not voucher.khach_hang_duoc_su_dung.exists() or 
-                        voucher.khach_hang_duoc_su_dung.filter(id=khach_hang.id).exists()):
-                        so_tien_giam = voucher.tinh_giam_gia(tong_tien)
-                        tong_tien -= so_tien_giam
-                    else:
-                        messages.warning(request, "Bạn không có quyền sử dụng voucher này!")
-                        voucher = None
-                else:
-                    messages.error(request, "Voucher đã hết hạn hoặc hết lượt sử dụng!")
+                
+                # Kiểm tra voucher còn hiệu lực
+                if not voucher.con_hieu_luc():
+                    messages.error(request, "❌ Voucher đã hết hạn hoặc hết lượt sử dụng!")
                     voucher = None
+                
+                # Kiểm tra user có quyền dùng voucher không
+                elif voucher.khach_hang_duoc_su_dung.exists():  # Nếu có chỉ định user
+                    if not voucher.khach_hang_duoc_su_dung.filter(id=khach_hang.id).exists():
+                        messages.error(request, "❌ Bạn không có quyền sử dụng voucher này!")
+                        voucher = None
+                
+                # Kiểm tra user đã dùng voucher này quá số lần cho phép chưa
+                elif not voucher.user_con_duoc_dung(khach_hang):
+                    messages.error(request, "❌ Bạn đã sử dụng hết lượt voucher này!")
+                    voucher = None
+                
+                # Tính tiền giảm
+                else:
+                    so_tien_giam = voucher.tinh_giam_gia(tong_tien)
+                    if so_tien_giam > 0:
+                        tong_tien -= so_tien_giam
+                        messages.success(request, f"✅ Áp dụng voucher thành công! Giảm {so_tien_giam:,.0f}đ")
+                    else:
+                        messages.warning(request, "⚠️ Đơn hàng chưa đủ điều kiện áp dụng voucher!")
+                        voucher = None
+                        
             except Voucher.DoesNotExist:
-                messages.error(request, "Mã voucher không tồn tại!")
+                messages.error(request, "❌ Mã voucher không tồn tại!")
         
         try:
             with transaction.atomic():
@@ -228,7 +242,7 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
                     trang_thai='CHO_THANH_TOAN'
                 )
                 
-                # Nếu có voucher, lưu lịch sử
+                # Lưu lịch sử voucher
                 if voucher and so_tien_giam > 0:
                     VoucherSuDung.objects.create(
                         voucher=voucher,
@@ -242,10 +256,10 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
                 # Tạo Thanh Toán
                 ThanhToan.objects.create(
                     ve=ve,
+                    so_tien=tong_tien,  # Đã trừ voucher
                     phuong_thuc='VNPAY',
                     trang_thai='CHO_THANH_TOAN',
                     ma_giao_dich=txn_ref,  # Lưu mã số
-                    so_tien=tong_tien
                 )
                 
                 # Tạo URL VNPAY
@@ -282,6 +296,19 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
             'seat_layout': seat_layout,
             'so_ghe_con_lai': chuyen.tong_so_ve - len(booked_seats),
         })
+        
+        # Lấy danh sách voucher khả dụng cho user hiện tại
+        khach_hang = self.request.user.khachhang
+        vouchers = Voucher.objects.filter(
+            trang_thai=True,
+            ngay_bat_dau__lte=timezone.now(),
+            ngay_ket_thuc__gte=timezone.now()
+        ).filter(
+            Q(khach_hang_duoc_su_dung__isnull=True) |  # Voucher cho tất cả
+            Q(khach_hang_duoc_su_dung=khach_hang)      # Voucher cho user này
+        ).distinct()
+        
+        context['vouchers'] = vouchers
         return context
 
 class PaymentSuccessView(LoginRequiredMixin, TemplateView):
