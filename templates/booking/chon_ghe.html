@@ -562,6 +562,19 @@
         </button>
       </div>
     </div>
+
+    <div class="voucher-section">
+      <h3>Mã giảm giá</h3>
+      <select name="voucher_code" class="form-control">
+        <option value="">-- Chọn voucher --</option>
+        {% for voucher in vouchers %}
+        <option value="{{ voucher.ma_voucher }}">
+            {{ voucher.ma_voucher }} - {{ voucher.ten_voucher }} 
+            (Giảm {% if voucher.loai_giam_gia == 'PHAN_TRAM' %}{{ voucher.gia_tri_giam }}%{% else %}{{ voucher.gia_tri_giam|floatformat:0 }}đ{% endif %})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
   </form>
 </div>
 

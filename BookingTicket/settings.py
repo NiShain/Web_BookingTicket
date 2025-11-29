@@ -83,7 +83,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',   # vẫn để mysql vì Django không có backend riêng cho MariaDB
         'NAME': 'bookingticket',                 # schema bạn đã tạo
         'USER': 'root',                        # user của MariaDB (mặc định là root)
-        'PASSWORD': '24042005',                 # mật khẩu root (đã cập nhật theo HelixSQL)
+        'PASSWORD': '03062005',                 # mật khẩu root (đã cập nhật theo HelixSQL)
         'HOST': '127.0.0.1',                   # localhost
         'PORT': '3307',                        # port MariaDB (có thể là 3306 hoặc 3307)
         'OPTIONS': {
@@ -117,11 +117,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_TZ = True
+TIME_ZONE = 'Asia/Ho_Chi_Minh'  # Múi giờ Việt Nam
+USE_TZ = True  # Bật timezone-aware datetime
 
 AUTH_USER_MODEL = 'users.Account'
 

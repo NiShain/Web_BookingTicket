@@ -1,0 +1,196 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if object %}Sửa{% else %}Tạo{% endif %} Voucher</h2>
+    
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>Tên voucher *</label>
+                    {{ form.ten_voucher }}
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label>Mô tả</label>
+                    {{ form.mo_ta }}
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label>Loại giảm giá *</label>
+                    {{ form.loai_giam_gia }}
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label>Giá trị giảm *</label>
+                    {{ form.gia_tri_giam }}
+                    <small class="form-text text-muted">
+                        Nếu chọn "Phần trăm": nhập 20 = giảm 20%. Nếu chọn "Số tiền": nhập 50000 = giảm 50,000đ
+                    </small>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label>Giảm tối đa (đ)</label>
+                    {{ form.giam_toi_da }}
+                    <small class="form-text text-muted">Chỉ áp dụng khi loại giảm = Phần trăm</small>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label>Giá trị đơn tối thiểu (đ)</label>
+                    {{ form.gia_tri_don_toi_thieu }}
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label>Ngày bắt đầu *</label>
+                    <input type="datetime-local" 
+                           name="ngay_bat_dau" 
+                           id="id_ngay_bat_dau"
+                           class="form-control" 
+                           value="{{ form.ngay_bat_dau.value|date:'Y-m-d\TH:i' }}"
+                           required>
+                    <small class="form-text text-muted">Chọn ngày và giờ bắt đầu hiệu lực</small>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label>Ngày kết thúc *</label>
+                    <input type="datetime-local" 
+                           name="ngay_ket_thuc" 
+                           id="id_ngay_ket_thuc"
+                           class="form-control" 
+                           value="{{ form.ngay_ket_thuc.value|date:'Y-m-d\TH:i' }}"
+                           required>
+                    <small class="form-text text-muted">Chọn ngày và giờ hết hạn</small>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label>Số lượng voucher *</label>
+                    {{ form.so_luong }}
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label>Số lần dùng tối đa/user *</label>
+                    {{ form.so_lan_su_dung_toi_da_moi_user }}
+                    <small class="form-text text-muted">Mỗi user có thể dùng voucher này bao nhiêu lần</small>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label>Trạng thái</label>
+                    <div class="form-check">
+                        {{ form.trang_thai }}
+                        <label class="form-check-label">Đang hoạt động</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PHẦN QUAN TRỌNG: CHỌN KHÁCH HÀNG -->
+        <div class="form-group mt-3 mb-3">
+            <label>👥 Khách hàng được sử dụng</label>
+            {{ form.khach_hang_duoc_su_dung }}
+            <small class="form-text text-muted">
+                <strong>Để trống</strong> = Tất cả khách hàng đều dùng được.<br>
+                <strong>Chọn user</strong> = Chỉ những user được chọn mới dùng được.<br>
+                Nhấn <kbd>Ctrl</kbd> (hoặc <kbd>Cmd</kbd> trên Mac) để chọn nhiều user.
+            </small>
+        </div>
+        
+        <hr>
+        
+        <button type="submit" class="btn btn-primary">
+            {% if object %}💾 Cập nhật{% else %}➕ Tạo voucher{% endif %}
+        </button>
+        <a href="{% url 'admin_panel:voucher_list' %}" class="btn btn-secondary">❌ Hủy</a>
+    </form>
+</div>
+
+<!-- Script để hiển thị form đẹp hơn và set datetime mặc định -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Thêm class Bootstrap cho tất cả input
+    document.querySelectorAll('input:not([type="datetime-local"]), select, textarea').forEach(function(element) {
+        element.classList.add('form-control');
+    });
+    
+    // Checkbox đặc biệt
+    document.querySelectorAll('input[type="checkbox"]').forEach(function(element) {
+        element.classList.remove('form-control');
+        element.classList.add('form-check-input');
+    });
+    
+    // Set giá trị mặc định cho datetime nếu đang tạo mới
+    {% if not object %}
+    const now = new Date();
+    const dateStart = document.getElementById('id_ngay_bat_dau');
+    const dateEnd = document.getElementById('id_ngay_ket_thuc');
+    
+    if (dateStart && !dateStart.value) {
+        // Set ngày bắt đầu = hôm nay
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        dateStart.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    
+    if (dateEnd && !dateEnd.value) {
+        // Set ngày kết thúc = 30 ngày sau
+        const endDate = new Date(now);
+        endDate.setDate(endDate.getDate() + 30);
+        const year = endDate.getFullYear();
+        const month = String(endDate.getMonth() + 1).padStart(2, '0');
+        const day = String(endDate.getDate()).padStart(2, '0');
+        const hours = '23';
+        const minutes = '59';
+        dateEnd.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    {% endif %}
+    
+    // Validate ngày kết thúc phải sau ngày bắt đầu
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const startDate = new Date(document.getElementById('id_ngay_bat_dau').value);
+        const endDate = new Date(document.getElementById('id_ngay_ket_thuc').value);
+        
+        if (startDate >= endDate) {
+            e.preventDefault();
+            alert('⚠️ Ngày kết thúc phải sau ngày bắt đầu!');
+            return false;
+        }
+    });
+});
+</script>
+
+<style>
+    /* Style cho datetime-local input */
+    input[type="datetime-local"] {
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #495057;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    input[type="datetime-local"]:focus {
+        color: #495057;
+        background-color: #fff;
+        border-color: #80bdff;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    /* Style cho select multiple */
+    select[multiple] {
+        height: 150px;
+    }
+</style>
+{% endblock %}

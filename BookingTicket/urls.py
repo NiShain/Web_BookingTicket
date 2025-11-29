@@ -20,8 +20,7 @@ from booking import views as booking_views
 
 urlpatterns = [
     path('', booking_views.HomeView.as_view(), name='home'),
-    #path('admin/', admin.site.urls),
-    # Include booking app URLs under namespace 'src' so templates using 'src:' resolve
+    path('admin/', include('admin.urls')),
     path('src/', include(('booking.urls', 'booking'), namespace='src')),
     path('accounts/', include('users.urls')),
     path('payment/', include('payment.urls')),

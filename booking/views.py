@@ -1,19 +1,16 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
-from django.db.models import Count
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import TemplateView, ListView, UpdateView, CreateView, DeleteView, DetailView
-from django.urls import reverse_lazy
-from django.db.models import Q
+from django.db.models import Count, Q
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView, ListView
 from django.contrib import messages
-from users.models import KhachHang
 from django.db import transaction
-import json
 import uuid  
 
 from .models import Tuyen, Chuyen, Ve, ThanhToan, Xe
 from payment.services import VnPayService
 from payment.models import PaymentInformationModel
+from booking.models import Voucher, VoucherSuDung
 
 class HomeView(TemplateView):
     """Homepage view with popular routes and upcoming trips."""
@@ -196,6 +193,44 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
         
         payment_url = None
 
+        # Xử lý voucher
+        ma_voucher = request.POST.get('voucher_code')
+        voucher = None
+        so_tien_giam = 0
+        
+        if ma_voucher:
+            try:
+                voucher = Voucher.objects.get(ma_voucher=ma_voucher)
+                
+                # Kiểm tra voucher còn hiệu lực
+                if not voucher.con_hieu_luc():
+                    messages.error(request, "❌ Voucher đã hết hạn hoặc hết lượt sử dụng!")
+                    voucher = None
+                
+                # Kiểm tra user có quyền dùng voucher không
+                elif voucher.khach_hang_duoc_su_dung.exists():  # Nếu có chỉ định user
+                    if not voucher.khach_hang_duoc_su_dung.filter(id=khach_hang.id).exists():
+                        messages.error(request, "❌ Bạn không có quyền sử dụng voucher này!")
+                        voucher = None
+                
+                # Kiểm tra user đã dùng voucher này quá số lần cho phép chưa
+                elif not voucher.user_con_duoc_dung(khach_hang):
+                    messages.error(request, "❌ Bạn đã sử dụng hết lượt voucher này!")
+                    voucher = None
+                
+                # Tính tiền giảm
+                else:
+                    so_tien_giam = voucher.tinh_giam_gia(tong_tien)
+                    if so_tien_giam > 0:
+                        tong_tien -= so_tien_giam
+                        messages.success(request, f"✅ Áp dụng voucher thành công! Giảm {so_tien_giam:,.0f}đ")
+                    else:
+                        messages.warning(request, "⚠️ Đơn hàng chưa đủ điều kiện áp dụng voucher!")
+                        voucher = None
+                        
+            except Voucher.DoesNotExist:
+                messages.error(request, "❌ Mã voucher không tồn tại!")
+        
         try:
             with transaction.atomic():
                 # Tạo Vé
@@ -207,15 +242,24 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
                     trang_thai='CHO_THANH_TOAN'
                 )
                 
-                # *** XÓA DÒNG: txn_ref = f"VE-{uuid.uuid4().hex[:8].upper()}" ***
+                # Lưu lịch sử voucher
+                if voucher and so_tien_giam > 0:
+                    VoucherSuDung.objects.create(
+                        voucher=voucher,
+                        khach_hang=khach_hang,
+                        ve=ve,
+                        so_tien_giam=so_tien_giam
+                    )
+                    voucher.da_su_dung += 1
+                    voucher.save()
                 
                 # Tạo Thanh Toán
                 ThanhToan.objects.create(
                     ve=ve,
+                    so_tien=tong_tien,  # Đã trừ voucher
                     phuong_thuc='VNPAY',
                     trang_thai='CHO_THANH_TOAN',
                     ma_giao_dich=txn_ref,  # Lưu mã số
-                    so_tien=tong_tien
                 )
                 
                 # Tạo URL VNPAY
@@ -252,173 +296,19 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
             'seat_layout': seat_layout,
             'so_ghe_con_lai': chuyen.tong_so_ve - len(booked_seats),
         })
-        return context
-
-
-
-    
-#====================== ADMIN ======================#
-    
-class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-
-    def test_func(self):
-        return self.request.user.is_active and self.request.user.is_staff
-    
-class AdminTuyenListView(AdminRequiredMixin, ListView):
-    model = Tuyen
-    template_name = 'booking/admin/tuyen_list.html'
-    context_object_name = 'tuyens'
-    paginate_by = 10
-
-class AdminTuyenCreateView(AdminRequiredMixin, CreateView):
-    model = Tuyen
-    template_name = 'booking/admin/tuyen_form.html'
-    fields = ['diem_di', 'diem_den', 'khoang_cach']
-    success_url = reverse_lazy('src:admin_tuyen_list')
-    extra_context = {'title': 'Thêm Tuyến Mới'}
-
-class AdminTuyenUpdateView(AdminRequiredMixin, UpdateView):
-    model = Tuyen
-    template_name = 'booking/admin/tuyen_form.html'
-    fields = ['diem_di', 'diem_den', 'khoang_cach']
-    success_url = reverse_lazy('src:admin_tuyen_list')
-    extra_context = {'title': 'Cập nhật Tuyến'}
-
-class AdminTuyenDeleteView(AdminRequiredMixin, DeleteView):
-    model = Tuyen
-    template_name = 'booking/admin/confirm_delete.html'
-    success_url = reverse_lazy('src:admin_tuyen_list')
-
-class AdminXeListView(AdminRequiredMixin, ListView):
-    model = Tuyen # Lưu ý: Sửa lại thành Xe khi bạn có model Xe import vào
-    # Giả sử bạn đã import Xe:
-    # model = Xe 
-    template_name = 'booking/admin/xe_list.html'
-    context_object_name = 'xes'
-
-    def get_queryset(self):
-        # Import Xe cục bộ nếu chưa có ở đầu file
-        from .models import Xe
-        return Xe.objects.all()
-
-class AdminXeCreateView(AdminRequiredMixin, CreateView):
-    from .models import Xe
-    model = Xe
-    template_name = 'booking/admin/xe_form.html'
-    fields = ['bien_so', 'loai_xe', 'so_ghe']
-    success_url = reverse_lazy('src:admin_xe_list')
-
-class AdminXeUpdateView(AdminRequiredMixin, UpdateView):
-    from .models import Xe
-    model = Xe
-    template_name = 'booking/admin/xe_form.html'
-    fields = ['bien_so', 'loai_xe', 'so_ghe']
-    success_url = reverse_lazy('src:admin_xe_list')
-
-class AdminXeDeleteView(AdminRequiredMixin, DeleteView):
-    from .models import Xe
-    model = Xe
-    template_name = 'booking/admin/confirm_delete.html'
-    success_url = reverse_lazy('src:admin_xe_list')
-
-
-class AdminChuyenListView(AdminRequiredMixin, ListView):
-    model = Chuyen
-    template_name = 'booking/admin/chuyen_list.html'
-    context_object_name = 'chuyens'
-    paginate_by = 10
-
-    def get_queryset(self):
-        # Hiển thị thêm thông tin số vé đã bán để dễ theo dõi
-        return Chuyen.objects.select_related('tuyen', 'xe').annotate(
-            so_ve_da_ban=Count('ves', filter=Q(ves__trang_thai='DA_THANH_TOAN'))
-        ).order_by('-ngay_gio_khoi_hanh')
-
-class AdminChuyenCreateView(AdminRequiredMixin, CreateView):
-    model = Chuyen
-    template_name = 'booking/admin/chuyen_form.html'
-    fields = ['tuyen', 'xe', 'ngay_gio_khoi_hanh', 'ngay_gio_den', 'tong_so_ve', 'gia_ve']
-    success_url = reverse_lazy('src:admin_chuyen_list')
-
-class AdminChuyenUpdateView(AdminRequiredMixin, UpdateView):
-    model = Chuyen
-    template_name = 'booking/admin/chuyen_form.html'
-    fields = ['tuyen', 'xe', 'ngay_gio_khoi_hanh', 'ngay_gio_den', 'tong_so_ve', 'gia_ve']
-    success_url = reverse_lazy('src:admin_chuyen_list')
-
-class AdminChuyenDeleteView(AdminRequiredMixin, DeleteView):
-    model = Chuyen
-    template_name = 'booking/admin/confirm_delete.html'
-    success_url = reverse_lazy('src:admin_chuyen_list')
-
-
-#==================== ADMIN TICKETS ====================#
-
-class AdminVeListView(AdminRequiredMixin, ListView):
-    model = Ve
-    template_name = 'booking/admin/ve_list.html'
-    context_object_name = 'ves'
-    paginate_by = 20
-
-    def get_queryset(self):
-        qs = Ve.objects.select_related('chuyen', 'khach', 'chuyen__tuyen').order_by('-id')
         
-        # Tính năng tìm kiếm vé theo tên khách hoặc mã vé (nếu có)
-        search_query = self.request.GET.get('q')
-        if search_query:
-            qs = qs.filter(
-                Q(khach__ten__icontains=search_query) | 
-                Q(khach__sdt__icontains=search_query)
-            )
-            
-        # Tính năng lọc theo trạng thái
-        status_filter = self.request.GET.get('status')
-        if status_filter:
-            qs = qs.filter(trang_thai=status_filter)
-            
-        return qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Gửi thêm danh sách các trạng thái để làm bộ lọc trên giao diện
-        context['status_choices'] = ['DA_THANH_TOAN', 'CHO_THANH_TOAN', 'DA_HUY']
-        return context
-
-class AdminVeDetailView(AdminRequiredMixin, DetailView):
-    model = Ve
-    template_name = 'booking/admin/ve_detail.html'
-    context_object_name = 've'
-
-
-#==================== ADMIN CUSTOMERS ====================#
-
-class AdminKhachHangListView(AdminRequiredMixin, ListView):
-    model = KhachHang
-    template_name = 'booking/admin/khachhang_list.html'
-    context_object_name = 'khachhangs'
-    paginate_by = 15
-    
-    def get_queryset(self):
-        # Tìm kiếm khách hàng
-        query = self.request.GET.get('q')
-        if query:
-            return KhachHang.objects.filter(
-                Q(ten__icontains=query) | Q(sdt__icontains=query) | Q(email__icontains=query)
-            )
-        return KhachHang.objects.all()
-
-class AdminKhachHangDetailView(AdminRequiredMixin, DetailView):
-
-    model = KhachHang
-    template_name = 'booking/admin/khachhang_detail.html'
-    context_object_name = 'khach'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Lấy lịch sử đặt vé của khách này
-        context['history_ves'] = Ve.objects.filter(
-            khach=self.object
-        ).select_related('chuyen', 'chuyen__tuyen').order_by('-chuyen__ngay_gio_khoi_hanh')
+        # Lấy danh sách voucher khả dụng cho user hiện tại
+        khach_hang = self.request.user.khachhang
+        vouchers = Voucher.objects.filter(
+            trang_thai=True,
+            ngay_bat_dau__lte=timezone.now(),
+            ngay_ket_thuc__gte=timezone.now()
+        ).filter(
+            Q(khach_hang_duoc_su_dung__isnull=True) |  # Voucher cho tất cả
+            Q(khach_hang_duoc_su_dung=khach_hang)      # Voucher cho user này
+        ).distinct()
+        
+        context['vouchers'] = vouchers
         return context
 
 class PaymentSuccessView(LoginRequiredMixin, TemplateView):

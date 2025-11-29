@@ -1,8 +1,10 @@
+import random
+import string
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from users.models import KhachHang  # import từ app users
-from dataclasses import dataclass
+from decimal import Decimal
+from users.models import KhachHang
 
 class Tuyen(models.Model):
     diem_di = models.CharField(max_length=100, verbose_name="Điểm đi")
@@ -139,3 +141,137 @@ class ThanhToan(models.Model):
     class Meta:
         verbose_name = "Thanh toán"
         verbose_name_plural = "Thanh toán"
+
+class Voucher(models.Model):
+    LOAI_GIAM_GIA_CHOICES = [
+        ('PHAN_TRAM', 'Phần trăm'),
+        ('SO_TIEN', 'Số tiền cố định'),
+    ]
+    
+    ma_voucher = models.CharField(max_length=20, unique=True, verbose_name="Mã voucher")
+    ten_voucher = models.CharField(max_length=200, verbose_name="Tên voucher")
+    mo_ta = models.TextField(blank=True, verbose_name="Mô tả")
+    
+    loai_giam_gia = models.CharField(max_length=20, choices=LOAI_GIAM_GIA_CHOICES, default='PHAN_TRAM')
+    gia_tri_giam = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="Giá trị giảm")
+    
+    giam_toi_da = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True, verbose_name="Giảm tối đa (đ)")
+    gia_tri_don_toi_thieu = models.DecimalField(max_digits=10, decimal_places=0, default=0, verbose_name="Giá trị đơn tối thiểu")
+    
+    ngay_bat_dau = models.DateTimeField(verbose_name="Ngày bắt đầu")
+    ngay_ket_thuc = models.DateTimeField(verbose_name="Ngày kết thúc")
+    
+    so_luong = models.IntegerField(default=100, verbose_name="Số lượng voucher")
+    da_su_dung = models.IntegerField(default=0, verbose_name="Đã sử dụng")
+    so_lan_su_dung_toi_da_moi_user = models.IntegerField(default=1, verbose_name="Số lần dùng/user")
+    
+    khach_hang_duoc_su_dung = models.ManyToManyField(
+        KhachHang, 
+        blank=True, 
+        related_name='vouchers_nhan', 
+        verbose_name="Khách hàng được sử dụng"
+    )
+    
+    trang_thai = models.BooleanField(default=True, verbose_name="Đang hoạt động")
+    ngay_tao = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Voucher"
+        verbose_name_plural = "Vouchers"
+        ordering = ['-ngay_tao']
+    
+    def __str__(self):
+        return f"{self.ma_voucher} - {self.ten_voucher}"
+    
+    def clean(self):
+        """Validate dữ liệu voucher"""
+        # Kiểm tra ngày bắt đầu và ngày kết thúc không được để trống
+        if not self.ngay_bat_dau:
+            raise ValidationError({'ngay_bat_dau': "Ngày bắt đầu không được để trống."})
+        
+        if not self.ngay_ket_thuc:
+            raise ValidationError({'ngay_ket_thuc': "Ngày kết thúc không được để trống."})
+        
+        # Kiểm tra ngày bắt đầu < ngày kết thúc
+        if self.ngay_bat_dau >= self.ngay_ket_thuc:
+            raise ValidationError({'ngay_ket_thuc': "Ngày kết thúc phải sau ngày bắt đầu."})
+        
+        # Kiểm tra giá trị giảm hợp lệ
+        if self.gia_tri_giam is not None and self.gia_tri_giam <= 0:
+            raise ValidationError({'gia_tri_giam': "Giá trị giảm phải lớn hơn 0."})
+        
+        if self.loai_giam_gia == 'PHAN_TRAM' and self.gia_tri_giam and self.gia_tri_giam > 100:
+            raise ValidationError({'gia_tri_giam': "Giảm giá theo phần trăm không được vượt quá 100%."})
+        
+        # Kiểm tra số lượng
+        if self.so_luong is not None and self.so_luong <= 0:
+            raise ValidationError({'so_luong': "Số lượng voucher phải lớn hơn 0."})
+    
+    @staticmethod
+    def tao_ma_voucher(length=8, prefix="FUTA"):
+        """Tạo mã voucher ngẫu nhiên
+        VD: FUTA12AB34CD
+        """
+        characters = string.ascii_uppercase + string.digits
+        random_part = ''.join(random.choices(characters, k=length))
+        return f"{prefix}{random_part}"
+    
+    def con_hieu_luc(self):
+        """Kiểm tra voucher còn hiệu lực không"""
+        now = timezone.now()
+        
+        # Debug: In ra để kiểm tra
+        print(f"Voucher: {self.ma_voucher}")
+        print(f"Trạng thái: {self.trang_thai}")
+        print(f"Thời gian hiện tại: {now}")
+        print(f"Ngày bắt đầu: {self.ngay_bat_dau}")
+        print(f"Ngày kết thúc: {self.ngay_ket_thuc}")
+        print(f"Đã dùng/Tổng: {self.da_su_dung}/{self.so_luong}")
+        
+        return (
+            self.trang_thai and 
+            self.ngay_bat_dau <= now <= self.ngay_ket_thuc and 
+            self.da_su_dung < self.so_luong
+        )
+    
+    def user_da_dung_bao_nhieu_lan(self, khach_hang):
+        """Kiểm tra user đã dùng voucher này bao nhiêu lần"""
+        return self.lich_su_su_dung.filter(khach_hang=khach_hang).count()
+    
+    def user_con_duoc_dung(self, khach_hang):
+        """Kiểm tra user còn được dùng voucher không"""
+        return self.user_da_dung_bao_nhieu_lan(khach_hang) < self.so_lan_su_dung_toi_da_moi_user
+    
+    def tinh_giam_gia(self, tong_tien):
+        """Tính số tiền được giảm"""
+        if not self.con_hieu_luc():
+            return Decimal('0')
+        
+        if tong_tien < self.gia_tri_don_toi_thieu:
+            return Decimal('0')
+        
+        if self.loai_giam_gia == 'PHAN_TRAM':
+            giam = tong_tien * (self.gia_tri_giam / 100)
+            if self.giam_toi_da:
+                giam = min(giam, self.giam_toi_da)
+            return giam.quantize(Decimal('1'))
+        else:  # SO_TIEN
+            return min(self.gia_tri_giam, tong_tien)
+
+
+class VoucherSuDung(models.Model):
+    """Lịch sử sử dụng voucher"""
+    voucher = models.ForeignKey(Voucher, on_delete=models.CASCADE, related_name='lich_su_su_dung')
+    khach_hang = models.ForeignKey(KhachHang, on_delete=models.CASCADE)
+    ve = models.ForeignKey('Ve', on_delete=models.CASCADE, related_name='voucher_da_dung')
+    so_tien_giam = models.DecimalField(max_digits=10, decimal_places=0)
+    ngay_su_dung = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.voucher.ma_voucher} - {self.khach_hang.ten} - {self.so_tien_giam}đ"
+    
+    class Meta:
+        verbose_name = "Lịch sử voucher"
+        verbose_name_plural = "Lịch sử vouchers"
+        ordering = ['-ngay_su_dung']
+        # unique_together = ('voucher', 'khach_hang')  # Bỏ comment nếu muốn mỗi user chỉ dùng 1 lần
