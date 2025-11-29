@@ -170,6 +170,79 @@ class AdminKhachHangDetailView(AdminRequiredMixin, DetailView):
         ).select_related('chuyen', 'chuyen__tuyen').order_by('-chuyen__ngay_gio_khoi_hanh')
         return context
 
+#==================== ADMIN EMPLOYEES ====================#
+
+class AdminNhanVienListView(AdminRequiredMixin, ListView):
+    model = NhanVien
+    template_name = 'admin/nhanvien_list.html'
+    context_object_name = 'nhanviens'
+    paginate_by = 20
+
+class AdminNhanVienCreateView(AdminRequiredMixin, CreateView):
+    model = NhanVien
+    template_name = 'admin/nhanvien_form.html'
+    fields = ['user', 'anh_dai_dien', 'ho_ten', 'ngay_sinh', 'so_dien_thoai', 'chuc_vu', 'trang_thai']
+    success_url = reverse_lazy('admin_panel:nhanvien_list')
+
+class AdminNhanVienUpdateView(AdminRequiredMixin, UpdateView):
+    model = NhanVien
+    template_name = 'admin/nhanvien_form.html'
+    fields = ['anh_dai_dien', 'ho_ten', 'ngay_sinh', 'so_dien_thoai', 'chuc_vu', 'trang_thai']
+    success_url = reverse_lazy('admin_panel:nhanvien_list')
+
+class AdminNhanVienDeleteView(AdminRequiredMixin, DeleteView):
+    model = NhanVien
+    template_name = 'admin/confirm_delete.html'
+    success_url = reverse_lazy('admin_panel:nhanvien_list')
+
+
+#==================== ADMIN VOUCHERS ====================#
+
+class AdminVoucherListView(AdminRequiredMixin, ListView):
+    model = Voucher
+    template_name = 'admin/voucher_list.html'
+    context_object_name = 'vouchers'
+    paginate_by = 20
+
+class AdminVoucherCreateView(AdminRequiredMixin, CreateView):
+    model = Voucher
+    template_name = 'admin/voucher_form.html'
+    fields = ['ten_voucher', 'mo_ta', 'loai_giam_gia', 'gia_tri_giam', 'giam_toi_da', 
+              'gia_tri_don_toi_thieu', 'ngay_bat_dau', 'ngay_ket_thuc', 'so_luong', 
+              'khach_hang_duoc_su_dung', 'trang_thai']
+    success_url = reverse_lazy('admin_panel:voucher_list')
+    
+    def form_valid(self, form):
+        # Tự động tạo mã voucher
+        form.instance.ma_voucher = Voucher.tao_ma_voucher()
+        messages.success(self.request, f"Đã tạo voucher: {form.instance.ma_voucher}")
+        return super().form_valid(form)
+
+class AdminVoucherUpdateView(AdminRequiredMixin, UpdateView):
+    model = Voucher
+    template_name = 'admin/voucher_form.html'
+    fields = ['ten_voucher', 'mo_ta', 'loai_giam_gia', 'gia_tri_giam', 'giam_toi_da',
+              'gia_tri_don_toi_thieu', 'ngay_bat_dau', 'ngay_ket_thuc', 'so_luong',
+              'khach_hang_duoc_su_dung', 'trang_thai']
+    success_url = reverse_lazy('admin_panel:voucher_list')
+
+class AdminVoucherDeleteView(AdminRequiredMixin, DeleteView):
+    model = Voucher
+    template_name = 'admin/confirm_delete.html'
+    success_url = reverse_lazy('admin_panel:voucher_list')
+
+class AdminVoucherHistoryView(AdminRequiredMixin, ListView):
+    """Xem lịch sử sử dụng voucher"""
+    model = VoucherSuDung
+    template_name = 'admin/voucher_history.html'
+    context_object_name = 'histories'
+    paginate_by = 50
+    
+    def get_queryset(self):
+        voucher_id = self.kwargs.get('pk')
+        if voucher_id:
+            return VoucherSuDung.objects.filter(voucher_id=voucher_id)
+        return VoucherSuDung.objects.all()
 
 
 
