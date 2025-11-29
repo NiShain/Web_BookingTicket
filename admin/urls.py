@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    
+    
     path('manage/tuyen/', views.AdminTuyenListView.as_view(), name='admin_tuyen_list'),
     path('manage/tuyen/create/', views.AdminTuyenCreateView.as_view(), name='admin_tuyen_create'),
     path('manage/tuyen/<int:pk>/update/', views.AdminTuyenUpdateView.as_view(), name='admin_tuyen_update'),
@@ -26,5 +28,20 @@ urlpatterns = [
 
     path('manage/khach-hang/', views.AdminKhachHangListView.as_view(), name='admin_khachhang_list'),
     path('manage/khach-hang/<int:pk>/', views.AdminKhachHangDetailView.as_view(), name='admin_khachhang_detail'),
+    
+    
+    path('nhanvien/', views.AdminNhanVienListView.as_view(), name='nhanvien_list'),
+    path('nhanvien/them/', views.AdminNhanVienCreateView.as_view(), name='nhanvien_create'),
+    path('nhanvien/<int:pk>/sua/', views.AdminNhanVienUpdateView.as_view(), name='nhanvien_update'),
+    path('nhanvien/<int:pk>/xoa/', views.AdminNhanVienDeleteView.as_view(), name='nhanvien_delete'),
+    
+    
+    path('voucher/', views.AdminVoucherListView.as_view(), name='voucher_list'),
+    path('voucher/them/', views.AdminVoucherCreateView.as_view(), name='voucher_create'),
+    path('voucher/<int:pk>/sua/', views.AdminVoucherUpdateView.as_view(), name='voucher_update'),
+    path('voucher/<int:pk>/xoa/', views.AdminVoucherDeleteView.as_view(), name='voucher_delete'),
+    path('voucher/<int:pk>/lich-su/', views.AdminVoucherHistoryView.as_view(), name='voucher_history'),
+    
+    
 ]
 

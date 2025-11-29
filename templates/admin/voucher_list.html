@@ -1,0 +1,49 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<h2>Quản lý Voucher</h2>
+<a href="{% url 'admin_panel:voucher_create' %}" class="btn btn-primary">Tạo voucher mới</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Mã</th>
+            <th>Tên</th>
+            <th>Giảm giá</th>
+            <th>Hạn sử dụng</th>
+            <th>Đã dùng/Tổng</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for voucher in vouchers %}
+        <tr>
+            <td>{{ voucher.ma_voucher }}</td>
+            <td>{{ voucher.ten_voucher }}</td>
+            <td>
+                {% if voucher.loai_giam_gia == 'PHAN_TRAM' %}
+                    {{ voucher.gia_tri_giam }}%
+                {% else %}
+                    {{ voucher.gia_tri_giam|floatformat:0 }}đ
+                {% endif %}
+            </td>
+            <td>{{ voucher.ngay_bat_dau|date:"d/m/Y" }} - {{ voucher.ngay_ket_thuc|date:"d/m/Y" }}</td>
+            <td>{{ voucher.da_su_dung }}/{{ voucher.so_luong }}</td>
+            <td>
+                {% if voucher.con_hieu_luc %}
+                    <span class="badge bg-success">Hoạt động</span>
+                {% else %}
+                    <span class="badge bg-secondary">Hết hạn</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{% url 'admin_panel:voucher_update' voucher.pk %}">Sửa</a> |
+                <a href="{% url 'admin_panel:voucher_history' voucher.pk %}">Lịch sử</a> |
+                <a href="{% url 'admin_panel:voucher_delete' voucher.pk %}">Xóa</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
