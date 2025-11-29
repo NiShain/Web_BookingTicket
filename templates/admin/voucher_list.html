@@ -1,4 +1,5 @@
 {% extends "admin/base_admin.html" %}
+{% load tz %}
 
 {% block content %}
 <h2>Quản lý Voucher</h2>
@@ -32,9 +33,23 @@
             <td>{{ voucher.da_su_dung }}/{{ voucher.so_luong }}</td>
             <td>
                 {% if voucher.con_hieu_luc %}
-                    <span class="badge bg-success">Hoạt động</span>
+                    <span class="badge bg-success">
+                        <i class="fas fa-check-circle"></i> Hoạt động
+                    </span>
                 {% else %}
-                    <span class="badge bg-secondary">Hết hạn</span>
+                    {% if not voucher.trang_thai %}
+                        <span class="badge bg-secondary">
+                            <i class="fas fa-ban"></i> Đã tắt
+                        </span>
+                    {% elif voucher.da_su_dung >= voucher.so_luong %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="fas fa-exclamation-triangle"></i> Hết lượt
+                        </span>
+                    {% else %}
+                        <span class="badge bg-danger">
+                            <i class="fas fa-calendar-times"></i> Hết hạn
+                        </span>
+                    {% endif %}
                 {% endif %}
             </td>
             <td>

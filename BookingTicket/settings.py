@@ -117,11 +117,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_TZ = True
+TIME_ZONE = 'Asia/Ho_Chi_Minh'  # Múi giờ Việt Nam
+USE_TZ = True  # Bật timezone-aware datetime
 
 AUTH_USER_MODEL = 'users.Account'
 

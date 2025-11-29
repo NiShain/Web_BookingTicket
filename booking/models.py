@@ -1,9 +1,11 @@
+import random
+import string
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from users.models import KhachHang  
-import random
-import string
+from decimal import Decimal
+from users.models import KhachHang
+
 class Tuyen(models.Model):
     diem_di = models.CharField(max_length=100, verbose_name="Điểm đi")
     diem_den = models.CharField(max_length=100, verbose_name="Điểm đến")
@@ -163,7 +165,12 @@ class Voucher(models.Model):
     da_su_dung = models.IntegerField(default=0, verbose_name="Đã sử dụng")
     so_lan_su_dung_toi_da_moi_user = models.IntegerField(default=1, verbose_name="Số lần dùng/user")
     
-    khach_hang_duoc_su_dung = models.ManyToManyField(KhachHang, blank=True, related_name='vouchers_nhan', verbose_name="Khách hàng được sử dụng")
+    khach_hang_duoc_su_dung = models.ManyToManyField(
+        KhachHang, 
+        blank=True, 
+        related_name='vouchers_nhan', 
+        verbose_name="Khách hàng được sử dụng"
+    )
     
     trang_thai = models.BooleanField(default=True, verbose_name="Đang hoạt động")
     ngay_tao = models.DateTimeField(auto_now_add=True)
@@ -177,23 +184,34 @@ class Voucher(models.Model):
         return f"{self.ma_voucher} - {self.ten_voucher}"
     
     def clean(self):
-        from django.core.exceptions import ValidationError
+        """Validate dữ liệu voucher"""
+        # Kiểm tra ngày bắt đầu và ngày kết thúc không được để trống
+        if not self.ngay_bat_dau:
+            raise ValidationError({'ngay_bat_dau': "Ngày bắt đầu không được để trống."})
         
+        if not self.ngay_ket_thuc:
+            raise ValidationError({'ngay_ket_thuc': "Ngày kết thúc không được để trống."})
+        
+        # Kiểm tra ngày bắt đầu < ngày kết thúc
         if self.ngay_bat_dau >= self.ngay_ket_thuc:
-            raise ValidationError("Ngày bắt đầu phải trước ngày kết thúc.")
+            raise ValidationError({'ngay_ket_thuc': "Ngày kết thúc phải sau ngày bắt đầu."})
         
-        if self.gia_tri_giam <= 0:
-            raise ValidationError("Giá trị giảm phải lớn hơn 0.")
+        # Kiểm tra giá trị giảm hợp lệ
+        if self.gia_tri_giam is not None and self.gia_tri_giam <= 0:
+            raise ValidationError({'gia_tri_giam': "Giá trị giảm phải lớn hơn 0."})
         
-        if self.loai_giam_gia == 'PHAN_TRAM' and self.gia_tri_giam > 100:
-            raise ValidationError("Giảm giá theo phần trăm không được vượt quá 100%.")
+        if self.loai_giam_gia == 'PHAN_TRAM' and self.gia_tri_giam and self.gia_tri_giam > 100:
+            raise ValidationError({'gia_tri_giam': "Giảm giá theo phần trăm không được vượt quá 100%."})
         
-        if self.so_luong <= 0:
-            raise ValidationError("Số lượng voucher phải lớn hơn 0.")
+        # Kiểm tra số lượng
+        if self.so_luong is not None and self.so_luong <= 0:
+            raise ValidationError({'so_luong': "Số lượng voucher phải lớn hơn 0."})
     
     @staticmethod
     def tao_ma_voucher(length=8, prefix="FUTA"):
-        """Tạo mã voucher ngẫu nhiên"""
+        """Tạo mã voucher ngẫu nhiên
+        VD: FUTA12AB34CD
+        """
         characters = string.ascii_uppercase + string.digits
         random_part = ''.join(random.choices(characters, k=length))
         return f"{prefix}{random_part}"
@@ -201,9 +219,20 @@ class Voucher(models.Model):
     def con_hieu_luc(self):
         """Kiểm tra voucher còn hiệu lực không"""
         now = timezone.now()
-        return (self.trang_thai and 
-                self.ngay_bat_dau <= now <= self.ngay_ket_thuc and 
-                self.da_su_dung < self.so_luong)
+        
+        # Debug: In ra để kiểm tra
+        print(f"Voucher: {self.ma_voucher}")
+        print(f"Trạng thái: {self.trang_thai}")
+        print(f"Thời gian hiện tại: {now}")
+        print(f"Ngày bắt đầu: {self.ngay_bat_dau}")
+        print(f"Ngày kết thúc: {self.ngay_ket_thuc}")
+        print(f"Đã dùng/Tổng: {self.da_su_dung}/{self.so_luong}")
+        
+        return (
+            self.trang_thai and 
+            self.ngay_bat_dau <= now <= self.ngay_ket_thuc and 
+            self.da_su_dung < self.so_luong
+        )
     
     def user_da_dung_bao_nhieu_lan(self, khach_hang):
         """Kiểm tra user đã dùng voucher này bao nhiêu lần"""
@@ -215,8 +244,6 @@ class Voucher(models.Model):
     
     def tinh_giam_gia(self, tong_tien):
         """Tính số tiền được giảm"""
-        from decimal import Decimal
-        
         if not self.con_hieu_luc():
             return Decimal('0')
         
@@ -228,7 +255,7 @@ class Voucher(models.Model):
             if self.giam_toi_da:
                 giam = min(giam, self.giam_toi_da)
             return giam.quantize(Decimal('1'))
-        else:
+        else:  # SO_TIEN
             return min(self.gia_tri_giam, tong_tien)
 
 

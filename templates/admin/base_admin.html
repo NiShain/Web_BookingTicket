@@ -24,16 +24,23 @@
                 <li><a href="#" class="nav-link text-white">Dashboard</a></li> 
                 
                 <li class="nav-header text-uppercase text-secondary mt-3 ms-3" style="font-size: 0.8rem;">Quản lý</li>
-                <li><a href="{% url 'src:admin_tuyen_list' %}" class="nav-link">Quản lý Tuyến</a></li>
-                <li><a href="{% url 'src:admin_xe_list' %}" class="nav-link">Quản lý Xe</a></li>
-                <li><a href="{% url 'src:admin_chuyen_list' %}" class="nav-link">Quản lý Chuyến</a></li>
+                <!-- SỬA: Đổi từ 'src:' thành 'admin_panel:' -->
+                <li><a href="{% url 'admin_panel:admin_tuyen_list' %}" class="nav-link">Quản lý Tuyến</a></li>
+                <li><a href="{% url 'admin_panel:admin_xe_list' %}" class="nav-link">Quản lý Xe</a></li>
+                <li><a href="{% url 'admin_panel:admin_chuyen_list' %}" class="nav-link">Quản lý Chuyến</a></li>
                 
                 <li class="nav-header text-uppercase text-secondary mt-3 ms-3" style="font-size: 0.8rem;">Theo dõi</li>
-                <li><a href="{% url 'src:admin_ve_list' %}" class="nav-link">Quản lý Vé</a></li>
-                <li><a href="{% url 'src:admin_khachhang_list' %}" class="nav-link">Khách hàng</a></li>
+                <li><a href="{% url 'admin_panel:admin_ve_list' %}" class="nav-link">Quản lý Vé</a></li>
+                <li><a href="{% url 'admin_panel:admin_khachhang_list' %}" class="nav-link">Khách hàng</a></li>
+                
+                <li class="nav-header text-uppercase text-secondary mt-3 ms-3" style="font-size: 0.8rem;">Nhân sự & Khuyến mãi</li>
+                <li><a href="{% url 'admin_panel:nhanvien_list' %}" class="nav-link">Nhân viên</a></li>
+                <li><a href="{% url 'admin_panel:voucher_list' %}" class="nav-link">Voucher</a></li>
                 
                 <hr>
-                <li><a href="{% url 'home' %}" class="nav-link text-warning"><i class="fas fa-sign-out-alt"></i> Về trang chủ</a></li>
+                <li><a href="{% url 'home' %}" class="nav-link text-warning">
+    <i class="fas fa-sign-out-alt"></i> Về trang chủ
+</a></li>
             </ul>
         </div>
 

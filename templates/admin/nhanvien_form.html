@@ -1,0 +1,354 @@
+{% extends "admin/base_admin.html" %}
+{% load static %}
+
+{% block title %}{% if object %}Sửa{% else %}Thêm{% endif %} Nhân viên{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">
+                <i class="fas fa-user-plus"></i> 
+                {% if object %}Cập nhật thông tin nhân viên{% else %}Thêm nhân viên mới{% endif %}
+            </h3>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <strong>❌ Có lỗi xảy ra:</strong>
+                    <ul class="mb-0">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ field }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endif %}
+
+                <div class="row">
+                    <!-- Cột trái - Thông tin cá nhân -->
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="fas fa-user"></i> Thông tin cá nhân</h5>
+                        
+                        <!-- Họ tên -->
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-signature"></i> Họ và tên *
+                            </label>
+                            {{ form.ho_ten }}
+                        </div>
+
+                        <!-- Ngày sinh -->
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-birthday-cake"></i> Ngày sinh *
+                            </label>
+                            <input type="date" 
+                                   name="ngay_sinh" 
+                                   id="id_ngay_sinh"
+                                   class="form-control" 
+                                   value="{% if object %}{{ object.ngay_sinh|date:'Y-m-d' }}{% endif %}"
+                                   required>
+                        </div>
+
+                        <!-- Số điện thoại -->
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-phone"></i> Số điện thoại *
+                            </label>
+                            {{ form.so_dien_thoai }}
+                            <small class="form-text text-muted">VD: 0901234567</small>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-envelope"></i> Email
+                            </label>
+                            {{ form.email }}
+                        </div>
+
+                        <!-- Địa chỉ -->
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-map-marker-alt"></i> Địa chỉ
+                            </label>
+                            {{ form.dia_chi }}
+                        </div>
+                    </div>
+
+                    <!-- Cột phải - Thông tin công việc -->
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3"><i class="fas fa-briefcase"></i> Thông tin công việc</h5>
+                        
+                        <!-- Ảnh đại diện -->
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-image"></i> Ảnh đại diện
+                            </label>
+                            
+                            {% if object and object.anh_dai_dien %}
+                            <div class="mb-2 text-center">
+                                <img src="{{ object.anh_dai_dien.url }}" 
+                                     alt="{{ object.ho_ten }}" 
+                                     class="img-thumbnail rounded-circle"
+                                     id="preview-image"
+                                     style="width: 150px; height: 150px; object-fit: cover;">
+                            </div>
+                            {% else %}
+                            <div class="mb-2 text-center">
+                                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center"
+                                     id="preview-placeholder"
+                                     style="width: 150px; height: 150px;">
+                                    <i class="fas fa-user fa-4x text-secondary"></i>
+                                </div>
+                                <img src="#" 
+                                     alt="Preview" 
+                                     class="img-thumbnail rounded-circle d-none"
+                                     id="preview-image"
+                                     style="width: 150px; height: 150px; object-fit: cover;">
+                            </div>
+                            {% endif %}
+                            
+                            {{ form.anh_dai_dien }}
+                            <small class="form-text text-muted">Chọn ảnh JPG, PNG (tối đa 2MB)</small>
+                        </div>
+
+                        <!-- Chức vụ -->
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-id-badge"></i> Chức vụ *
+                            </label>
+                            {{ form.chuc_vu }}
+                        </div>
+
+                        <!-- Lương cơ bản -->
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-money-bill-wave"></i> Lương cơ bản (đ)
+                            </label>
+                            {{ form.luong_co_ban }}
+                            <small class="form-text text-muted">VD: 8000000 = 8 triệu/tháng</small>
+                        </div>
+
+                        <!-- Trạng thái -->
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-toggle-on"></i> Trạng thái
+                            </label>
+                            <div class="form-check form-switch">
+                                {{ form.trang_thai }}
+                                <label class="form-check-label" for="id_trang_thai">
+                                    Đang làm việc
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">Bỏ chọn nếu nhân viên đã nghỉ việc</small>
+                        </div>
+
+                        {% if object %}
+                        <!-- Ngày vào làm (chỉ hiển thị khi sửa) -->
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-calendar-check"></i> Ngày vào làm
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   value="{{ object.ngay_vao_lam|date:'d/m/Y' }}" 
+                                   readonly>
+                            <small class="form-text text-muted">Không thể chỉnh sửa</small>
+                        </div>
+                        {% endif %}
+
+                        <!-- Ghi chú -->
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-sticky-note"></i> Ghi chú
+                            </label>
+                            {{ form.ghi_chu }}
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Buttons -->
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'admin_panel:nhanvien_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> 
+                        {% if object %}Cập nhật{% else %}Thêm nhân viên{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Thêm class Bootstrap cho các input
+    document.querySelectorAll('input:not([type="file"]):not([type="checkbox"]), select, textarea').forEach(function(element) {
+        element.classList.add('form-control');
+    });
+    
+    // Checkbox đặc biệt (switch)
+    document.querySelectorAll('input[type="checkbox"]').forEach(function(element) {
+        element.classList.add('form-check-input');
+    });
+    
+    // File input
+    document.querySelectorAll('input[type="file"]').forEach(function(element) {
+        element.classList.add('form-control');
+    });
+    
+    // Preview ảnh khi chọn file
+    const imageInput = document.querySelector('input[type="file"][name="anh_dai_dien"]');
+    const previewImage = document.getElementById('preview-image');
+    const previewPlaceholder = document.getElementById('preview-placeholder');
+    
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Kiểm tra file size (2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('⚠️ Ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 2MB.');
+                    this.value = '';
+                    return;
+                }
+                
+                // Kiểm tra định dạng
+                if (!file.type.match('image.*')) {
+                    alert('⚠️ Vui lòng chọn file ảnh (JPG, PNG)!');
+                    this.value = '';
+                    return;
+                }
+                
+                // Preview ảnh
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    previewImage.src = event.target.result;
+                    previewImage.classList.remove('d-none');
+                    if (previewPlaceholder) {
+                        previewPlaceholder.classList.add('d-none');
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Set max date cho ngày sinh (phải >= 18 tuổi)
+    const today = new Date();
+    const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    const minDate = new Date(today.getFullYear() - 65, today.getMonth(), today.getDate());
+    
+    const ngaySinhInput = document.getElementById('id_ngay_sinh');
+    if (ngaySinhInput) {
+        ngaySinhInput.max = maxDate.toISOString().split('T')[0];
+        ngaySinhInput.min = minDate.toISOString().split('T')[0];
+    }
+    
+    // Validate form
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        // Validate số điện thoại
+        const phoneInput = document.querySelector('input[name="so_dien_thoai"]');
+        if (phoneInput) {
+            const phoneValue = phoneInput.value.trim();
+            const phoneRegex = /^(0|\+84)[0-9]{9}$/;
+            
+            if (!phoneRegex.test(phoneValue)) {
+                e.preventDefault();
+                alert('⚠️ Số điện thoại không hợp lệ! Vui lòng nhập đúng định dạng: 0901234567 hoặc +84901234567');
+                phoneInput.focus();
+                return false;
+            }
+        }
+        
+        // Validate email
+        const emailInput = document.querySelector('input[name="email"]');
+        if (emailInput && emailInput.value) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(emailInput.value)) {
+                e.preventDefault();
+                alert('⚠️ Email không hợp lệ!');
+                emailInput.focus();
+                return false;
+            }
+        }
+        
+        // Validate ngày sinh
+        if (ngaySinhInput) {
+            const birthDate = new Date(ngaySinhInput.value);
+            const age = (today - birthDate) / (365.25 * 24 * 60 * 60 * 1000);
+            
+            if (age < 18) {
+                e.preventDefault();
+                alert('⚠️ Nhân viên phải từ 18 tuổi trở lên!');
+                ngaySinhInput.focus();
+                return false;
+            }
+            
+            if (age > 65) {
+                e.preventDefault();
+                alert('⚠️ Tuổi không hợp lệ!');
+                ngaySinhInput.focus();
+                return false;
+            }
+        }
+    });
+});
+</script>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border-radius: 0.5rem;
+        border: none;
+    }
+    
+    .card-header {
+        border-radius: 0.5rem 0.5rem 0 0 !important;
+    }
+    
+    .form-label.fw-bold {
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .btn {
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+    }
+    
+    .form-check-input:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+    
+    input[type="file"] {
+        cursor: pointer;
+    }
+    
+    .img-thumbnail {
+        border: 3px solid #0d6efd;
+    }
+    
+    textarea {
+        min-height: 80px;
+    }
+</style>
+{% endblock %}
