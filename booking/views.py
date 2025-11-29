@@ -10,6 +10,7 @@ import uuid
 from .models import Tuyen, Chuyen, Ve, ThanhToan, Xe
 from payment.services import VnPayService
 from payment.models import PaymentInformationModel
+from booking.models import Voucher, VoucherSuDung
 
 class HomeView(TemplateView):
     """Homepage view with popular routes and upcoming trips."""
@@ -192,6 +193,30 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
         
         payment_url = None
 
+        # Xử lý voucher
+        ma_voucher = request.POST.get('voucher_code')
+        voucher = None
+        so_tien_giam = 0
+        
+        if ma_voucher:
+            try:
+                voucher = Voucher.objects.get(ma_voucher=ma_voucher)
+                if voucher.con_hieu_luc():
+                    # Kiểm tra user có quyền dùng không
+                    khach_hang = request.user.khachhang
+                    if (not voucher.khach_hang_duoc_su_dung.exists() or 
+                        voucher.khach_hang_duoc_su_dung.filter(id=khach_hang.id).exists()):
+                        so_tien_giam = voucher.tinh_giam_gia(tong_tien)
+                        tong_tien -= so_tien_giam
+                    else:
+                        messages.warning(request, "Bạn không có quyền sử dụng voucher này!")
+                        voucher = None
+                else:
+                    messages.error(request, "Voucher đã hết hạn hoặc hết lượt sử dụng!")
+                    voucher = None
+            except Voucher.DoesNotExist:
+                messages.error(request, "Mã voucher không tồn tại!")
+        
         try:
             with transaction.atomic():
                 # Tạo Vé
@@ -203,7 +228,16 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
                     trang_thai='CHO_THANH_TOAN'
                 )
                 
-                # *** XÓA DÒNG: txn_ref = f"VE-{uuid.uuid4().hex[:8].upper()}" ***
+                # Nếu có voucher, lưu lịch sử
+                if voucher and so_tien_giam > 0:
+                    VoucherSuDung.objects.create(
+                        voucher=voucher,
+                        khach_hang=khach_hang,
+                        ve=ve,
+                        so_tien_giam=so_tien_giam
+                    )
+                    voucher.da_su_dung += 1
+                    voucher.save()
                 
                 # Tạo Thanh Toán
                 ThanhToan.objects.create(

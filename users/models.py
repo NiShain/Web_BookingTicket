@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 import uuid
 import random
 import string
-
+from django.contrib.auth.models import User
 # -------------------------
 # 0. Account
 # -------------------------
@@ -185,3 +185,27 @@ class KhachHang(models.Model):
     class Meta:
         verbose_name = "Khách hàng"
         verbose_name_plural = "Khách hàng"
+
+class NhanVien(models.Model):
+    CHUC_VU_CHOICES = [
+        ('KE_TOAN', 'Kế toán'),
+        ('NHAN_VIEN', 'Nhân viên'),
+        ('TAI_XE', 'Tài xế'),
+        ('PHU_XE', 'Phụ xe'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='nhanvien')
+    anh_dai_dien = models.ImageField(upload_to='nhanvien/', blank=True, null=True, verbose_name="Ảnh đại diện")
+    ho_ten = models.CharField(max_length=200, verbose_name="Họ tên")
+    ngay_sinh = models.DateField(verbose_name="Ngày sinh")
+    so_dien_thoai = models.CharField(max_length=15, verbose_name="Số điện thoại")
+    chuc_vu = models.CharField(max_length=20, choices=CHUC_VU_CHOICES, default='NHAN_VIEN', verbose_name="Chức vụ")
+    ngay_vao_lam = models.DateField(auto_now_add=True, verbose_name="Ngày vào làm")
+    trang_thai = models.BooleanField(default=True, verbose_name="Đang làm việc")
+    
+    class Meta:
+        verbose_name = "Nhân viên"
+        verbose_name_plural = "Nhân viên"
+    
+    def __str__(self):
+        return f"{self.ho_ten} - {self.get_chuc_vu_display()}"

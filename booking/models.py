@@ -1,9 +1,9 @@
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from users.models import KhachHang  # import từ app users
-from dataclasses import dataclass
-
+from users.models import KhachHang  
+import random
+import string
 class Tuyen(models.Model):
     diem_di = models.CharField(max_length=100, verbose_name="Điểm đi")
     diem_den = models.CharField(max_length=100, verbose_name="Điểm đến")
@@ -139,3 +139,84 @@ class ThanhToan(models.Model):
     class Meta:
         verbose_name = "Thanh toán"
         verbose_name_plural = "Thanh toán"
+
+class Voucher(models.Model):
+    LOAI_GIAM_GIA_CHOICES = [
+        ('PHAN_TRAM', 'Phần trăm'),
+        ('SO_TIEN', 'Số tiền cố định'),
+    ]
+    
+    ma_voucher = models.CharField(max_length=20, unique=True, verbose_name="Mã voucher")
+    ten_voucher = models.CharField(max_length=200, verbose_name="Tên voucher")
+    mo_ta = models.TextField(blank=True, verbose_name="Mô tả")
+    
+    loai_giam_gia = models.CharField(max_length=20, choices=LOAI_GIAM_GIA_CHOICES, default='PHAN_TRAM')
+    gia_tri_giam = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="Giá trị giảm")
+    # Nếu loai_giam_gia = PHAN_TRAM: gia_tri_giam = 20 (tức 20%)
+    # Nếu loai_giam_gia = SO_TIEN: gia_tri_giam = 50000 (tức 50,000đ)
+    
+    giam_toi_da = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True, verbose_name="Giảm tối đa (đ)")
+    gia_tri_don_toi_thieu = models.DecimalField(max_digits=10, decimal_places=0, default=0, verbose_name="Giá trị đơn tối thiểu")
+    
+    ngay_bat_dau = models.DateTimeField(verbose_name="Ngày bắt đầu")
+    ngay_ket_thuc = models.DateTimeField(verbose_name="Ngày kết thúc")
+    
+    so_luong = models.IntegerField(default=100, verbose_name="Số lượng voucher")
+    da_su_dung = models.IntegerField(default=0, verbose_name="Đã sử dụng")
+    
+    khach_hang_duoc_su_dung = models.ManyToManyField(KhachHang, blank=True, related_name='vouchers_nhan', verbose_name="Khách hàng được sử dụng")
+    # Nếu để trống = tất cả user đều dùng được
+    
+    trang_thai = models.BooleanField(default=True, verbose_name="Đang hoạt động")
+    ngay_tao = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Voucher"
+        verbose_name_plural = "Vouchers"
+        ordering = ['-ngay_tao']
+    
+    def __str__(self):
+        return f"{self.ma_voucher} - {self.ten_voucher}"
+    
+    @staticmethod
+    def tao_ma_voucher(length=8, prefix="FUTA"):
+        """Tạo mã voucher ngẫu nhiên"""
+        characters = string.ascii_uppercase + string.digits
+        random_part = ''.join(random.choices(characters, k=length))
+        return f"{prefix}{random_part}"
+    
+    def con_hieu_luc(self):
+        """Kiểm tra voucher còn hiệu lực không"""
+        now = timezone.now()
+        return (self.trang_thai and 
+                self.ngay_bat_dau <= now <= self.ngay_ket_thuc and 
+                self.da_su_dung < self.so_luong)
+    
+    def tinh_giam_gia(self, tong_tien):
+        """Tính số tiền được giảm"""
+        if not self.con_hieu_luc():
+            return 0
+        
+        if tong_tien < self.gia_tri_don_toi_thieu:
+            return 0
+        
+        if self.loai_giam_gia == 'PHAN_TRAM':
+            giam = tong_tien * (self.gia_tri_giam / 100)
+            if self.giam_toi_da:
+                giam = min(giam, self.giam_toi_da)
+            return giam
+        else:  # SO_TIEN
+            return min(self.gia_tri_giam, tong_tien)
+
+
+class VoucherSuDung(models.Model):
+    """Lịch sử sử dụng voucher"""
+    voucher = models.ForeignKey(Voucher, on_delete=models.CASCADE, related_name='lich_su_su_dung')
+    khach_hang = models.ForeignKey(KhachHang, on_delete=models.CASCADE)
+    ve = models.ForeignKey('Ve', on_delete=models.CASCADE, related_name='voucher_da_dung')
+    so_tien_giam = models.DecimalField(max_digits=10, decimal_places=0)
+    ngay_su_dung = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Lịch sử voucher"
+        verbose_name_plural = "Lịch sử vouchers"
