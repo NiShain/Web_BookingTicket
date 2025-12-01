@@ -2,27 +2,269 @@
 {% load static %}
 
 {% block content %}
-<div class="container dashboard">
-  <h1>Admin Dashboard</h1>
+<style>
+  .dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
 
-  <div class="stats-grid" style="margin-top:12px">
-    <div class="stat card">
-      <div class="number">—</div>
-      <div class="label">Tổng đơn</div>
+  .dashboard-header {
+    background: linear-gradient(135deg, #1e3c72, #2a5298, #3b82f6);
+    color: white;
+    padding: 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 30px rgba(30, 60, 114, 0.3);
+  }
+
+  .dashboard-header h1 {
+    margin: 0;
+    font-size: 2.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .dashboard-header h1::before {
+    content: '📊';
+    font-size: 2.5rem;
+  }
+
+  .dashboard-header p {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    font-size: 1rem;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--stat-color-1), var(--stat-color-2));
+  }
+
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  }
+
+  .stat-card.primary {
+    --stat-color-1: #3b82f6;
+    --stat-color-2: #2563eb;
+  }
+
+  .stat-card.success {
+    --stat-color-1: #10b981;
+    --stat-color-2: #059669;
+  }
+
+  .stat-card.warning {
+    --stat-color-1: #f59e0b;
+    --stat-color-2: #d97706;
+  }
+
+  .stat-card.info {
+    --stat-color-1: #06b6d4;
+    --stat-color-2: #0891b2;
+  }
+
+  .stat-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+  }
+
+  .stat-label {
+    color: #6b7280;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--stat-color-1), var(--stat-color-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-change {
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .stat-change.positive {
+    color: #10b981;
+  }
+
+  .stat-change.negative {
+    color: #ef4444;
+  }
+
+  .quick-actions {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .quick-actions h3 {
+    color: #1e3c72;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .quick-actions h3::before {
+    content: '⚡';
+    font-size: 1.8rem;
+  }
+
+  .action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .action-btn {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border: 2px solid #e5e7eb;
+    padding: 1.2rem;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #374151;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 0.95rem;
+  }
+
+  .action-btn:hover {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #1e40af;
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+  }
+
+  .action-btn::before {
+    font-size: 1.5rem;
+  }
+
+  .action-btn.tuyen::before { content: '🛣️'; }
+  .action-btn.xe::before { content: '🚌'; }
+  .action-btn.chuyen::before { content: '📅'; }
+  .action-btn.ve::before { content: '🎫'; }
+  .action-btn.voucher::before { content: '🎟️'; }
+  .action-btn.nhanvien::before { content: '👔'; }
+</style>
+
+<div class="dashboard">
+  <div class="dashboard-header">
+    <h1>Bảng Điều Khiển Admin</h1>
+    <p>Xin chào, <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>! Chào mừng bạn đến với hệ thống quản trị.</p>
+  </div>
+
+  <!-- THỐNG KÊ CHÍNH -->
+  <div class="stats-grid">
+    <!-- Tổng Vé Đã Bán -->
+    <div class="stat-card primary">
+      <div class="stat-icon">🎫</div>
+      <div class="stat-label">Tổng Vé Đã Đặt</div>
+      <div class="stat-number">{{ tong_ve_da_ban }}</div>
+      <div class="stat-change positive">
+        ✅ Đã thanh toán: {{ ve_da_thanh_toan }}
+      </div>
+      <div class="stat-change" style="color: #f59e0b;">
+        ⏳ Chờ thanh toán: {{ ve_cho_thanh_toan }}
+      </div>
     </div>
-    <div class="stat card">
-      <div class="number">—</div>
-      <div class="label">Doanh thu</div>
+
+    <!-- Doanh Thu -->
+    <div class="stat-card success">
+      <div class="stat-icon">💰</div>
+      <div class="stat-label">Doanh Thu (VNĐ)</div>
+      <div class="stat-number">{{ doanh_thu|floatformat:0 }}</div>
+      <div class="stat-change positive">
+        ✅ Từ {{ ve_da_thanh_toan }} vé đã thanh toán
+      </div>
     </div>
-    <div class="stat card">
-      <div class="number">—</div>
-      <div class="label">Người dùng</div>
+
+    <!-- Tổng Khách Hàng -->
+    <div class="stat-card warning">
+      <div class="stat-icon">👥</div>
+      <div class="stat-label">Tổng Khách Hàng</div>
+      <div class="stat-number">{{ tong_khach_hang }}</div>
+      <div class="stat-change positive">
+        ✅ Đã đăng ký
+      </div>
+    </div>
+
+    <!-- Chuyến Xe Hôm Nay -->
+    <div class="stat-card info">
+      <div class="stat-icon">🚌</div>
+      <div class="stat-label">Chuyến Xe Hôm Nay</div>
+      <div class="stat-number">{{ chuyen_xe_hom_nay }}</div>
+      <div class="stat-change">
+        📅 {{ current_date|date:"d/m/Y" }}
+      </div>
     </div>
   </div>
 
-  <div class="card" style="margin-top:16px">
-    <p>Welcome, {{ request.user.get_full_name|default:request.user.username }}. This is a placeholder dashboard.</p>
-    <p>You can add stats and admin links here (recent bookings, revenue, system health, etc.).</p>
+  <!-- THỐNG KÊ PHỤ -->
+  <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
+    <div class="stat-card" style="--stat-color-1: #8b5cf6; --stat-color-2: #7c3aed; padding: 1.5rem;">
+      <div class="stat-icon" style="font-size: 2rem; margin-bottom: 0.5rem;">🛣️</div>
+      <div class="stat-label" style="font-size: 0.85rem;">Tổng Tuyến</div>
+      <div class="stat-number" style="font-size: 2rem;">{{ tong_tuyen }}</div>
+    </div>
+
+    <div class="stat-card" style="--stat-color-1: #ec4899; --stat-color-2: #db2777; padding: 1.5rem;">
+      <div class="stat-icon" style="font-size: 2rem; margin-bottom: 0.5rem;">🚐</div>
+      <div class="stat-label" style="font-size: 0.85rem;">Tổng Xe</div>
+      <div class="stat-number" style="font-size: 2rem;">{{ tong_xe }}</div>
+    </div>
+
+    <div class="stat-card" style="--stat-color-1: #ef4444; --stat-color-2: #dc2626; padding: 1.5rem;">
+      <div class="stat-icon" style="font-size: 2rem; margin-bottom: 0.5rem;">🚫</div>
+      <div class="stat-label" style="font-size: 0.85rem;">Vé Đã Hủy</div>
+      <div class="stat-number" style="font-size: 2rem;">{{ ve_da_huy }}</div>
+    </div>
   </div>
 </div>
 {% endblock %}

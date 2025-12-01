@@ -534,7 +534,7 @@ class UserProfileView(LoginRequiredMixin, TemplateView):
 		
 		# Import Ve lazily
 		from booking.models import Ve
-		ve_da_dat = Ve.objects.filter(khach=khach_hang).order_by('-thoi_gian_dat')[:10]
+		ve_da_dat = Ve.objects.filter(khach=khach_hang).order_by('-ngay_dat')[:10]
 		
 		context.update({
 			'khach_hang': khach_hang,
