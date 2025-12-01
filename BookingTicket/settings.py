@@ -181,3 +181,13 @@ VNPAY_CONFIG = {
     "Locale": "vn",
     "ReturnUrl": "http://127.0.0.1:8000/payment/callback_vnpay" # Sửa lại port cho đúng Django
 }
+
+# CELERY SETTINGS
+CELERY_TASK_ALWAYS_EAGER = True  # Chạy đồng bộ (không cần Redis)
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_BROKER_URL = 'memory://'
+CELERY_RESULT_BACKEND = 'cache+memory://'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'

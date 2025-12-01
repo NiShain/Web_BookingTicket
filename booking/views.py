@@ -6,6 +6,7 @@ from django.views.generic import TemplateView, ListView
 from django.contrib import messages
 from django.db import transaction
 import uuid  
+from datetime import timedelta
 
 from .models import Tuyen, Chuyen, Ve, ThanhToan, Xe
 from payment.services import VnPayService
@@ -97,14 +98,21 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
         )
 
     def get_booked_seats(self, chuyen):
-        """Helper method: Get list of booked seats."""
+        """Helper method: Get list of booked seats - BAO GỒM CẢ CHO_THANH_TOAN"""
         booked_seats = []
-        for ve in chuyen.ves.filter(trang_thai='DA_THANH_TOAN'):
+        
+        # LẤY CẢ VÉ ĐÃ THANH TOÁN VÀ ĐANG CHỜ THANH TOÁN
+        for ve in chuyen.ves.filter(trang_thai__in=['DA_THANH_TOAN', 'CHO_THANH_TOAN']):
+            # Kiểm tra vé chờ thanh toán có hết hạn không
+            if ve.trang_thai == 'CHO_THANH_TOAN' and ve.kiem_tra_het_han():
+                ve.huy_ve_het_han()  # Tự động hủy và hoàn ghế
+                continue  # Bỏ qua vé này, ghế đã được giải phóng
+            
             if ve.vi_tri_ghe:
                 booked_seats.extend(ve.vi_tri_ghe)
+        
         return booked_seats
 
- 
     def _generate_seat_layout(self, so_ghe):
         """Internal method: Generate seat layout structure."""
         rows = []
@@ -162,10 +170,9 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
         chuyen = self.get_chuyen()
         now = timezone.now()
         
-        # Validation logic giữ nguyên nhưng gọn gàng hơn
         if chuyen.ngay_gio_khoi_hanh < now:
             messages.error(request, 'Chuyến xe này đã khởi hành.')
-            return redirect('danh-sach-chuyen') # Sửa tên URL cho đúng chuẩn (giả sử tên url của bạn)
+            return redirect('src:danh_sach_chuyen_xe')
 
         return super().get(request, *args, **kwargs)
 
@@ -181,16 +188,18 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
 
         conflict = set(selected_seats) & set(booked_seats)
         if conflict:
-            messages.error(request, f'Ghế {", ".join(conflict)} đã được đặt.')
+            messages.error(request, f'Ghế {", ".join(conflict)} đã được đặt hoặc đang được giữ.')
+            return self.get(request, *args, **kwargs)
+
+        # *** KIỂM TRA SỐ GHẾ CÒN LẠI ***
+        if len(selected_seats) > chuyen.tong_so_ve:
+            messages.error(request, f'Chỉ còn {chuyen.tong_so_ve} ghế trống.')
             return self.get(request, *args, **kwargs)
 
         # 2. Chuẩn bị dữ liệu
         khach_hang = request.user.khachhang
         tong_tien = chuyen.gia_ve * len(selected_seats)
-        
-        # *** CHỈ TẠO MỘT LẦN VỚI ĐỊNH DẠNG SỐ ***
-        txn_ref = str(uuid.uuid4().int)[:10]  # Ví dụ: '1764267851'
-        
+        txn_ref = str(uuid.uuid4().int)[:10]
         payment_url = None
 
         # Xử lý voucher
@@ -202,23 +211,16 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
             try:
                 voucher = Voucher.objects.get(ma_voucher=ma_voucher)
                 
-                # Kiểm tra voucher còn hiệu lực
                 if not voucher.con_hieu_luc():
                     messages.error(request, "❌ Voucher đã hết hạn hoặc hết lượt sử dụng!")
                     voucher = None
-                
-                # Kiểm tra user có quyền dùng voucher không
-                elif voucher.khach_hang_duoc_su_dung.exists():  # Nếu có chỉ định user
+                elif voucher.khach_hang_duoc_su_dung.exists():
                     if not voucher.khach_hang_duoc_su_dung.filter(id=khach_hang.id).exists():
                         messages.error(request, "❌ Bạn không có quyền sử dụng voucher này!")
                         voucher = None
-                
-                # Kiểm tra user đã dùng voucher này quá số lần cho phép chưa
                 elif not voucher.user_con_duoc_dung(khach_hang):
                     messages.error(request, "❌ Bạn đã sử dụng hết lượt voucher này!")
                     voucher = None
-                
-                # Tính tiền giảm
                 else:
                     so_tien_giam = voucher.tinh_giam_gia(tong_tien)
                     if so_tien_giam > 0:
@@ -227,19 +229,29 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
                     else:
                         messages.warning(request, "⚠️ Đơn hàng chưa đủ điều kiện áp dụng voucher!")
                         voucher = None
-                        
             except Voucher.DoesNotExist:
                 messages.error(request, "❌ Mã voucher không tồn tại!")
         
         try:
             with transaction.atomic():
-                # Tạo Vé
+                # *** KIỂM TRA LẠI SỐ GHẾ TRONG TRANSACTION (TRÁNH RACE CONDITION) ***
+                chuyen.refresh_from_db()
+                if len(selected_seats) > chuyen.tong_so_ve:
+                    messages.error(request, f'Chỉ còn {chuyen.tong_so_ve} ghế trống.')
+                    return self.get(request, *args, **kwargs)
+                
+                # *** TRỪ SỐ VÉ NGAY LẬP TỨC ***
+                chuyen.tong_so_ve -= len(selected_seats)
+                chuyen.save()
+                
+                # Tạo Vé với hạn thanh toán 10 phút
                 ve = Ve.objects.create(
                     chuyen=chuyen,
                     khach=khach_hang,
                     so_luong=len(selected_seats),
                     vi_tri_ghe=selected_seats,
-                    trang_thai='CHO_THANH_TOAN'
+                    trang_thai='CHO_THANH_TOAN',
+                    han_thanh_toan=timezone.now() + timedelta(minutes=10)  # SET HẠN
                 )
                 
                 # Lưu lịch sử voucher
@@ -256,10 +268,10 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
                 # Tạo Thanh Toán
                 ThanhToan.objects.create(
                     ve=ve,
-                    so_tien=tong_tien,  # Đã trừ voucher
+                    so_tien=tong_tien,
                     phuong_thuc='VNPAY',
                     trang_thai='CHO_THANH_TOAN',
-                    ma_giao_dich=txn_ref,  # Lưu mã số
+                    ma_giao_dich=txn_ref,
                 )
                 
                 # Tạo URL VNPAY
@@ -268,7 +280,7 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
                     amount=float(tong_tien),
                     order_description=f"Thanh toan ve {txn_ref}",
                     name=khach_hang.ten,
-                    order_id=txn_ref  # Gửi mã số sang VNPAY
+                    order_id=txn_ref
                 )
                 
                 vnp_service = VnPayService()
@@ -290,22 +302,23 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
 
         seat_layout = self._generate_seat_layout(chuyen.xe.so_ghe)
 
+        # *** TÍNH SỐ GHẾ CÒN LẠI DựA TRÊN tong_so_ve ***
         context.update({
             'chuyen': chuyen,
             'booked_seats': booked_seats,
             'seat_layout': seat_layout,
-            'so_ghe_con_lai': chuyen.tong_so_ve - len(booked_seats),
+            'so_ghe_con_lai': chuyen.tong_so_ve,  # ĐÃ TRỪ SẴN
         })
         
-        # Lấy danh sách voucher khả dụng cho user hiện tại
+        # Lấy danh sách voucher
         khach_hang = self.request.user.khachhang
         vouchers = Voucher.objects.filter(
             trang_thai=True,
             ngay_bat_dau__lte=timezone.now(),
             ngay_ket_thuc__gte=timezone.now()
         ).filter(
-            Q(khach_hang_duoc_su_dung__isnull=True) |  # Voucher cho tất cả
-            Q(khach_hang_duoc_su_dung=khach_hang)      # Voucher cho user này
+            Q(khach_hang_duoc_su_dung__isnull=True) |
+            Q(khach_hang_duoc_su_dung=khach_hang)
         ).distinct()
         
         context['vouchers'] = vouchers

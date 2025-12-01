@@ -1,12 +1,12 @@
 {% extends 'admin/base_admin.html' %}
 
 {% block content %}
-<a href="{% url 'src:admin_ve_list' %}" class="btn btn-secondary mb-3">&larr; Quay lại</a>
+<a href="{% url 'admin_panel:admin_ve_list' %}" class="btn btn-secondary mb-3">&larr; Quay lại</a>
 
 <div class="row">
     <div class="col-md-8">
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-info text-white">
+            <div class="card-header bg-info text-wshite">
                 <h5 class="mb-0">Chi tiết Vé #{{ ve.id }}</h5>
             </div>
             <div class="card-body">
