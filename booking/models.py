@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 from users.models import KhachHang
 from datetime import timedelta
+from django.db import transaction
 
 class Tuyen(models.Model):
     diem_di = models.CharField(max_length=100, verbose_name="Điểm đi")
@@ -122,6 +123,50 @@ class Ve(models.Model):
             self.save()
             return True
         return False
+    
+    def co_the_huy(self):
+        """Kiểm tra vé có thể hủy không"""
+        # Chỉ được hủy vé CHỜ THANH TOÁN hoặc ĐÃ THANH TOÁN
+        if self.trang_thai not in ['CHO_THANH_TOAN', 'DA_THANH_TOAN']:
+            return False
+        
+        # Kiểm tra chuyến xe chưa khởi hành
+        if self.chuyen.ngay_gio_khoi_hanh <= timezone.now():
+            return False
+        
+        # Có thể thêm điều kiện: chỉ hủy trước giờ khởi hành X phút
+        # time_before_departure = self.chuyen.ngay_gio_khoi_hanh - timezone.now()
+        # if time_before_departure < timedelta(hours=2):
+        #     return False
+        
+        return True
+    
+    def huy_ve(self):
+        """Hủy vé và hoàn lại ghế + tiền (nếu đã thanh toán)"""
+        if not self.co_the_huy():
+            return False
+        
+        with transaction.atomic():
+            # Hoàn lại số ghế
+            self.chuyen.tong_so_ve += self.so_luong
+            self.chuyen.save()
+            
+            # Xử lý hoàn tiền nếu đã thanh toán
+            if self.trang_thai == 'DA_THANH_TOAN':
+                try:
+                    thanh_toan = self.thanh_toans.first()
+                    if thanh_toan:
+                        thanh_toan.trang_thai = 'DA_HOAN'
+                        thanh_toan.save()
+                        # TODO: Tích hợp API hoàn tiền VNPAY
+                except:
+                    pass
+            
+            # Đổi trạng thái vé
+            self.trang_thai = 'DA_HUY'
+            self.save()
+            
+            return True
 
 class ThanhToan(models.Model):
     TRANG_THAI_CHOICES = [

@@ -1,0 +1,81 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <h2>📋 Lịch Sử Đặt Vé</h2>
+    
+    {% if ves %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Mã Vé</th>
+                        <th>Tuyến</th>
+                        <th>Ngày Khởi Hành</th>
+                        <th>Ghế</th>
+                        <th>Trạng Thái</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ve in ves %}
+                    <tr>
+                        <td>#{{ ve.id }}</td>
+                        <td>{{ ve.chuyen.tuyen.diem_di }} → {{ ve.chuyen.tuyen.diem_den }}</td>
+                        <td>{{ ve.chuyen.ngay_gio_khoi_hanh|date:"d/m/Y H:i" }}</td>
+                        <td>{{ ve.vi_tri_ghe|join:", " }}</td>
+                        <td>
+                            {% if ve.trang_thai == 'DA_THANH_TOAN' %}
+                                <span class="badge bg-success">Đã thanh toán</span>
+                            {% elif ve.trang_thai == 'CHO_THANH_TOAN' %}
+                                <span class="badge bg-warning">Chờ thanh toán</span>
+                            {% elif ve.trang_thai == 'DA_HUY' %}
+                                <span class="badge bg-secondary">Đã hủy</span>
+                            {% elif ve.trang_thai == 'HET_HAN' %}
+                                <span class="badge bg-danger">Hết hạn</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if ve.co_the_huy %}
+                                <form method="post" action="{% url 'src:huy_ve' ve.id %}" style="display:inline;" 
+                                      onsubmit="return confirm('Bạn có chắc muốn hủy vé này?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        🗑️ Hủy Vé
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="text-muted">Không thể hủy</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">Đầu</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Trước</a></li>
+                {% endif %}
+                
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Sau</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Cuối</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info">
+            Bạn chưa đặt vé nào.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

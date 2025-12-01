@@ -2,11 +2,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.db.models import Count, Q
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import TemplateView, ListView
+from django.views.generic import TemplateView, ListView, View
 from django.contrib import messages
 from django.db import transaction
 import uuid  
 from datetime import timedelta
+from django.http import JsonResponse
 
 from .models import Tuyen, Chuyen, Ve, ThanhToan, Xe
 from payment.services import VnPayService
@@ -343,3 +344,52 @@ class PaymentSuccessView(LoginRequiredMixin, TemplateView):
 
 class PaymentProcessingView(TemplateView):
     template_name = 'booking/payment_processing.html'
+
+
+class HuyVeView(LoginRequiredMixin, View):
+    """View xử lý hủy vé"""
+    
+    def post(self, request, ve_id):
+        try:
+            # Lấy vé của user hiện tại
+            ve = Ve.objects.select_related('chuyen').get(
+                id=ve_id,
+                khach=request.user.khachhang
+            )
+            
+            # Kiểm tra và hủy
+            if ve.co_the_huy():
+                if ve.huy_ve():
+                    messages.success(request, f'✅ Đã hủy vé thành công! Hoàn lại {ve.so_luong} ghế.')
+                    
+                    # Nếu là AJAX request
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'success': True,
+                            'message': 'Hủy vé thành công!'
+                        })
+                else:
+                    messages.error(request, '❌ Không thể hủy vé.')
+            else:
+                messages.error(request, '❌ Vé không thể hủy (đã khởi hành hoặc đã hủy trước đó).')
+                
+        except Ve.DoesNotExist:
+            messages.error(request, '❌ Không tìm thấy vé.')
+        except Exception as e:
+            messages.error(request, f'❌ Lỗi: {str(e)}')
+        
+        # Redirect về trang lịch sử đặt vé
+        return redirect('src:lich_su_dat_ve')
+
+
+class LichSuDatVeView(LoginRequiredMixin, ListView):
+    """Danh sách vé đã đặt của khách hàng"""
+    model = Ve
+    template_name = 'booking/lich_su_dat_ve.html'
+    context_object_name = 'ves'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        return Ve.objects.filter(
+            khach=self.request.user.khachhang
+        ).select_related('chuyen__tuyen', 'chuyen__xe').order_by('-ngay_dat')
