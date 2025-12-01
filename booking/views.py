@@ -178,84 +178,100 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        chuyen = self.get_chuyen()
-        booked_seats = self.get_booked_seats(chuyen)
         selected_seats = request.POST.getlist('seats')
-
-        # 1. Validate ghế
+        
         if not selected_seats:
             messages.error(request, 'Vui lòng chọn ít nhất một ghế.')
             return self.get(request, *args, **kwargs)
-
-        conflict = set(selected_seats) & set(booked_seats)
-        if conflict:
-            messages.error(request, f'Ghế {", ".join(conflict)} đã được đặt hoặc đang được giữ.')
-            return self.get(request, *args, **kwargs)
-
-        # *** KIỂM TRA SỐ GHẾ CÒN LẠI ***
-        if len(selected_seats) > chuyen.tong_so_ve:
-            messages.error(request, f'Chỉ còn {chuyen.tong_so_ve} ghế trống.')
-            return self.get(request, *args, **kwargs)
-
-        # 2. Chuẩn bị dữ liệu
-        khach_hang = request.user.khachhang
-        tong_tien = chuyen.gia_ve * len(selected_seats)
-        txn_ref = str(uuid.uuid4().int)[:10]
-        payment_url = None
-
-        # Xử lý voucher
-        ma_voucher = request.POST.get('voucher_code')
-        voucher = None
-        so_tien_giam = 0
         
-        if ma_voucher:
-            try:
-                voucher = Voucher.objects.get(ma_voucher=ma_voucher)
-                
-                if not voucher.con_hieu_luc():
-                    messages.error(request, "❌ Voucher đã hết hạn hoặc hết lượt sử dụng!")
-                    voucher = None
-                elif voucher.khach_hang_duoc_su_dung.exists():
-                    if not voucher.khach_hang_duoc_su_dung.filter(id=khach_hang.id).exists():
-                        messages.error(request, "❌ Bạn không có quyền sử dụng voucher này!")
-                        voucher = None
-                elif not voucher.user_con_duoc_dung(khach_hang):
-                    messages.error(request, "❌ Bạn đã sử dụng hết lượt voucher này!")
-                    voucher = None
-                else:
-                    so_tien_giam = voucher.tinh_giam_gia(tong_tien)
-                    if so_tien_giam > 0:
-                        tong_tien -= so_tien_giam
-                        messages.success(request, f"✅ Áp dụng voucher thành công! Giảm {so_tien_giam:,.0f}đ")
-                    else:
-                        messages.warning(request, "⚠️ Đơn hàng chưa đủ điều kiện áp dụng voucher!")
-                        voucher = None
-            except Voucher.DoesNotExist:
-                messages.error(request, "❌ Mã voucher không tồn tại!")
+        khach_hang = request.user.khachhang
+        ma_voucher = request.POST.get('voucher_code')
+        txn_ref = str(uuid.uuid4().int)[:10]
         
         try:
             with transaction.atomic():
-                # *** KIỂM TRA LẠI SỐ GHẾ TRONG TRANSACTION (TRÁNH RACE CONDITION) ***
-                chuyen.refresh_from_db()
-                if len(selected_seats) > chuyen.tong_so_ve:
-                    messages.error(request, f'Chỉ còn {chuyen.tong_so_ve} ghế trống.')
+                # ✅ LOCK HÀNG TRONG DATABASE (ngăn race condition)
+                chuyen = Chuyen.objects.select_for_update().select_related(
+                    'tuyen', 'xe'
+                ).get(pk=self.kwargs['chuyen_id'])
+                
+                # ✅ LẤY LẠI DANH SÁCH GHẾ ĐÃ ĐẶT (trong transaction)
+                booked_seats = []
+                for ve in chuyen.ves.filter(
+                    trang_thai__in=['DA_THANH_TOAN', 'CHO_THANH_TOAN']
+                ).select_for_update():
+                    # Kiểm tra vé hết hạn
+                    if ve.trang_thai == 'CHO_THANH_TOAN' and ve.kiem_tra_het_han():
+                        ve.huy_ve_het_han()
+                        continue
+                    
+                    if ve.vi_tri_ghe:
+                        booked_seats.extend(ve.vi_tri_ghe)
+                
+                # ✅ KIỂM TRA XUNG ĐỘT GHẾ (trong transaction)
+                conflict = set(selected_seats) & set(booked_seats)
+                if conflict:
+                    messages.error(request, f'❌ Ghế {", ".join(conflict)} đã được người khác đặt.')
                     return self.get(request, *args, **kwargs)
                 
-                # *** TRỪ SỐ VÉ NGAY LẬP TỨC ***
+                # ✅ KIỂM TRA SỐ VÉ CÒN LẠI
+                if len(selected_seats) > chuyen.tong_so_ve:
+                    messages.error(request, f'❌ Chỉ còn {chuyen.tong_so_ve} ghế trống.')
+                    return self.get(request, *args, **kwargs)
+                
+                # ✅ KIỂM TRA CHUYẾN ĐÃ KHỞI HÀNH CHƯA
+                if chuyen.ngay_gio_khoi_hanh <= timezone.now():
+                    messages.error(request, '❌ Chuyến xe đã khởi hành.')
+                    return redirect('src:danh_sach_chuyen_xe')
+                
+                # ✅ TRỪ SỐ VÉ NGAY LẬP TỨC
                 chuyen.tong_so_ve -= len(selected_seats)
                 chuyen.save()
                 
-                # Tạo Vé với hạn thanh toán 10 phút
+                # Tính tiền
+                tong_tien = chuyen.gia_ve * len(selected_seats)
+                
+                # Xử lý voucher
+                voucher = None
+                so_tien_giam = 0
+                
+                if ma_voucher:
+                    try:
+                        voucher = Voucher.objects.select_for_update().get(
+                            ma_voucher=ma_voucher
+                        )
+                        
+                        if not voucher.con_hieu_luc():
+                            messages.error(request, "❌ Voucher đã hết hạn!")
+                            voucher = None
+                        elif voucher.khach_hang_duoc_su_dung.exists():
+                            if not voucher.khach_hang_duoc_su_dung.filter(id=khach_hang.id).exists():
+                                messages.error(request, "❌ Bạn không có quyền sử dụng voucher!")
+                                voucher = None
+                        elif not voucher.user_con_duoc_dung(khach_hang):
+                            messages.error(request, "❌ Bạn đã hết lượt sử dụng voucher!")
+                            voucher = None
+                        else:
+                            so_tien_giam = voucher.tinh_giam_gia(tong_tien)
+                            if so_tien_giam > 0:
+                                tong_tien -= so_tien_giam
+                                messages.success(request, f"✅ Giảm {so_tien_giam:,.0f}đ")
+                            else:
+                                voucher = None
+                    except Voucher.DoesNotExist:
+                        messages.error(request, "❌ Mã voucher không tồn tại!")
+                
+                # Tạo Vé
                 ve = Ve.objects.create(
                     chuyen=chuyen,
                     khach=khach_hang,
                     so_luong=len(selected_seats),
                     vi_tri_ghe=selected_seats,
                     trang_thai='CHO_THANH_TOAN',
-                    han_thanh_toan=timezone.now() + timedelta(minutes=10)  # SET HẠN
+                    han_thanh_toan=timezone.now() + timedelta(minutes=10)
                 )
                 
-                # Lưu lịch sử voucher
+                # Lưu voucher
                 if voucher and so_tien_giam > 0:
                     VoucherSuDung.objects.create(
                         voucher=voucher,
@@ -286,14 +302,20 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
                 
                 vnp_service = VnPayService()
                 payment_url = vnp_service.create_payment_url(payment_info, request)
-
+                
+                # ✅ TRANSACTION COMMIT TẠI ĐÂY (auto)
+                # Sau khi commit, Lock được giải phóng
+                
+        except Chuyen.DoesNotExist:
+            messages.error(request, '❌ Không tìm thấy chuyến xe.')
+            return redirect('src:danh_sach_chuyen_xe')
         except Exception as e:
-            messages.error(request, f'Lỗi khởi tạo: {str(e)}')
+            messages.error(request, f'❌ Lỗi: {str(e)}')
             return self.get(request, *args, **kwargs)
-
+        
         if payment_url:
             return redirect(payment_url)
-            
+        
         return self.get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
