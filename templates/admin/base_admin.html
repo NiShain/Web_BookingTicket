@@ -21,10 +21,9 @@
             </a>
             <hr>
             <ul class="nav nav-pills flex-column mb-auto">
-                <li><a href="#" class="nav-link text-white">Dashboard</a></li> 
+                <li><a href="{% url 'admin_panel:admin_dashboard' %}" class="nav-link text-white">Dashboard</a></li>
                 
                 <li class="nav-header text-uppercase text-secondary mt-3 ms-3" style="font-size: 0.8rem;">Quản lý</li>
-                <!-- SỬA: Đổi từ 'src:' thành 'admin_panel:' -->
                 <li><a href="{% url 'admin_panel:admin_tuyen_list' %}" class="nav-link">Quản lý Tuyến</a></li>
                 <li><a href="{% url 'admin_panel:admin_xe_list' %}" class="nav-link">Quản lý Xe</a></li>
                 <li><a href="{% url 'admin_panel:admin_chuyen_list' %}" class="nav-link">Quản lý Chuyến</a></li>

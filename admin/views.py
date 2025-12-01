@@ -1,17 +1,69 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, TemplateView ,DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.db.models import Count, Q
 from users.models import KhachHang, NhanVien
-from booking.models import Tuyen, Chuyen, Ve, Voucher, VoucherSuDung, Xe
+from booking.models import Tuyen, Chuyen, Ve, Voucher, VoucherSuDung, Xe, ThanhToan
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
+from django.db.models import Sum
+
 
 class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-    """Mixin kiểm tra user phải là admin"""
     def test_func(self):
         return self.request.user.is_active and self.request.user.is_staff
-
+#==================== ADMIN DASHBOARD ====================#
+class AdminDashboardView(AdminRequiredMixin, TemplateView):
+    template_name = 'admin/admin_dashboard.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # 1. Tổng vé đã bán (chỉ tính ĐÃ THANH TOÁN)
+        ve_da_thanh_toan = Ve.objects.filter(trang_thai='DA_THANH_TOAN').count()
+        
+        # 2. Tổng vé đã đặt (bao gồm cả CHỜ THANH TOÁN)
+        tong_ve_da_ban = Ve.objects.filter(
+            trang_thai__in=['DA_THANH_TOAN', 'CHO_THANH_TOAN']
+        ).count()
+        
+        # 3. Doanh thu (chỉ tính từ vé ĐÃ THANH TOÁN)
+        doanh_thu = ThanhToan.objects.filter(
+            trang_thai='THANH_CONG'
+        ).aggregate(
+            total=Sum('so_tien')
+        )['total'] or 0
+        
+        # 4. Tổng khách hàng
+        tong_khach_hang = KhachHang.objects.count()
+        
+        # 5. Chuyến xe hôm nay
+        today = timezone.now().date()
+        chuyen_xe_hom_nay = Chuyen.objects.filter(
+            ngay_gio_khoi_hanh__date=today
+        ).count()
+        
+        # 6. Thống kê thêm
+        ve_cho_thanh_toan = Ve.objects.filter(trang_thai='CHO_THANH_TOAN').count()
+        ve_da_huy = Ve.objects.filter(trang_thai='DA_HUY').count()
+        tong_tuyen = Tuyen.objects.count()
+        tong_xe = Xe.objects.count()
+        
+        context.update({
+            'tong_ve_da_ban': tong_ve_da_ban,
+            've_da_thanh_toan': ve_da_thanh_toan,
+            've_cho_thanh_toan': ve_cho_thanh_toan,
+            've_da_huy': ve_da_huy,
+            'doanh_thu': doanh_thu,
+            'tong_khach_hang': tong_khach_hang,
+            'chuyen_xe_hom_nay': chuyen_xe_hom_nay,
+            'current_date': today,
+            'tong_tuyen': tong_tuyen,
+            'tong_xe': tong_xe,
+        })
+        
+        return context
 
 #==================== ADMIN TUYẾN ====================#
 

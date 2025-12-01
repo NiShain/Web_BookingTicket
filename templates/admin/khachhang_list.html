@@ -22,7 +22,7 @@
                 {% for khach in khachhangs %}
                 <tr>
                     <td>{{ khach.ten }}</td>
-                    <td>{{ khach.sdt }}</td>
+                    <td>{{ khach.so_dien_thoai|default:"Chưa cập nhật"  }}</td>
                     <td>{{ khach.email }}</td>
                     <td>
                         <a href="{% url 'admin_panel:admin_khachhang_detail' khach.pk %}" class="btn btn-sm btn-info text-white">Lịch sử đặt vé</a>
