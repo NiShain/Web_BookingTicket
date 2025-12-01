@@ -8,4 +8,4 @@ python -m venv venv
 # install all necessary lib 
 python -m pip install Django mysqlclient pillow redis==4.6.0 celery eventlet
 # run webapp
-./start_celery.bat
+.\start_celery.bat
