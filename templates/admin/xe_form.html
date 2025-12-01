@@ -9,7 +9,7 @@
             {% csrf_token %}
             {{ form.as_p }}
             <button type="submit" class="btn btn-success mt-3">Lưu xe</button>
-            <a href="{% url 'src:admin_xe_list' %}" class="btn btn-secondary mt-3">Hủy</a>
+            <a href="{% url 'admin_panel:admin_xe_list' %}" class="btn btn-secondary mt-3">Hủy</a>
         </form>
     </div>
 </div>

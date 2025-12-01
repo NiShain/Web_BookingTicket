@@ -25,7 +25,7 @@
                     <td>{{ khach.sdt }}</td>
                     <td>{{ khach.email }}</td>
                     <td>
-                        <a href="{% url 'src:admin_khachhang_detail' khach.pk %}" class="btn btn-sm btn-info text-white">Lịch sử đặt vé</a>
+                        <a href="{% url 'admin_panel:admin_khachhang_detail' khach.pk %}" class="btn btn-sm btn-info text-white">Lịch sử đặt vé</a>
                     </td>
                 </tr>
                 {% endfor %}

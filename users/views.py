@@ -597,7 +597,7 @@ class UserDashboardView(LoginRequiredMixin, TemplateView):
 		from django.utils import timezone
 		from django.db.models import Count
 		
-		recent_ves = Ve.objects.filter(khach__account=self.request.user).order_by('-thoi_gian_dat')[:10] if khach_hang else []
+		recent_ves = Ve.objects.filter(khach__account=self.request.user).order_by('-ngay_dat')[:10] if khach_hang else []
 		
 		# Upcoming trips
 		upcoming_chuyens = Chuyen.objects.filter(

@@ -5,6 +5,8 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from users.models import KhachHang
+from datetime import timedelta
+from django.db import transaction
 
 class Tuyen(models.Model):
     diem_di = models.CharField(max_length=100, verbose_name="Điểm đi")
@@ -71,54 +73,100 @@ class Chuyen(models.Model):
 
 class Ve(models.Model):
     TRANG_THAI_CHOICES = [
-        ("CHO_THANH_TOAN", "Chờ thanh toán"),
-        ("DA_THANH_TOAN", "Đã thanh toán"),
-        ("DA_HUY", "Đã hủy"),
+        ('CHO_THANH_TOAN', 'Chờ thanh toán'),
+        ('DA_THANH_TOAN', 'Đã thanh toán'),
+        ('DA_HUY', 'Đã hủy'),
+        ('HET_HAN', 'Hết hạn'),  # THÊM TRẠNG THÁI MỚI
     ]
-
-    chuyen = models.ForeignKey(Chuyen, on_delete=models.CASCADE, related_name="ves", verbose_name="Chuyến")
-    khach = models.ForeignKey(KhachHang, on_delete=models.CASCADE, related_name="ves", verbose_name="Khách hàng")
-    so_luong = models.PositiveIntegerField(verbose_name="Số lượng")
-    vi_tri_ghe = models.JSONField(
-        default=list,
-        blank=True,
-        help_text='Danh sách vị trí ghế đã chọn, ví dụ: ["A1", "A2", "B3"]'
-    )
-    trang_thai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default="CHO_THANH_TOAN")
-    thoi_gian_dat = models.DateTimeField(auto_now_add=True)
-
-    def clean(self):
-        if self.so_luong <= 0:
-            raise ValidationError("Số lượng vé phải lớn hơn 0.")
-        if self.so_luong > self.chuyen.so_ve_con_lai:
-            raise ValidationError("Số lượng vé vượt quá số vé còn lại của chuyến.")
-        # Validate seat positions if provided
-        if self.vi_tri_ghe:
-            if not isinstance(self.vi_tri_ghe, list):
-                raise ValidationError("Vị trí ghế phải là danh sách.")
-            if len(self.vi_tri_ghe) != self.so_luong:
-                raise ValidationError(f"Số lượng vị trí ghế ({len(self.vi_tri_ghe)}) phải bằng số lượng vé ({self.so_luong}).")
-            # Check for duplicate seats in this booking
-            if len(self.vi_tri_ghe) != len(set(self.vi_tri_ghe)):
-                raise ValidationError("Không được chọn trùng vị trí ghế.")
     
-    def get_ghe_da_dat(self):
-        """Trả về danh sách các ghế đã được đặt cho chuyến xe này"""
-        booked_seats = []
-        for ve in self.chuyen.ves.filter(trang_thai="DA_THANH_TOAN").exclude(id=self.id):
-            if ve.vi_tri_ghe:
-                booked_seats.extend(ve.vi_tri_ghe)
-        return booked_seats
-
-    def __str__(self):
-        seats_info = f" - Ghế: {', '.join(self.vi_tri_ghe)}" if self.vi_tri_ghe else ""
-        return f"Vé {self.id} - {self.khach.ten}{seats_info}"
-
+    chuyen = models.ForeignKey(Chuyen, on_delete=models.CASCADE, related_name='ves')
+    khach = models.ForeignKey('users.KhachHang', on_delete=models.CASCADE, related_name='ves')
+    so_luong = models.IntegerField(default=1, verbose_name="Số lượng vé")
+    vi_tri_ghe = models.JSONField(default=list, verbose_name="Vị trí ghế")
+    trang_thai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default='CHO_THANH_TOAN')
+    ngay_dat = models.DateTimeField(auto_now_add=True, verbose_name="Ngày đặt")
+    han_thanh_toan = models.DateTimeField(
+        null=True, 
+        blank=True, 
+        verbose_name="Hạn thanh toán"
+    )
+    
     class Meta:
         verbose_name = "Vé"
         verbose_name_plural = "Vé"
-
-
+    
+    def __str__(self):
+        return f"Vé {self.id} - {self.khach.ten} - {self.chuyen}"
+    
+    def save(self, *args, **kwargs):
+        # Tự động set hạn thanh toán = 10 phút sau khi đặt
+        if not self.han_thanh_toan and self.trang_thai == 'CHO_THANH_TOAN':
+            self.han_thanh_toan = timezone.now() + timedelta(minutes=10)
+        super().save(*args, **kwargs)
+    
+    def kiem_tra_het_han(self):
+        """Kiểm tra vé có hết hạn không"""
+        if self.trang_thai == 'CHO_THANH_TOAN' and self.han_thanh_toan:
+            if timezone.now() > self.han_thanh_toan:
+                return True
+        return False
+    
+    def huy_ve_het_han(self):
+        """Hủy vé hết hạn và hoàn lại ghế"""
+        if self.kiem_tra_het_han():
+            # Hoàn lại số vé
+            self.chuyen.tong_so_ve += self.so_luong
+            self.chuyen.save()
+            
+            # Đổi trạng thái
+            self.trang_thai = 'HET_HAN'
+            self.save()
+            return True
+        return False
+    
+    def co_the_huy(self):
+        """Kiểm tra vé có thể hủy không"""
+        # Chỉ được hủy vé CHỜ THANH TOÁN hoặc ĐÃ THANH TOÁN
+        if self.trang_thai not in ['CHO_THANH_TOAN', 'DA_THANH_TOAN']:
+            return False
+        
+        # Kiểm tra chuyến xe chưa khởi hành
+        if self.chuyen.ngay_gio_khoi_hanh <= timezone.now():
+            return False
+        
+        # Có thể thêm điều kiện: chỉ hủy trước giờ khởi hành X phút
+        # time_before_departure = self.chuyen.ngay_gio_khoi_hanh - timezone.now()
+        # if time_before_departure < timedelta(hours=2):
+        #     return False
+        
+        return True
+    
+    def huy_ve(self):
+        """Hủy vé và hoàn lại ghế + tiền (nếu đã thanh toán)"""
+        if not self.co_the_huy():
+            return False
+        
+        with transaction.atomic():
+            # Hoàn lại số ghế
+            self.chuyen.tong_so_ve += self.so_luong
+            self.chuyen.save()
+            
+            # Xử lý hoàn tiền nếu đã thanh toán
+            if self.trang_thai == 'DA_THANH_TOAN':
+                try:
+                    thanh_toan = self.thanh_toans.first()
+                    if thanh_toan:
+                        thanh_toan.trang_thai = 'DA_HOAN'
+                        thanh_toan.save()
+                        # TODO: Tích hợp API hoàn tiền VNPAY
+                except:
+                    pass
+            
+            # Đổi trạng thái vé
+            self.trang_thai = 'DA_HUY'
+            self.save()
+            
+            return True
 
 class ThanhToan(models.Model):
     TRANG_THAI_CHOICES = [

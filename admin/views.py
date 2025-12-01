@@ -5,7 +5,7 @@ from django.db.models import Count, Q
 from users.models import KhachHang, NhanVien
 from booking.models import Tuyen, Chuyen, Ve, Voucher, VoucherSuDung, Xe
 from django.contrib import messages
-
+from django.shortcuts import render, get_object_or_404
 
 class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Mixin kiểm tra user phải là admin"""
@@ -158,13 +158,14 @@ class AdminKhachHangDetailView(AdminRequiredMixin, DetailView):
     model = KhachHang
     template_name = 'admin/khachhang_detail.html'
     context_object_name = 'khach'
-
-    def get_context_data(self, **kwargs):
+    
+    def get_context_data(self, **kwargs):  # ✅ ĐÚNG: Override method của CBV
         context = super().get_context_data(**kwargs)
-        # Lấy lịch sử đặt vé của khách này
-        context['history_ves'] = Ve.objects.filter(
-            khach=self.object
-        ).select_related('chuyen', 'chuyen__tuyen').order_by('-chuyen__ngay_gio_khoi_hanh')
+        context['ves'] = Ve.objects.filter(
+            khach=self.object  # self.object = khách hàng hiện tại
+        ).select_related(
+            'chuyen__tuyen', 'chuyen__xe'
+        ).order_by('-ngay_dat')
         return context
 
 

@@ -387,6 +387,113 @@
     border-color: #9ca3af;
   }
 
+  /* Thêm style cho voucher section */
+  .voucher-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e5e7eb;
+  }
+
+  .voucher-label {
+    color: #1e3c72;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .voucher-label::before {
+    content: '🎟️';
+    font-size: 1.3rem;
+  }
+
+  .voucher-select {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    border: 2px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    color: #374151;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .voucher-select:hover {
+    border-color: #3b82f6;
+  }
+
+  .voucher-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .price-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .price-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0;
+  }
+
+  .price-label {
+    color: #6b7280;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  .price-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .discount-value {
+    color: #ef4444;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .final-price {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-top: 0.5rem;
+  }
+
+  .final-price .price-label {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+  }
+
+  .final-price .price-value {
+    color: white;
+    font-size: 1.8rem;
+  }
+
+  .voucher-info {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #92400e;
+    display: none;
+  }
+
+  .voucher-info.show {
+    display: block;
+  }
+
   @media (max-width: 992px) {
     .booking-grid {
       grid-template-columns: 1fr;
@@ -552,36 +659,61 @@
           </div>
         </div>
 
+        <!-- ✅ THÊM PHẦN VOUCHER VÀO ĐÂY -->
+        <div class="voucher-section">
+          <label class="voucher-label">Mã giảm giá</label>
+          <select name="voucher_code" class="voucher-select" id="voucherSelect">
+            <option value="" data-type="" data-value="0">-- Chọn voucher --</option>
+            {% for voucher in vouchers %}
+            <option value="{{ voucher.ma_voucher }}" 
+                    data-type="{{ voucher.loai_giam_gia }}" 
+                    data-value="{{ voucher.gia_tri_giam }}"
+                    data-max="{{ voucher.giam_toi_da|default:0 }}">
+              {{ voucher.ma_voucher }} - {{ voucher.ten_voucher }} 
+              (Giảm {% if voucher.loai_giam_gia == 'PHAN_TRAM' %}{{ voucher.gia_tri_giam }}%{% if voucher.giam_toi_da %} (Tối đa {{ voucher.giam_toi_da|floatformat:0 }}₫){% endif %}{% else %}{{ voucher.gia_tri_giam|floatformat:0 }}₫{% endif %})
+            </option>
+            {% endfor %}
+          </select>
+          <div class="voucher-info" id="voucherInfo"></div>
+        </div>
+
+        <!-- ✅ HIỂN THỊ 2 GIÁ -->
         <div class="total-section">
-          <div class="total-label">Tổng tiền:</div>
-          <div class="total-value" id="totalPrice">0₫</div>
+          <div class="price-breakdown">
+            <div class="price-item">
+              <span class="price-label">Tổng tiền vé:</span>
+              <span class="price-value" id="originalPrice">0₫</span>
+            </div>
+            
+            <div class="price-item" id="discountRow" style="display: none;">
+              <span class="price-label">Giảm giá:</span>
+              <span class="discount-value" id="discountAmount">- 0₫</span>
+            </div>
+          </div>
+
+          <div class="final-price">
+            <div class="price-item" style="padding: 0;">
+              <span class="price-label">Thành tiền:</span>
+              <span class="price-value" id="finalPrice">0₫</span>
+            </div>
+          </div>
         </div>
 
         <button type="submit" class="btn-continue" id="btnContinue" disabled>
-          Thanh Toán VNPAY Ngay →
+          💳 Thanh Toán VNPAY Ngay →
         </button>
       </div>
     </div>
 
-    <div class="voucher-section">
-      <h3>Mã giảm giá</h3>
-      <select name="voucher_code" class="form-control">
-        <option value="">-- Chọn voucher --</option>
-        {% for voucher in vouchers %}
-        <option value="{{ voucher.ma_voucher }}">
-            {{ voucher.ma_voucher }} - {{ voucher.ten_voucher }} 
-            (Giảm {% if voucher.loai_giam_gia == 'PHAN_TRAM' %}{{ voucher.gia_tri_giam }}%{% else %}{{ voucher.gia_tri_giam|floatformat:0 }}đ{% endif %})
-        </option>
-        {% endfor %}
-      </select>
-    </div>
   </form>
 </div>
 
 <script>
   const seatPrice = {{ chuyen.gia_ve }};
   const selectedSeats = new Set();
+  let discountAmount = 0;
 
+  // Xử lý chọn ghế
   document.querySelectorAll('.seat-checkbox').forEach(checkbox => {
     checkbox.addEventListener('change', function() {
       const seatLabel = this.value;
@@ -601,13 +733,62 @@
     });
   });
 
+  // ✅ XỬ LÝ THAY ĐỔI VOUCHER
+  document.getElementById('voucherSelect').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const type = selectedOption.getAttribute('data-type');
+    const value = parseFloat(selectedOption.getAttribute('data-value')) || 0;
+    const maxDiscount = parseFloat(selectedOption.getAttribute('data-max')) || 0;
+
+    const originalTotal = selectedSeats.size * seatPrice;
+
+    if (type === 'PHAN_TRAM') {
+      discountAmount = (originalTotal * value) / 100;
+      if (maxDiscount > 0 && discountAmount > maxDiscount) {
+        discountAmount = maxDiscount;
+      }
+    } else if (type === 'SO_TIEN') {
+      discountAmount = value;
+    } else {
+      discountAmount = 0;
+    }
+
+    // Hiển thị thông tin voucher
+    const voucherInfo = document.getElementById('voucherInfo');
+    if (this.value) {
+      voucherInfo.textContent = `✅ Đã áp dụng mã giảm giá: ${this.options[this.selectedIndex].text}`;
+      voucherInfo.classList.add('show');
+    } else {
+      voucherInfo.classList.remove('show');
+    }
+
+    updateSummary();
+  });
+
   function updateSummary() {
     const count = selectedSeats.size;
-    const total = count * seatPrice;
+    const originalTotal = count * seatPrice;
+    const finalTotal = Math.max(0, originalTotal - discountAmount);
 
+    // Cập nhật số ghế
     document.getElementById('seatCount').textContent = count;
-    document.getElementById('totalPrice').textContent = total.toLocaleString('vi-VN') + '₫';
 
+    // Cập nhật giá gốc
+    document.getElementById('originalPrice').textContent = originalTotal.toLocaleString('vi-VN') + '₫';
+
+    // Hiển thị/ẩn dòng giảm giá
+    const discountRow = document.getElementById('discountRow');
+    if (discountAmount > 0) {
+      discountRow.style.display = 'flex';
+      document.getElementById('discountAmount').textContent = '- ' + discountAmount.toLocaleString('vi-VN') + '₫';
+    } else {
+      discountRow.style.display = 'none';
+    }
+
+    // Cập nhật tổng tiền cuối
+    document.getElementById('finalPrice').textContent = finalTotal.toLocaleString('vi-VN') + '₫';
+
+    // Cập nhật danh sách ghế đã chọn
     const selectedSeatsContainer = document.getElementById('selectedSeats');
     if (count > 0) {
       selectedSeatsContainer.innerHTML = Array.from(selectedSeats)

@@ -482,6 +482,9 @@
             {% if request.resolver_match.url_name != 'danh_sach_chuyen_xe' %}
             <a href="{% url 'src:danh_sach_chuyen_xe' %}" {% if request.resolver_match.url_name == 'danh_sach_chuyen_xe' %}class="active"{% endif %}>Chuyến xe</a>
             {% endif %}
+            {% if request.resolver_match.url_name != 'lich_su_dat_ve' %}
+            <a href="{% url 'src:lich_su_dat_ve' %}" {% if request.resolver_match.url_name == 'lich_su_dat_ve' %}class="active"{% endif %}>📋 Lịch sử vé</a>
+            {% endif %}
           </nav>
         </div>
 
