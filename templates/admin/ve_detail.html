@@ -1,52 +1,219 @@
 {% extends 'admin/base_admin.html' %}
 
 {% block content %}
-<a href="{% url 'admin_panel:admin_ve_list' %}" class="btn btn-secondary mb-3">&larr; Quay lại</a>
+<style>
+  .detail-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-info text-wshite">
-                <h5 class="mb-0">Chi tiết Vé #{{ ve.id }}</h5>
-            </div>
-            <div class="card-body">
-                <dl class="row">
-                    <dt class="col-sm-4">Khách hàng:</dt>
-                    <dd class="col-sm-8">{{ ve.khach.ten }} ({{ ve.khach.sdt }})</dd>
+  .back-btn {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    border: none;
+  }
 
-                    <dt class="col-sm-4">Chuyến xe:</dt>
-                    <dd class="col-sm-8">
-                        {{ ve.chuyen.tuyen }} <br>
-                        Thời gian: {{ ve.chuyen.ngay_gio_khoi_hanh|date:"H:i d/m/Y" }}
-                    </dd>
+  .back-btn:hover {
+    transform: translateX(-5px);
+    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
+    color: white;
+  }
 
-                    <dt class="col-sm-4">Số lượng vé:</dt>
-                    <dd class="col-sm-8">{{ ve.so_luong }}</dd>
+  .detail-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
 
-                    <dt class="col-sm-4">Vị trí ghế:</dt>
-                    <dd class="col-sm-8">{{ ve.vi_tri_ghe }}</dd>
+  .card-header-custom {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: white;
+    padding: 1.5rem 2rem;
+  }
 
-                    <dt class="col-sm-4">Trạng thái:</dt>
-                    <dd class="col-sm-8 fw-bold">{{ ve.get_trang_thai_display }}</dd>
-                </dl>
-            </div>
-        </div>
+  .card-header-custom h5 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .card-header-custom h5::before {
+    content: '🎫';
+    font-size: 2rem;
+  }
+
+  .card-body-custom {
+    padding: 2rem;
+  }
+
+  .info-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .info-row:last-child {
+    border-bottom: none;
+  }
+
+  .info-label {
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .info-value {
+    color: #1f2937;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .status-badge.success {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+  }
+
+  .status-badge.warning {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    color: #856404;
+  }
+
+  .status-badge.secondary {
+    background: linear-gradient(135deg, #e2e3e5, #d6d8db);
+    color: #383d41;
+  }
+
+  .status-badge.danger {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+  }
+
+  .seat-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .seat-badge {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #1e40af;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 768px) {
+    .info-row {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .info-label {
+      font-weight: 700;
+      color: #374151;
+    }
+  }
+</style>
+
+<div class="detail-container">
+  <a href="{% url 'admin_panel:admin_ve_list' %}" class="back-btn">
+    ← Quay lại
+  </a>
+
+  <div class="detail-card">
+    <div class="card-header-custom">
+      <h5>Chi tiết Vé #{{ ve.id }}</h5>
     </div>
-    
-    <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-header">Thông tin giao dịch</div>
-            <div class="card-body">
-                {% if ve.thanh_toan %}
-                    <p><strong>Mã GD:</strong> {{ ve.thanh_toan.ma_giao_dich }}</p>
-                    <p><strong>Phương thức:</strong> {{ ve.thanh_toan.phuong_thuc }}</p>
-                    <p><strong>Ngày:</strong> {{ ve.thanh_toan.ngay_gio|date:"d/m/Y H:i" }}</p>
-                    <div class="alert alert-success py-1 text-center">Đã thanh toán</div>
-                {% else %}
-                    <p class="text-muted text-center">Chưa có thông tin thanh toán</p>
-                {% endif %}
-            </div>
+    <div class="card-body-custom">
+      <div class="info-row">
+        <div class="info-label">Khách hàng:</div>
+        <div class="info-value">
+          <strong>{{ ve.khach.ten }}</strong> ({{ ve.khach.sdt }})
         </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-label">Chuyến xe:</div>
+        <div class="info-value">
+          <strong>{{ ve.chuyen.tuyen.diem_di }} → {{ ve.chuyen.tuyen.diem_den }}</strong><br>
+          <span style="color: #6b7280;">Thời gian: {{ ve.chuyen.ngay_gio_khoi_hanh|date:"H:i d/m/Y" }}</span>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-label">Số lượng vé:</div>
+        <div class="info-value">
+          <strong style="font-size: 1.2rem; color: #0ea5e9;">{{ ve.so_luong }}</strong>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-label">Vị trí ghế:</div>
+        <div class="info-value">
+          <div class="seat-list">
+            {% for ghe in ve.vi_tri_ghe %}
+              <span class="seat-badge">{{ ghe }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-label">Trạng thái:</div>
+        <div class="info-value">
+          {% if ve.trang_thai == 'DA_THANH_TOAN' %}
+            <span class="status-badge success">✅ Đã thanh toán</span>
+          {% elif ve.trang_thai == 'CHO_THANH_TOAN' %}
+            <span class="status-badge warning">⏳ Chờ thanh toán</span>
+          {% elif ve.trang_thai == 'DA_HUY' %}
+            <span class="status-badge secondary">🚫 Đã hủy</span>
+          {% elif ve.trang_thai == 'HET_HAN' %}
+            <span class="status-badge danger">⏰ Hết hạn</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-label">Ngày đặt:</div>
+        <div class="info-value">
+          {{ ve.ngay_dat|date:"H:i d/m/Y" }}
+        </div>
+      </div>
+
+      {% if ve.han_thanh_toan %}
+      <div class="info-row">
+        <div class="info-label">Hạn thanh toán:</div>
+        <div class="info-value">
+          {{ ve.han_thanh_toan|date:"H:i d/m/Y" }}
+        </div>
+      </div>
+      {% endif %}
     </div>
+  </div>
 </div>
 {% endblock %}
