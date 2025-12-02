@@ -8,7 +8,7 @@ from django.db import transaction
 import uuid  
 from datetime import timedelta
 from django.http import JsonResponse
-
+from datetime import datetime
 from .models import Tuyen, Chuyen, Ve, ThanhToan, Xe
 from payment.services import VnPayService
 from payment.models import PaymentInformationModel
@@ -27,6 +27,7 @@ class HomeView(TemplateView):
         context = super().get_context_data(**kwargs)
         now = timezone.now()
 
+        # Dữ liệu mặc định
         context['tuyen_popular'] = Tuyen.objects.annotate(
             chuyen_count=Count('chuyens')
         ).order_by('-chuyen_count')[:6]
@@ -34,6 +35,42 @@ class HomeView(TemplateView):
         context['upcoming_chuyen'] = Chuyen.objects.filter(
             ngay_gio_khoi_hanh__gte=now
         ).order_by('ngay_gio_khoi_hanh')[:8]
+
+        # ✅ XỬ LÝ TÌM KIẾM
+        diem_di = self.request.GET.get('diem_di', '').strip()
+        diem_den = self.request.GET.get('diem_den', '').strip()
+        ngay_di = self.request.GET.get('ngay_gio_khoi_hanh', '').strip()
+
+        # Nếu có tìm kiếm (ít nhất 1 trường)
+        if diem_di or diem_den or ngay_di:
+            context['is_searching'] = True
+            context['search_params'] = {
+                'diem_di': diem_di,
+                'diem_den': diem_den,
+                'ngay_gio_khoi_hanh': ngay_di,
+            }
+
+            # Lọc chuyến xe
+            chuyens = Chuyen.objects.filter(
+                ngay_gio_khoi_hanh__gte=now
+            ).select_related('tuyen', 'xe')
+
+            if diem_di:
+                chuyens = chuyens.filter(tuyen__diem_di__icontains=diem_di)
+
+            if diem_den:
+                chuyens = chuyens.filter(tuyen__diem_den__icontains=diem_den)
+
+            if ngay_di:
+                try:
+                    ngay_di_date = datetime.strptime(ngay_di, '%Y-%m-%d').date()
+                    chuyens = chuyens.filter(ngay_gio_khoi_hanh__date=ngay_di_date)
+                except ValueError:
+                    pass
+
+            context['search_results'] = chuyens.order_by('ngay_gio_khoi_hanh')[:50]
+        else:
+            context['is_searching'] = False
 
         return context
 
