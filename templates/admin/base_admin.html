@@ -12,6 +12,7 @@
         .sidebar a:hover, .sidebar a.active { background-color: #495057; color: white; }
         .content { padding: 20px; }
     </style>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <div class="d-flex">
@@ -21,25 +22,44 @@
             </a>
             <hr>
             <ul class="nav nav-pills flex-column mb-auto">
-                <li><a href="{% url 'admin_panel:admin_dashboard' %}" class="nav-link text-white">Dashboard</a></li>
+                <li><a href="{% url 'admin_panel:admin_dashboard' %}" class="nav-link text-white">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a></li>
+                <li><a href="{% url 'admin_panel:admin_bieu_do' %}" class="nav-link text-white">
+                    <i class="fas fa-chart-line"></i> Biểu Đồ Thống Kê
+                </a></li>
                 
                 <li class="nav-header text-uppercase text-secondary mt-3 ms-3" style="font-size: 0.8rem;">Quản lý</li>
-                <li><a href="{% url 'admin_panel:admin_tuyen_list' %}" class="nav-link">Quản lý Tuyến</a></li>
-                <li><a href="{% url 'admin_panel:admin_xe_list' %}" class="nav-link">Quản lý Xe</a></li>
-                <li><a href="{% url 'admin_panel:admin_chuyen_list' %}" class="nav-link">Quản lý Chuyến</a></li>
+                <li><a href="{% url 'admin_panel:admin_tuyen_list' %}" class="nav-link">
+                    <i class="fas fa-route"></i> Quản lý Tuyến
+                </a></li>
+                <li><a href="{% url 'admin_panel:admin_xe_list' %}" class="nav-link">
+                    <i class="fas fa-bus"></i> Quản lý Xe
+                </a></li>
+                <li><a href="{% url 'admin_panel:admin_chuyen_list' %}" class="nav-link">
+                    <i class="fas fa-calendar-check"></i> Quản lý Chuyến
+                </a></li>
                 
                 <li class="nav-header text-uppercase text-secondary mt-3 ms-3" style="font-size: 0.8rem;">Theo dõi</li>
-                <li><a href="{% url 'admin_panel:admin_ve_list' %}" class="nav-link">Quản lý Vé</a></li>
-                <li><a href="{% url 'admin_panel:admin_khachhang_list' %}" class="nav-link">Khách hàng</a></li>
+                <li><a href="{% url 'admin_panel:admin_ve_list' %}" class="nav-link">
+                    <i class="fas fa-ticket-alt"></i> Quản lý Vé
+                </a></li>
+                <li><a href="{% url 'admin_panel:admin_khachhang_list' %}" class="nav-link">
+                    <i class="fas fa-users"></i> Khách hàng
+                </a></li>
                 
                 <li class="nav-header text-uppercase text-secondary mt-3 ms-3" style="font-size: 0.8rem;">Nhân sự & Khuyến mãi</li>
-                <li><a href="{% url 'admin_panel:nhanvien_list' %}" class="nav-link">Nhân viên</a></li>
-                <li><a href="{% url 'admin_panel:voucher_list' %}" class="nav-link">Voucher</a></li>
+                <li><a href="{% url 'admin_panel:nhanvien_list' %}" class="nav-link">
+                    <i class="fas fa-user-tie"></i> Nhân viên
+                </a></li>
+                <li><a href="{% url 'admin_panel:voucher_list' %}" class="nav-link">
+                    <i class="fas fa-tags"></i> Voucher
+                </a></li>
                 
                 <hr>
                 <li><a href="{% url 'home' %}" class="nav-link text-warning">
-    <i class="fas fa-sign-out-alt"></i> Về trang chủ
-</a></li>
+                    <i class="fas fa-home"></i> Về trang chủ
+                </a></li>
             </ul>
         </div>
 
@@ -58,5 +78,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

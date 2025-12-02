@@ -1,0 +1,178 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Biểu Đồ Thống Kê{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-chart-line"></i> Biểu Đồ Thống Kê</h2>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Thống kê tổng quan -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-money-bill-wave"></i> Tổng Doanh Thu</h5>
+                    <h2 class="mb-0">{{ tong_doanh_thu|floatformat:0 }} VNĐ</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-ticket-alt"></i> Tổng Vé Đã Đặt</h5>
+                    <h2 class="mb-0">{{ tong_ve }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BIỂU ĐỒ DOANH THU -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Biểu Đồ Doanh Thu</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <a href="?chart_filter=day" class="btn btn-sm btn-{% if chart_filter == 'day' %}primary{% else %}outline-primary{% endif %}">
+                            <i class="fas fa-calendar-day"></i> Theo ngày
+                        </a>
+                        <a href="?chart_filter=month" class="btn btn-sm btn-{% if chart_filter == 'month' %}primary{% else %}outline-primary{% endif %}">
+                            <i class="fas fa-calendar-alt"></i> Theo tháng
+                        </a>
+                        <a href="?chart_filter=year" class="btn btn-sm btn-{% if chart_filter == 'year' %}primary{% else %}outline-primary{% endif %}">
+                            <i class="fas fa-calendar"></i> Theo năm
+                        </a>
+                    </div>
+                    <div style="position: relative; height: 400px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BIỂU ĐỒ TUYẾN XE -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Top 5 Tuyến Xe Được Đặt Nhiều Nhất</h5>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 400px;">
+                        <canvas id="routeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // BIỂU ĐỒ DOANH THU (Line Chart)
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueChart = new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: {{ revenue_labels|safe }},
+            datasets: [{
+                label: 'Doanh thu (VNĐ)',
+                data: {{ revenue_data|safe }},
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Doanh thu: ' + context.parsed.y.toLocaleString('vi-VN') + ' VNĐ';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('vi-VN') + ' VNĐ';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // BIỂU ĐỒ TUYẾN XE (Pie Chart)
+    const routeCtx = document.getElementById('routeChart').getContext('2d');
+    const routeChart = new Chart(routeCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ tuyen_labels|safe }},
+            datasets: [{
+                label: 'Số vé đã đặt',
+                data: {{ tuyen_data|safe }},
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            return context.label + ': ' + context.parsed + ' vé (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

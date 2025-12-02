@@ -1,13 +1,16 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, TemplateView ,DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from users.models import KhachHang, NhanVien
 from booking.models import Tuyen, Chuyen, Ve, Voucher, VoucherSuDung, Xe, ThanhToan
 from django.contrib import messages
-from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
-from django.db.models import Sum
+from datetime import time
+import json
+from datetime import timedelta
+from datetime import datetime
+import calendar
 
 
 class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -65,7 +68,121 @@ class AdminDashboardView(AdminRequiredMixin, TemplateView):
         
         return context
 
-#==================== ADMIN TUYẾN ====================#
+class AdminBieuDoView(AdminRequiredMixin, TemplateView):
+    template_name = 'admin/bieu_do.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Lấy ngày hiện tại theo múi giờ hệ thống (VN) thay vì UTC thuần
+        today = timezone.localtime(timezone.now()).date()
+        
+        filter_type = self.request.GET.get('chart_filter', 'day')
+        labels = []
+        data = []
+
+        # === BIỂU ĐỒ 1: DOANH THU ===
+        if filter_type == 'day':
+            # 30 ngày gần nhất
+            for i in range(29, -1, -1):
+                target_date = today - timedelta(days=i)
+                label = target_date.strftime('%d/%m')
+                
+                # Tạo khoảng thời gian: Từ 00:00:00 đến 23:59:59 của ngày đó
+                # make_aware giúp Django hiểu đây là giờ VN (nếu settings TIME_ZONE='Asia/Ho_Chi_Minh')
+                start_time = timezone.make_aware(datetime.combine(target_date, time.min))
+                end_time = timezone.make_aware(datetime.combine(target_date, time.max))
+                
+                revenue = ThanhToan.objects.filter(
+                    trang_thai='THANH_CONG',
+                    ngay_gio__range=(start_time, end_time) # Dùng range để bắt chính xác mọi giao dịch trong ngày
+                ).aggregate(total=Sum('so_tien'))['total'] or 0
+                
+                labels.append(label)
+                data.append(float(revenue))
+
+        elif filter_type == 'month':
+            # 12 tháng gần nhất
+            for i in range(11, -1, -1):
+                # Tính toán tháng và năm
+                calc_month = today.month - i
+                calc_year = today.year
+                
+                # Logic lùi năm
+                while calc_month <= 0:
+                    calc_month += 12
+                    calc_year -= 1
+                
+                label = f"{calc_month}/{calc_year}"
+                
+                # Tìm ngày đầu và ngày cuối của tháng
+                # day=1 là đầu tháng
+                # last_day lấy từ calendar.monthrange (trả về số ngày của tháng đó, vd: 28, 30, 31)
+                _, last_day = calendar.monthrange(calc_year, calc_month)
+                
+                start_time = timezone.make_aware(datetime(calc_year, calc_month, 1, 0, 0, 0))
+                end_time = timezone.make_aware(datetime(calc_year, calc_month, last_day, 23, 59, 59))
+                
+                revenue = ThanhToan.objects.filter(
+                    trang_thai='THANH_CONG',
+                    ngay_gio__range=(start_time, end_time)
+                ).aggregate(total=Sum('so_tien'))['total'] or 0
+                
+                labels.append(label)
+                data.append(float(revenue))
+
+        else:  # filter_type == 'year'
+            # 5 năm gần nhất
+            for i in range(4, -1, -1):
+                target_year = today.year - i
+                label = str(target_year)
+                
+                # Query theo năm (đơn giản hơn, ít bị lỗi múi giờ hơn ngày/tháng)
+                revenue = ThanhToan.objects.filter(
+                    trang_thai='THANH_CONG',
+                    ngay_gio__year=target_year
+                ).aggregate(total=Sum('so_tien'))['total'] or 0
+                
+                labels.append(label)
+                data.append(float(revenue))
+        
+        # Đẩy dữ liệu biểu đồ doanh thu
+        context['revenue_labels'] = json.dumps(labels)
+        context['revenue_data'] = json.dumps(data)
+        context['chart_filter'] = filter_type
+        
+        # === BIỂU ĐỒ 2: TUYẾN XE PHỔ BIẾN ===
+        # (Logic này của bạn đã tốt, giữ nguyên)
+        tuyen_stats = Ve.objects.filter(
+            trang_thai__in=['DA_THANH_TOAN', 'CHO_THANH_TOAN']
+        ).values(
+            'chuyen__tuyen__diem_di',
+            'chuyen__tuyen__diem_den'
+        ).annotate(
+            so_ve=Count('id')
+        ).order_by('-so_ve')[:5]
+        
+        tuyen_labels = [
+            f"{item['chuyen__tuyen__diem_di']} → {item['chuyen__tuyen__diem_den']}" 
+            for item in tuyen_stats
+        ]
+        tuyen_data = [item['so_ve'] for item in tuyen_stats]
+        
+        context['tuyen_labels'] = json.dumps(tuyen_labels)
+        context['tuyen_data'] = json.dumps(tuyen_data)
+        
+        # === THỐNG KÊ TỔNG QUAN (KPI) ===
+        context['tong_doanh_thu'] = ThanhToan.objects.filter(
+            trang_thai='THANH_CONG'
+        ).aggregate(total=Sum('so_tien'))['total'] or 0
+        
+        context['tong_ve'] = Ve.objects.filter(
+            trang_thai__in=['DA_THANH_TOAN', 'CHO_THANH_TOAN']
+        ).count()
+        
+        return context
+
+
 
 class AdminTuyenListView(AdminRequiredMixin, ListView):
     model = Tuyen
@@ -93,7 +210,6 @@ class AdminTuyenDeleteView(AdminRequiredMixin, DeleteView):
     success_url = reverse_lazy('admin_panel:admin_tuyen_list')
 
 
-#==================== ADMIN XE ====================#
 
 class AdminXeListView(AdminRequiredMixin, ListView):
     model = Xe
@@ -119,8 +235,6 @@ class AdminXeDeleteView(AdminRequiredMixin, DeleteView):
     success_url = reverse_lazy('admin_panel:admin_xe_list')
 
 
-#==================== ADMIN CHUYẾN ====================#
-
 class AdminChuyenListView(AdminRequiredMixin, ListView):
     model = Chuyen
     template_name = 'admin/chuyen_list.html'
@@ -128,7 +242,7 @@ class AdminChuyenListView(AdminRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        # Hiển thị thêm thông tin số vé đã bán để dễ theo dõi
+     
         return Chuyen.objects.select_related('tuyen', 'xe').annotate(
             so_ve_da_ban=Count('ves', filter=Q(ves__trang_thai='DA_THANH_TOAN'))
         ).order_by('-ngay_gio_khoi_hanh')
@@ -151,8 +265,6 @@ class AdminChuyenDeleteView(AdminRequiredMixin, DeleteView):
     success_url = reverse_lazy('admin_panel:admin_chuyen_list')
 
 
-#==================== ADMIN VÉ ====================#
-
 class AdminVeListView(AdminRequiredMixin, ListView):
     model = Ve
     template_name = 'admin/ve_list.html'
@@ -162,7 +274,7 @@ class AdminVeListView(AdminRequiredMixin, ListView):
     def get_queryset(self):
         qs = Ve.objects.select_related('chuyen', 'khach', 'chuyen__tuyen').order_by('-id')
         
-        # Tính năng tìm kiếm vé theo tên khách hoặc số điện thoại
+     
         search_query = self.request.GET.get('q')
         if search_query:
             qs = qs.filter(
@@ -170,7 +282,7 @@ class AdminVeListView(AdminRequiredMixin, ListView):
                 Q(khach__sdt__icontains=search_query)
             )
             
-        # Tính năng lọc theo trạng thái
+       
         status_filter = self.request.GET.get('status')
         if status_filter:
             qs = qs.filter(trang_thai=status_filter)
@@ -179,7 +291,7 @@ class AdminVeListView(AdminRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Gửi thêm danh sách các trạng thái để làm bộ lọc trên giao diện
+        
         context['status_choices'] = ['DA_THANH_TOAN', 'CHO_THANH_TOAN', 'DA_HUY']
         return context
 
@@ -188,9 +300,6 @@ class AdminVeDetailView(AdminRequiredMixin, DetailView):
     template_name = 'admin/ve_detail.html'
     context_object_name = 've'
 
-
-#==================== ADMIN KHÁCH HÀNG ====================#
-
 class AdminKhachHangListView(AdminRequiredMixin, ListView):
     model = KhachHang
     template_name = 'admin/khachhang_list.html'
@@ -198,7 +307,7 @@ class AdminKhachHangListView(AdminRequiredMixin, ListView):
     paginate_by = 15
     
     def get_queryset(self):
-        # Tìm kiếm khách hàng
+        
         query = self.request.GET.get('q')
         if query:
             return KhachHang.objects.filter(
@@ -211,17 +320,16 @@ class AdminKhachHangDetailView(AdminRequiredMixin, DetailView):
     template_name = 'admin/khachhang_detail.html'
     context_object_name = 'khach'
     
-    def get_context_data(self, **kwargs):  # ✅ ĐÚNG: Override method của CBV
+    def get_context_data(self, **kwargs):  
         context = super().get_context_data(**kwargs)
         context['ves'] = Ve.objects.filter(
-            khach=self.object  # self.object = khách hàng hiện tại
+            khach=self.object  
         ).select_related(
             'chuyen__tuyen', 'chuyen__xe'
         ).order_by('-ngay_dat')
         return context
 
 
-#==================== ADMIN NHÂN VIÊN ====================#
 
 class AdminNhanVienListView(AdminRequiredMixin, ListView):
     model = NhanVien
@@ -232,7 +340,7 @@ class AdminNhanVienListView(AdminRequiredMixin, ListView):
     def get_queryset(self):
         qs = NhanVien.objects.all()
         
-        # Tìm kiếm
+        
         search_query = self.request.GET.get('q')
         if search_query:
             qs = qs.filter(
@@ -241,12 +349,11 @@ class AdminNhanVienListView(AdminRequiredMixin, ListView):
                 Q(email__icontains=search_query)
             )
         
-        # Lọc theo chức vụ
         chuc_vu = self.request.GET.get('chuc_vu')
         if chuc_vu:
             qs = qs.filter(chuc_vu=chuc_vu)
         
-        # Lọc theo trạng thái
+    
         trang_thai = self.request.GET.get('trang_thai')
         if trang_thai == '1':
             qs = qs.filter(trang_thai=True)
@@ -257,7 +364,6 @@ class AdminNhanVienListView(AdminRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Thêm thống kê
         from django.db.models import Sum
         all_nv = NhanVien.objects.filter(trang_thai=True)
         context['tong_luong'] = all_nv.aggregate(Sum('luong_co_ban'))['luong_co_ban__sum'] or 0
@@ -292,7 +398,6 @@ class AdminNhanVienDeleteView(AdminRequiredMixin, DeleteView):
     success_url = reverse_lazy('admin_panel:nhanvien_list')
 
 
-#==================== ADMIN VOUCHER ====================#
 
 class AdminVoucherListView(AdminRequiredMixin, ListView):
     model = Voucher
@@ -313,7 +418,6 @@ class AdminVoucherCreateView(AdminRequiredMixin, CreateView):
     success_url = reverse_lazy('admin_panel:voucher_list')
     
     def form_valid(self, form):
-        # Tự động tạo mã voucher ngẫu nhiên
         form.instance.ma_voucher = Voucher.tao_ma_voucher()
         messages.success(self.request, f"✅ Đã tạo voucher: {form.instance.ma_voucher}")
         return super().form_valid(form)
@@ -336,7 +440,6 @@ class AdminVoucherDeleteView(AdminRequiredMixin, DeleteView):
     success_url = reverse_lazy('admin_panel:voucher_list')
 
 class AdminVoucherHistoryView(AdminRequiredMixin, ListView):
-    """Xem lịch sử sử dụng voucher"""
     model = VoucherSuDung
     template_name = 'admin/voucher_history.html'
     context_object_name = 'histories'
