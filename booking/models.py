@@ -289,18 +289,10 @@ class Voucher(models.Model):
         """Kiểm tra voucher còn hiệu lực không"""
         now = timezone.now()
         
-        # Debug: In ra để kiểm tra
-        print(f"Voucher: {self.ma_voucher}")
-        print(f"Trạng thái: {self.trang_thai}")
-        print(f"Thời gian hiện tại: {now}")
-        print(f"Ngày bắt đầu: {self.ngay_bat_dau}")
-        print(f"Ngày kết thúc: {self.ngay_ket_thuc}")
-        print(f"Đã dùng/Tổng: {self.da_su_dung}/{self.so_luong}")
-        
         return (
-            self.trang_thai and 
-            self.ngay_bat_dau <= now <= self.ngay_ket_thuc and 
-            self.da_su_dung < self.so_luong
+            self.trang_thai and  # Đang hoạt động
+            self.ngay_bat_dau <= now <= self.ngay_ket_thuc and  # Trong thời hạn
+            self.da_su_dung < self.so_luong  # Còn số lượng
         )
     
     def user_da_dung_bao_nhieu_lan(self, khach_hang):
@@ -309,7 +301,12 @@ class Voucher(models.Model):
     
     def user_con_duoc_dung(self, khach_hang):
         """Kiểm tra user còn được dùng voucher không"""
-        return self.user_da_dung_bao_nhieu_lan(khach_hang) < self.so_lan_su_dung_toi_da_moi_user
+        so_lan_da_dung = self.user_da_dung_bao_nhieu_lan(khach_hang)
+        
+        # Debug
+        print(f"User {khach_hang.ten} đã dùng voucher {self.ma_voucher}: {so_lan_da_dung}/{self.so_lan_su_dung_toi_da_moi_user} lần")
+        
+        return so_lan_da_dung < self.so_lan_su_dung_toi_da_moi_user
     
     def tinh_giam_gia(self, tong_tien):
         """Tính số tiền được giảm"""
