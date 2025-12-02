@@ -488,6 +488,288 @@
         border: 1px solid #f1b0b7;
       }
 
+      .highlight {
+        background-color: rgba(52, 152, 219, 0.2);
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-weight: 600;
+      }
+
+      /* ===== STYLES CHO KẾT QUẢ TÌM KIẾM ===== */
+      #search-results {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        padding: 3rem 0 4rem;
+      }
+
+      #search-results h2 {
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .search-info {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.08) 0%, rgba(46, 204, 113, 0.08) 100%);
+        border-radius: 15px;
+        border-left: 5px solid #3498db;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .search-info::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 3s infinite;
+      }
+
+      @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+      }
+
+      .search-info-content {
+        position: relative;
+        z-index: 2;
+      }
+
+      .search-criteria {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 0.8rem;
+      }
+
+      .search-tag {
+        background: white;
+        padding: 0.5rem 1.2rem;
+        border-radius: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        font-size: 0.95rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 2px solid rgba(52, 152, 219, 0.2);
+        transition: all 0.3s ease;
+      }
+
+      .search-tag:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+      }
+
+      .search-tag-icon {
+        font-size: 1.1rem;
+      }
+
+      .search-tag-label {
+        color: #7f8c8d;
+        font-weight: 500;
+      }
+
+      .search-tag-value {
+        color: #2c3e50;
+        font-weight: 700;
+      }
+
+      .search-count {
+        margin-top: 0.5rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        padding: 0.6rem 1.5rem;
+        border-radius: 25px;
+        display: inline-block;
+        animation: fadeIn 0.5s ease;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .search-count.success {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border: 2px solid #b1dfbb;
+      }
+
+      .search-count.error {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+        border: 2px solid #f1b0b7;
+      }
+
+      .search-results-table {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
+        border: 2px solid rgba(52, 152, 219, 0.1);
+        animation: slideUp 0.5s ease-out;
+        width: 100%; /* Đảm bảo div bao ngoài full width */
+      }
+
+      .search-results-table table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed; /* QUAN TRỌNG: Giúp chia cột theo % chính xác */
+      }
+
+      .search-results-table thead {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+      }
+
+      .search-results-table th {
+        color: white;
+        padding: 1.3rem 0.5rem; /* Giảm padding trái phải để tiết kiệm chỗ */
+        font-weight: 700;
+        font-size: 0.9rem; /* Giảm nhẹ size chữ để vừa vặn hơn */
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        position: relative;
+        text-align: center; /* Mặc định căn giữa tiêu đề */
+        white-space: nowrap; /* Không cho tiêu đề xuống dòng */
+        vertical-align: middle;
+      }
+
+      /* Tùy chỉnh độ rộng từng cột để trải dài hợp lý */
+      /* Cột 1: Tuyến xe (Cần dài nhất) - 30% */
+      .search-results-table th:nth-child(1) {
+        width: 30%;
+        text-align: left; /* Riêng tuyến xe căn trái */
+        padding-left: 1.5rem;
+      }
+
+      /* Cột 2: Loại xe - 15% */
+      .search-results-table th:nth-child(2) {
+        width: 15%;
+      }
+
+      /* Cột 3, 4: Ngày, Giờ - 10% mỗi cột */
+      .search-results-table th:nth-child(3),
+      .search-results-table th:nth-child(4) {
+        width: 10%;
+      }
+
+      /* Cột 5: Giá vé - 10% */
+      .search-results-table th:nth-child(5) {
+        width: 10%;
+      }
+
+      /* Cột 6: Chỗ trống - 10% */
+      .search-results-table th:nth-child(6) {
+        width: 10%;
+      }
+
+      /* Cột 7: Thao tác - 15% */
+      .search-results-table th:nth-child(7) {
+        width: 15%;
+      }
+
+      .search-results-table th::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #3498db, #2ecc71, #3498db);
+        background-size: 200% 100%;
+        animation: gradientMove 3s ease infinite;
+      }
+
+      .search-results-table td {
+        padding: 1.2rem 0.5rem;
+        border-bottom: 1px solid #f0f0f0;
+        color: #555;
+        font-size: 0.95rem;
+        vertical-align: middle;
+        text-align: center; /* Mặc định căn giữa nội dung cho đẹp */
+      }
+
+      /* Riêng nội dung cột Tuyến xe căn trái */
+      .search-results-table td:first-child {
+        text-align: left;
+        padding-left: 1.5rem;
+      }
+
+      .route-text {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        font-size: 1.05rem;
+      }
+
+      .route-arrow {
+        color: #3498db;
+        font-size: 1.2rem;
+      }
+
+      .vehicle-type {
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        color: #2e7d32;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        display: inline-block;
+        border: 1px solid #a5d6a7;
+      }
+
+      .date-badge, .time-badge {
+        background: #f8f9fa;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        display: inline-block;
+        border: 1px solid #e8ecf0;
+      }
+
+      .time-badge {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+        border-color: #ffeeba;
+      }
+
+      #no-results {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e8ecf0 100%);
+      }
+
+      #no-results::before {
+        content: "😔";
+        display: block;
+        font-size: 5rem;
+        margin-bottom: 1rem;
+        animation: bounce 2s infinite;
+      }
+
+      #no-results p:first-of-type {
+        font-size: 1.3rem;
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+
+      #no-results p:last-of-type {
+        color: #7f8c8d;
+        font-size: 1rem;
+      }
+
       @media (max-width: 768px) {
         .search-row {
           grid-template-columns: 1fr;
@@ -554,6 +836,8 @@
                 id="diem_di"
                 name="diem_di"
                 placeholder="Nhập điểm đi"
+                value="{{ search_params.diem_di|default:'' }}"
+                autocomplete="off"
               />
             </div>
             <div class="form-group">
@@ -563,24 +847,78 @@
                 id="diem_den"
                 name="diem_den"
                 placeholder="Nhập điểm đến"
+                value="{{ search_params.diem_den|default:'' }}"
+                autocomplete="off"
               />
             </div>
             <div class="form-group">
               <label for="ngay_di">Ngày đi</label>
-              <input type="date" id="ngay_di" name="ngay_di" />
+              <input 
+                type="date" 
+                id="ngay_di" 
+                name="ngay_di"
+                value="{{ search_params.ngay_gio_khoi_hanh|default:'' }}"
+              />
             </div>
             <button type="submit" class="btn-search">Tìm kiếm</button>
           </div>
         </form>
+        <p style="text-align: center; margin-top: 1rem; color: #7f8c8d; font-size: 0.9rem;">
+          💡 Nhập ít nhất 1 trường để tìm kiếm
+        </p>
       </div>
     </div>
 
     <!-- Kết quả tìm kiếm -->
-    <section class="section" id="search-results" style="display: none">
+    {% if is_searching %}
+    <section class="section" id="search-results">
       <div class="container">
-        <h2>Kết Quả Tìm Kiếm</h2>
+        <h2>🔍 Kết Quả Tìm Kiếm</h2>
+        
+        <!-- Thông tin tìm kiếm -->
+        <div class="search-info">
+          <div class="search-info-content">
+            <div class="search-criteria">
+              {% if search_params.diem_di %}
+              <div class="search-tag">
+                <span class="search-tag-icon">📍</span>
+                <span class="search-tag-label">Điểm đi:</span>
+                <span class="search-tag-value">{{ search_params.diem_di }}</span>
+              </div>
+              {% endif %}
+              
+              {% if search_params.diem_den %}
+              <div class="search-tag">
+                <span class="search-tag-icon">🎯</span>
+                <span class="search-tag-label">Điểm đến:</span>
+                <span class="search-tag-value">{{ search_params.diem_den }}</span>
+              </div>
+              {% endif %}
+              
+              {% if search_params.ngay_di %}
+              <div class="search-tag">
+                <span class="search-tag-icon">📅</span>
+                <span class="search-tag-label">Ngày đi:</span>
+                <span class="search-tag-value">{{ search_params.ngay_di }}</span>
+              </div>
+              {% endif %}
+            </div>
+
+            {% if search_results %}
+            <div class="search-count success">
+              ✅ Tìm thấy {{ search_results|length }} chuyến xe phù hợp
+            </div>
+            {% else %}
+            <div class="search-count error">
+              ❌ Không tìm thấy chuyến xe nào
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
         <div class="search-results-table">
-          <table id="results-table">
+          {% if search_results %}
+          <table>
             <thead>
               <tr>
                 <th>Tuyến xe</th>
@@ -592,19 +930,60 @@
                 <th>Thao tác</th>
               </tr>
             </thead>
-            <tbody id="results-tbody">
+            <tbody>
+              {% for chuyen in search_results %}
+              <tr>
+                <td>
+                  <div class="route-text">
+                    {% if search_params.diem_di and search_params.diem_di|lower in chuyen.tuyen.diem_di|lower %}
+                      <span class="highlight">{{ chuyen.tuyen.diem_di }}</span>
+                    {% else %}
+                      {{ chuyen.tuyen.diem_di }}
+                    {% endif %}
+                    <span class="route-arrow">→</span>
+                    {% if search_params.diem_den and search_params.diem_den|lower in chuyen.tuyen.diem_den|lower %}
+                      <span class="highlight">{{ chuyen.tuyen.diem_den }}</span>
+                    {% else %}
+                      {{ chuyen.tuyen.diem_den }}
+                    {% endif %}
+                  </div>
+                </td>
+                <td>
+                  <span class="vehicle-type">{{ chuyen.xe.loai_xe }}</span>
+                </td>
+                <td>
+                  <span class="date-badge">
+                    {% if search_params.ngay_di and search_params.ngay_di == chuyen.ngay_gio_khoi_hanh|date:"Y-m-d" %}
+                      <span class="highlight">{{ chuyen.ngay_gio_khoi_hanh|date:"d/m/Y" }}</span>
+                    {% else %}
+                      {{ chuyen.ngay_gio_khoi_hanh|date:"d/m/Y" }}
+                    {% endif %}
+                  </span>
+                </td>
+                <td>
+                  <span class="time-badge">{{ chuyen.ngay_gio_khoi_hanh|date:"H:i" }}</span>
+                </td>
+                <td class="price">{{ chuyen.gia_ve|floatformat:0 }}đ</td>
+                <td class="seats-available">{{ chuyen.tong_so_ve }} chỗ trống</td>
+                <td>
+                  <a href="{% url 'src:chon_ghe' chuyen.id %}" class="btn-book">Đặt vé</a>
+                </td>
+              </tr>
+              {% endfor %}
             </tbody>
           </table>
-          <div
-            id="no-results"
-            style="display: none; text-align: center; padding: 2.5rem; color: #7f8c8d;"
-          >
-            <p style="font-size: 1.1rem;">❌ Không tìm thấy chuyến xe phù hợp với yêu cầu của bạn.</p>
+          {% else %}
+          <div id="no-results">
+            <p>Không tìm thấy chuyến xe phù hợp</p>
+            <p>Hãy thử tìm kiếm với từ khóa khác hoặc điều chỉnh bộ lọc</p>
           </div>
+          {% endif %}
         </div>
       </div>
     </section>
+    {% endif %}
 
+    <!-- Tuyến Xe Phổ Biến -->
     <section class="section">
       <div class="container">
         <h2>🔥 Tuyến Xe Phổ Biến</h2>
@@ -626,6 +1005,7 @@
       </div>
     </section>
 
+    <!-- Chuyến Xe Sắp Tới -->
     <section class="section" style="background: linear-gradient(135deg, #f8f9fa 0%, #e8ecf0 100%); padding: 4rem 0;">
       <div class="container">
         <h2>⏰ Chuyến Xe Sắp Tới</h2>
@@ -665,63 +1045,20 @@
     </section>
 
     <script>
+      // Set ngày mặc định
       document.getElementById("ngay_di").valueAsDate = new Date();
 
-      document.querySelector(".search-form form").addEventListener("submit", function (e) {
-          e.preventDefault();
-
-          const formData = new FormData(this);
-          const params = new URLSearchParams(formData);
-
-          const searchResults = document.getElementById("search-results");
-          const resultsTable = document.getElementById("results-tbody");
-          const noResults = document.getElementById("no-results");
-
-          resultsTable.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">🔍 Đang tìm kiếm...</td></tr>';
-          searchResults.style.display = "block";
-          noResults.style.display = "none";
-          document.getElementById("results-table").style.display = "table";
-
-          searchResults.scrollIntoView({ behavior: "smooth" });
-
-          fetch(`/api/tim-chuyen-xe/?${params}`)
-            .then((response) => response.json())
-            .then((data) => {
-              resultsTable.innerHTML = "";
-
-              if (data.chuyens && data.chuyens.length > 0) {
-                data.chuyens.forEach((chuyen) => {
-                  const row = document.createElement("tr");
-                  row.innerHTML = `
-                                <td><strong>${chuyen.tuyen_text}</strong></td>
-                                <td>${chuyen.loai_xe}</td>
-                                <td>${formatDate(chuyen.ngay_di)}</td>
-                                <td>${chuyen.gio_di}</td>
-                                <td class="price">${formatPrice(chuyen.gia_ve)}đ</td>
-                                <td class="seats-available">${chuyen.so_ghe_trong} chỗ trống</td>
-                                <td><a href="/chuyen/${chuyen.id}/" class="btn-book">Đặt vé</a></td>
-                            `;
-                  resultsTable.appendChild(row);
-                });
-              } else {
-                noResults.style.display = "block";
-                document.getElementById("results-table").style.display = "none";
-              }
-            })
-            .catch((error) => {
-              console.error("Error:", error);
-              resultsTable.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #e74c3c; padding: 2rem;">⚠️ Có lỗi xảy ra khi tìm kiếm.</td></tr>';
-            });
-        });
-
-      function formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("vi-VN");
-      }
-
-      function formatPrice(price) {
-        return new Intl.NumberFormat("vi-VN").format(price);
-      }
+      // Scroll to kết quả nếu có tìm kiếm
+      {% if is_searching %}
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+          document.getElementById('search-results').scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }, 300);
+      });
+      {% endif %}
     </script>
 
     <script src="{% static 'js/session-manager.js' %}"></script>

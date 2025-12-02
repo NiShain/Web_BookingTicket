@@ -51,16 +51,37 @@ class Chuyen(models.Model):
 
     def clean(self):
         now = timezone.now()
-        if self.ngay_gio_khoi_hanh < now:
-            raise ValidationError("Ngày giờ khởi hành không được sớm hơn hiện tại.")
-        if self.ngay_gio_den and self.ngay_gio_den < self.ngay_gio_khoi_hanh:
-            raise ValidationError("Ngày giờ đến phải sau hoặc bằng ngày giờ khởi hành.")
-        if self.tong_so_ve <= 0:
-            raise ValidationError("Tổng số vé phải lớn hơn 0.")
-        if self.gia_ve <= 0:
-            raise ValidationError("Giá vé phải lớn hơn 0.")
-        if self.xe and self.tong_so_ve > self.xe.so_ghe:
-            raise ValidationError(f"Tổng số vé ({self.tong_so_ve}) vượt quá số ghế của xe ({self.xe.so_ghe}).")
+        if self.pk is None:  # ✅ Chỉ check khi tạo mới
+            if self.ngay_gio_khoi_hanh and self.ngay_gio_khoi_hanh <= now:
+                raise ValidationError({
+                    'ngay_gio_khoi_hanh': "Ngày giờ khởi hành phải sau thời điểm hiện tại."
+                })
+        
+        # Kiểm tra ngày đến phải sau ngày khởi hành
+        if self.ngay_gio_den and self.ngay_gio_khoi_hanh:
+            if self.ngay_gio_den < self.ngay_gio_khoi_hanh:
+                raise ValidationError({
+                    'ngay_gio_den': "Ngày giờ đến phải sau hoặc bằng ngày giờ khởi hành."
+                })
+        
+        # Kiểm tra tổng số vé
+        if self.tong_so_ve is not None and self.tong_so_ve <= 0:
+            raise ValidationError({
+                'tong_so_ve': "Tổng số vé phải lớn hơn 0."
+            })
+        
+        # Kiểm tra giá vé
+        if self.gia_ve is not None and self.gia_ve <= 0:
+            raise ValidationError({
+                'gia_ve': "Giá vé phải lớn hơn 0."
+            })
+        
+        # Kiểm tra số vé không vượt quá số ghế xe
+        if self.xe and self.tong_so_ve and self.tong_so_ve > self.xe.so_ghe:
+            raise ValidationError({
+                'tong_so_ve': f"Tổng số vé ({self.tong_so_ve}) vượt quá số ghế của xe ({self.xe.so_ghe})."
+            })
+
 
     @property
     def so_ve_con_lai(self):
@@ -135,9 +156,9 @@ class Ve(models.Model):
             return False
         
         # Có thể thêm điều kiện: chỉ hủy trước giờ khởi hành X phút
-        # time_before_departure = self.chuyen.ngay_gio_khoi_hanh - timezone.now()
-        # if time_before_departure < timedelta(hours=2):
-        #     return False
+        time_before_departure = self.chuyen.ngay_gio_khoi_hanh - timezone.now()
+        if time_before_departure < timedelta(hours=1):
+            return False
         
         return True
     
