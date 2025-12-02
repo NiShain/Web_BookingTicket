@@ -370,18 +370,39 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
             'so_ghe_con_lai': chuyen.tong_so_ve,  # ĐÃ TRỪ SẴN
         })
         
-        # Lấy danh sách voucher
+        # ✅ LẤY DANH SÁCH VOUCHER HỢP LỆ
         khach_hang = self.request.user.khachhang
-        vouchers = Voucher.objects.filter(
+        now = timezone.now()
+        
+        # Lấy tất cả voucher đang hoạt động và trong thời hạn
+        all_vouchers = Voucher.objects.filter(
             trang_thai=True,
-            ngay_bat_dau__lte=timezone.now(),
-            ngay_ket_thuc__gte=timezone.now()
+            ngay_bat_dau__lte=now,
+            ngay_ket_thuc__gte=now
         ).filter(
             Q(khach_hang_duoc_su_dung__isnull=True) |
             Q(khach_hang_duoc_su_dung=khach_hang)
         ).distinct()
         
-        context['vouchers'] = vouchers
+        # ✅ LỌC THÊM: Chỉ lấy voucher còn slot và user còn lượt dùng
+        valid_vouchers = []
+        for voucher in all_vouchers:
+            # Kiểm tra còn số lượng không
+            if voucher.da_su_dung >= voucher.so_luong:
+                continue
+            
+            # Kiểm tra user còn lượt dùng không
+            so_lan_da_dung = voucher.user_da_dung_bao_nhieu_lan(khach_hang)
+            if so_lan_da_dung >= voucher.so_lan_su_dung_toi_da_moi_user:
+                continue
+            
+            # Kiểm tra voucher còn hiệu lực (method có sẵn trong model)
+            if not voucher.con_hieu_luc():
+                continue
+            
+            valid_vouchers.append(voucher)
+        
+        context['vouchers'] = valid_vouchers
         return context
 
 class PaymentSuccessView(LoginRequiredMixin, TemplateView):
