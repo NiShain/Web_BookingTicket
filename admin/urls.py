@@ -3,6 +3,8 @@ from . import views
 app_name = 'admin_panel'
 urlpatterns = [
     path('', views.AdminDashboardView.as_view(), name='admin_dashboard'),
+    path('bieu-do/', views.AdminBieuDoView.as_view(), name='admin_bieu_do'),
+    
     
     path('manage/tuyen/', views.AdminTuyenListView.as_view(), name='admin_tuyen_list'),
     path('manage/tuyen/create/', views.AdminTuyenCreateView.as_view(), name='admin_tuyen_create'),
