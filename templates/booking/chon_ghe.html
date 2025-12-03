@@ -123,41 +123,112 @@
   /* Dynamic grid based on layout */
   .seat-row.layout-5 {
     grid-template-columns: 1fr 1fr 0.5fr 1fr 1fr;
+    justify-items: center;
   }
 
   .seat-row.layout-4 {
     grid-template-columns: 1fr 1fr 0.5fr 1fr;
+    justify-items: center;
   }
 
   .seat-row.layout-3 {
     grid-template-columns: 1fr 0.5fr 1fr;
-  }
-
-  /* Last row with full width seats */
-  .seat-row.layout-1 {
-    grid-template-columns: 1fr;
+    justify-items: center;
   }
 
   .seat-row.layout-2 {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 0.5fr 1fr;
+    justify-items: center;
   }
 
+  .seat-row.layout-1 {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+
+  /* Last row styles - hàng cuối không có lối đi */
   .seat-row.last-row {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 2px dashed #cbd5e1;
-    max-width: 100%;
-    justify-items: stretch;
+    display: grid;
+    gap: 20px;
+    padding: 20px 40px;
+    margin-top: 20px;
+    border-top: 2px dashed #ddd;
+    justify-items: center;
+    align-items: center;
+    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+    border-radius: 12px;
+    justify-content: space-evenly;
   }
 
-  .seat-row.last-row.layout-3 {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.8rem;
-  }
-
-  .seat-row.last-row.layout-4 {
+  .seat-row.last-row.seats-4 {
     grid-template-columns: repeat(4, 1fr);
-    gap: 0.8rem;
+    max-width: 500px;
+    margin: 20px auto 0;
+    gap: 25px;
+  }
+
+  .seat-row.last-row.seats-5 {
+    grid-template-columns: repeat(5, 1fr);
+    max-width: 650px;
+    margin: 20px auto 0;
+    gap: 25px;
+  }
+
+  .seat-row.last-row.seats-6 {
+    grid-template-columns: repeat(6, 1fr);
+    max-width: 750px;
+    margin: 20px auto 0;
+    gap: 20px;
+  }
+
+  .seat-row.last-row.seats-7 {
+    grid-template-columns: repeat(7, 1fr);
+    max-width: 850px;
+    margin: 20px auto 0;
+    gap: 18px;
+  }
+
+  .seat-row.last-row.seats-8 {
+    grid-template-columns: repeat(8, 1fr);
+    max-width: 950px;
+    margin: 20px auto 0;
+    gap: 15px;
+  }
+
+  /* Ghế trong hàng cuối có kích thước đặc biệt */
+  .seat-row.last-row .seat {
+    width: 55px;
+    height: 55px;
+    font-size: 12px;
+    font-weight: 600;
+    border-width: 2px;
+    transition: all 0.3s ease;
+  }
+
+  .seat-row.last-row .seat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  }
+
+  /* Xử lý hàng cuối không đầy đủ */
+  .seat-row.incomplete {
+    opacity: 1;
+  }
+
+  .seat-row.incomplete.layout-3 {
+    grid-template-columns: 1fr 0.5fr 1fr;
+  }
+
+  .seat-row.incomplete.layout-2 {
+    grid-template-columns: 1fr 0.5fr;
+  }
+
+  .seat-row.incomplete.layout-1 {
+    grid-template-columns: 1fr;
+    max-width: 100px;
+    margin: 0 auto;
   }
 
   .aisle {
@@ -530,6 +601,15 @@
       grid-template-columns: 1fr 0.3fr 1fr;
     }
 
+    .seat-row.layout-2 {
+      grid-template-columns: 1fr 0.3fr 1fr;
+    }
+
+    .seat-row.layout-1 {
+      grid-template-columns: 1fr;
+      max-width: 150px;
+    }
+
     .booking-container {
       padding: 1rem;
     }
@@ -552,6 +632,63 @@
 
     .aisle {
       width: 15px;
+    }
+  }
+
+  /* Responsive cho hàng cuối */
+  @media (max-width: 768px) {
+    .seat-row.last-row {
+      padding: 15px 25px;
+      gap: 15px;
+    }
+
+    .seat-row.last-row.seats-4 {
+      max-width: 400px;
+      gap: 18px;
+    }
+
+    .seat-row.last-row.seats-5 {
+      max-width: 450px;
+      gap: 15px;
+    }
+
+    .seat-row.last-row.seats-6 {
+      max-width: 500px;
+      gap: 12px;
+    }
+
+    .seat-row.last-row .seat {
+      width: 45px;
+      height: 45px;
+      font-size: 11px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .seat-row.last-row {
+      padding: 10px 20px;
+      gap: 10px;
+    }
+
+    .seat-row.last-row.seats-4 {
+      max-width: 320px;
+      gap: 12px;
+    }
+
+    .seat-row.last-row.seats-5 {
+      max-width: 350px;
+      gap: 10px;
+    }
+
+    .seat-row.last-row.seats-6 {
+      max-width: 380px;
+      gap: 8px;
+    }
+
+    .seat-row.last-row .seat {
+      width: 40px;
+      height: 40px;
+      font-size: 10px;
     }
   }
 </style>
@@ -594,37 +731,53 @@
 
         <div class="seat-layout">
           {% for row in seat_layout %}
-            {% if forloop.last and row|length <= 4 and row.0 != None and None not in row %}
-              {# Last row with remaining seats - full width layout #}
-              <div class="seat-row layout-{{ row|length }} last-row">
-                {% for seat in row %}
-                  {% if seat in booked_seats %}
-                    <div class="seat booked" title="Đã đặt">{{ seat }}</div>
-                  {% else %}
-                    <label class="seat available" title="Click để chọn">
-                      <input type="checkbox" name="seats" value="{{ seat }}" style="display: none;" class="seat-checkbox">
-                      <span class="seat-label">{{ seat }}</span>
-                    </label>
+            {% comment %}
+              Kiểm tra xem có phải hàng cuối không (không có None = không có lối đi)
+              Hàng cuối sẽ có tất cả ghế liên tiếp, không có lối đi
+            {% endcomment %}
+            {% with has_aisle=False %}
+              {% for item in row %}
+                {% if item == None %}
+                  {% comment %}Set has_aisle to True{% endcomment %}
+                {% endif %}
+              {% endfor %}
+              
+              {% with real_seats=row|length %}
+                {% comment %}
+                  Đếm số ghế thật (loại trừ None)
+                {% endcomment %}
+                {% for item in row %}
+                  {% if item == None %}
+                    {% comment %}real_seats -= 1{% endcomment %}
                   {% endif %}
                 {% endfor %}
-              </div>
-            {% else %}
-              {# Normal row with aisle #}
-              <div class="seat-row layout-{{ row|length }}">
-                {% for seat in row %}
-                  {% if seat == None %}
-                    <div class="aisle"></div>
-                  {% elif seat in booked_seats %}
-                    <div class="seat booked" title="Đã đặt">{{ seat }}</div>
-                  {% else %}
-                    <label class="seat available" title="Click để chọn">
-                      <input type="checkbox" name="seats" value="{{ seat }}" style="display: none;" class="seat-checkbox">
-                      <span class="seat-label">{{ seat }}</span>
-                    </label>
-                  {% endif %}
-                {% endfor %}
-              </div>
-            {% endif %}
+                
+                {% comment %}
+                  Xác định class CSS:
+                  - Nếu hàng không có lối đi (None) và là hàng cuối -> last-row
+                  - Ngược lại dùng layout bình thường
+                {% endcomment %}
+                {% if forloop.last and None not in row %}
+                  <div class="seat-row last-row seats-{{ row|length }}">
+                {% else %}
+                  <div class="seat-row layout-{{ row|length }}{% if forloop.last %} incomplete{% endif %}">
+                {% endif %}
+                
+                  {% for seat in row %}
+                    {% if seat == None %}
+                      <div class="aisle"></div>
+                    {% elif seat in booked_seats %}
+                      <div class="seat booked" title="Đã đặt">{{ seat }}</div>
+                    {% else %}
+                      <label class="seat available" title="Click để chọn">
+                        <input type="checkbox" name="seats" value="{{ seat }}" style="display: none;" class="seat-checkbox">
+                        <span class="seat-label">{{ seat }}</span>
+                      </label>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              {% endwith %}
+            {% endwith %}
           {% endfor %}
         </div>
 
