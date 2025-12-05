@@ -189,6 +189,17 @@ class AdminTuyenListView(AdminRequiredMixin, ListView):
     template_name = 'admin/tuyen_list.html'
     context_object_name = 'tuyens'
     paginate_by = 10
+    
+    def get_queryset(self):
+        qs = Tuyen.objects.all().order_by('diem_di', 'diem_den')
+        
+        search_query = self.request.GET.get('q')
+        if search_query:
+            qs = qs.filter(
+                Q(diem_di__icontains=search_query) | 
+                Q(diem_den__icontains=search_query)
+            )
+        return qs
 
 class AdminTuyenCreateView(AdminRequiredMixin, CreateView):
     model = Tuyen
@@ -216,6 +227,17 @@ class AdminXeListView(AdminRequiredMixin, ListView):
     template_name = 'admin/xe_list.html'
     context_object_name = 'xes'
     paginate_by = 10
+    
+    def get_queryset(self):
+        qs = Xe.objects.all().order_by('bien_so', 'loai_xe')
+        
+        search_query = self.request.GET.get('q')
+        if search_query:
+            qs = qs.filter(
+                Q(bien_so__icontains=search_query) |
+                Q(loai_xe__icontains=search_query)   
+            )
+        return qs
 
 class AdminXeCreateView(AdminRequiredMixin, CreateView):
     model = Xe
@@ -269,30 +291,43 @@ class AdminVeListView(AdminRequiredMixin, ListView):
     model = Ve
     template_name = 'admin/ve_list.html'
     context_object_name = 'ves'
-    paginate_by = 20
-
+    paginate_by = 20 
+    
     def get_queryset(self):
-        qs = Ve.objects.select_related('chuyen', 'khach', 'chuyen__tuyen').order_by('-id')
+        qs = Ve.objects.select_related('khach', 'chuyen__tuyen').order_by('-ngay_dat')
         
-     
+        # Tìm kiếm theo tên hoặc SĐT
         search_query = self.request.GET.get('q')
         if search_query:
             qs = qs.filter(
-                Q(khach__ten__icontains=search_query) | 
+                Q(khach__ten__icontains=search_query) |
                 Q(khach__sdt__icontains=search_query)
             )
-            
-       
-        status_filter = self.request.GET.get('status')
-        if status_filter:
-            qs = qs.filter(trang_thai=status_filter)
-            
+        
+        # Lọc theo trạng thái
+        status = self.request.GET.get('status')
+        if status:
+            qs = qs.filter(trang_thai=status)
+        
+        # Lọc theo ngày
+        date = self.request.GET.get('date')
+        if date:
+            qs = qs.filter(ngay_dat__date=date)
+        
         return qs
-
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        context['status_choices'] = ['DA_THANH_TOAN', 'CHO_THANH_TOAN', 'DA_HUY']
+
+        context['status_choices'] = ['DA_THANH_TOAN', 'CHO_THANH_TOAN', 'DA_HUY', 'HET_HAN']
+        
+ 
+        all_ves = Ve.objects.all()
+        context['tong_ve_thanh_toan'] = all_ves.filter(trang_thai='DA_THANH_TOAN').count()
+        context['tong_ve_cho_thanh_toan'] = all_ves.filter(trang_thai='CHO_THANH_TOAN').count()
+        context['tong_ve_da_huy'] = all_ves.filter(trang_thai='DA_HUY').count()
+        
         return context
 
 class AdminVeDetailView(AdminRequiredMixin, DetailView):
@@ -304,7 +339,7 @@ class AdminKhachHangListView(AdminRequiredMixin, ListView):
     model = KhachHang
     template_name = 'admin/khachhang_list.html'
     context_object_name = 'khachhangs'
-    paginate_by = 15
+    paginate_by = 10
     
     def get_queryset(self):
         
@@ -365,7 +400,14 @@ class AdminNhanVienListView(AdminRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from django.db.models import Sum
-        all_nv = NhanVien.objects.filter(trang_thai=True)
+        
+        all_nv = NhanVien.objects.all()
+        nv_dang_lam = all_nv.filter(trang_thai=True)
+        nv_da_nghi = all_nv.filter(trang_thai=False)
+        
+        context['tong_nhan_vien'] = all_nv.count()  # ✅ THÊM
+        context['so_nv_dang_lam'] = nv_dang_lam.count()  # ✅ THÊM
+        context['so_nv_da_nghi'] = nv_da_nghi.count()  # ✅ THÊM
         context['tong_luong'] = all_nv.aggregate(Sum('luong_co_ban'))['luong_co_ban__sum'] or 0
         context['so_tai_xe'] = all_nv.filter(chuc_vu='TAI_XE').count()
         return context
@@ -403,7 +445,9 @@ class AdminVoucherListView(AdminRequiredMixin, ListView):
     model = Voucher
     template_name = 'admin/voucher_list.html'
     context_object_name = 'vouchers'
-    paginate_by = 20
+    paginate_by = 10
+    
+        
 
 class AdminVoucherCreateView(AdminRequiredMixin, CreateView):
     model = Voucher

@@ -133,13 +133,16 @@ class Ve(models.Model):
         return False
     
     def huy_ve_het_han(self):
-        """Hủy vé hết hạn và hoàn lại ghế"""
-        if self.kiem_tra_het_han():
-            # Hoàn lại số vé
+        """Hủy vé hết hạn thanh toán và hoàn lại ghế"""
+        if self.trang_thai == 'CHO_THANH_TOAN':
+            # ✅ XÓA VOUCHER SỬ DỤNG (nếu có)
+            VoucherSuDung.objects.filter(ve=self).delete()
+            
+            # Hoàn ghế
             self.chuyen.tong_so_ve += self.so_luong
             self.chuyen.save()
             
-            # Đổi trạng thái
+            # Cập nhật trạng thái
             self.trang_thai = 'HET_HAN'
             self.save()
             return True
@@ -340,4 +343,3 @@ class VoucherSuDung(models.Model):
         verbose_name = "Lịch sử voucher"
         verbose_name_plural = "Lịch sử vouchers"
         ordering = ['-ngay_su_dung']
-        # unique_together = ('voucher', 'khach_hang')  # Bỏ comment nếu muốn mỗi user chỉ dùng 1 lần
