@@ -12,3 +12,5 @@ venv\Scripts\activate.bat
 python -m pip install Django mysqlclient pillow redis==4.6.0 celery eventlet
 # run webapp
 .\start_celery.bat
+
+.\venv\Scripts\Activate.ps1
