@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Hệ Thống Đặt Vé Xe Khách{% endblock %}</title>
+    <meta name="description" content="Đặt vé xe khách trực tuyến nhanh chóng, tiện lợi với Futa Bus">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     {% block extra_head %}{% endblock %}
     <style>
@@ -282,8 +284,15 @@
     </footer>
 
     <script src="{% static 'js/session-manager.js' %}"></script>
+    <script src="{% static 'js/enhanced-ux.js' %}"></script>
     <script>
       document.body.dataset.userAuthenticated = 'false';
+      
+      // Page load animation
+      document.addEventListener('DOMContentLoaded', function() {
+        document.body.classList.add('fade-in');
+      });
     </script>
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>

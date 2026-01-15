@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Hệ Thống Đặt Vé Xe Khách{% endblock %}</title>
+    <meta name="description" content="Quản lý vé xe và thông tin cá nhân - Futa Bus">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     {% block extra_head %}{% endblock %}
     <style>
@@ -552,12 +554,15 @@
     </footer>
 
     <script src="{% static 'js/session-manager.js' %}"></script>
+    <script src="{% static 'js/enhanced-ux.js' %}"></script>
     <script>
       window.USER_LOGGED_IN = true;
       window.LOGOUT_URL = "{% url 'logout' %}";
       
-      // Auto-hide messages after 5 seconds
+      // Enhanced message handling with page load animation
       document.addEventListener('DOMContentLoaded', function() {
+        document.body.classList.add('fade-in');
+        
         const messages = document.querySelectorAll('.message');
         messages.forEach(function(message) {
           setTimeout(function() {
@@ -569,5 +574,6 @@
         });
       });
     </script>
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>
