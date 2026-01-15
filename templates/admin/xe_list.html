@@ -3,14 +3,47 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Quản lý Xe</h2>
-    <a href="{% url 'admin_panel:admin_xe_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Thêm Xe mới</a>
+    <a href="{% url 'admin_panel:admin_xe_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Thêm Xe mới
+    </a>
+</div>
+
+<!-- ✅ THÊM: Thanh tìm kiếm -->
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="GET" action="" class="row g-3">
+            <div class="col-md-10">
+                <input 
+                    type="text" 
+                    name="q" 
+                    class="form-control" 
+                    placeholder="🔍 Tìm kiếm theo biển số, loại xe..." 
+                    value="{{ request.GET.q }}"
+                >
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Tìm kiếm
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div class="card shadow-sm">
     <div class="card-body">
-        <table class="table table-striped">
-            <thead>
+        <!-- ✅ THÊM: Thông tin tổng số -->
+        <div class="mb-3">
+            <strong>Tổng số xe:</strong> {{ paginator.count }}
+            {% if request.GET.q %}
+                <span class="badge bg-info">Kết quả tìm kiếm: "{{ request.GET.q }}"</span>
+            {% endif %}
+        </div>
+
+        <table class="table table-hover table-striped">
+            <thead class="table-light">
                 <tr>
+                    <th>STT</th>
                     <th>Biển số</th>
                     <th>Loại xe</th>
                     <th>Số ghế</th>
@@ -20,17 +53,84 @@
             <tbody>
                 {% for xe in xes %}
                 <tr>
+                    <td>{{ forloop.counter|add:page_obj.start_index|add:"-1" }}</td>
                     <td><strong>{{ xe.bien_so }}</strong></td>
                     <td>{{ xe.loai_xe }}</td>
                     <td>{{ xe.so_ghe }} chỗ</td>
                     <td>
-                        <a href="{% url 'admin_panel:admin_xe_update' xe.pk %}" class="btn btn-sm btn-warning">Sửa</a>
-                        <a href="{% url 'admin_panel:admin_xe_delete' xe.pk %}" class="btn btn-sm btn-danger">Xóa</a>
+                        <a href="{% url 'admin_panel:admin_xe_update' xe.pk %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Sửa
+                        </a>
+                        <a href="{% url 'admin_panel:admin_xe_delete' xe.pk %}" class="btn btn-sm btn-danger">
+                            <i class="fas fa-trash"></i> Xóa
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">
+                        {% if request.GET.q %}
+                            ❌ Không tìm thấy xe nào với từ khóa "{{ request.GET.q }}"
+                        {% else %}
+                            Chưa có xe nào.
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
+        <!-- ✅ THÊM: Phân trang -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <!-- Nút Previous -->
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                        <i class="fas fa-chevron-left"></i> Trước
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-chevron-left"></i> Trước</span>
+                </li>
+                {% endif %}
+
+                <!-- Số trang -->
+                {% for num in paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Nút Next -->
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                        Sau <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Sau <i class="fas fa-chevron-right"></i></span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        <!-- Thông tin trang -->
+        <div class="text-center text-muted mt-2">
+            Trang {{ page_obj.number }} / {{ paginator.num_pages }}
+            (Hiển thị {{ page_obj.start_index }} - {{ page_obj.end_index }} / {{ paginator.count }} xe)
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

@@ -390,52 +390,53 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
                                 voucher = None
                     except Voucher.DoesNotExist:
                         messages.error(request, "❌ Mã voucher không tồn tại!")
-                
-                # Tạo Vé
-                ve = Ve.objects.create(
-                    chuyen=chuyen,
-                    khach=khach_hang,
-                    so_luong=len(selected_seats),
-                    vi_tri_ghe=selected_seats,
-                    trang_thai='CHO_THANH_TOAN',
-                    han_thanh_toan=timezone.now() + timedelta(minutes=10)
-                )
-                
-                # Lưu voucher
-                if voucher and so_tien_giam > 0:
-                    VoucherSuDung.objects.create(
-                        voucher=voucher,
-                        khach_hang=khach_hang,
-                        ve=ve,
-                        so_tien_giam=so_tien_giam
-                    )
-                    voucher.da_su_dung += 1
-                    voucher.save()
-                
-                # Tạo Thanh Toán
-                ThanhToan.objects.create(
+            
+            # Tạo Vé
+            ve = Ve.objects.create(
+                chuyen=chuyen,
+                khach=khach_hang,
+                so_luong=len(selected_seats),
+                vi_tri_ghe=selected_seats,
+                trang_thai='CHO_THANH_TOAN',
+                han_thanh_toan=timezone.now() + timedelta(minutes=10)
+            )
+            
+            # ✅ SỬA: Lưu voucher NHƯNG KHÔNG TĂNG da_su_dung
+            if voucher and so_tien_giam > 0:
+                VoucherSuDung.objects.create(
+                    voucher=voucher,
+                    khach_hang=khach_hang,
                     ve=ve,
-                    so_tien=tong_tien,
-                    phuong_thuc='VNPAY',
-                    trang_thai='CHO_THANH_TOAN',
-                    ma_giao_dich=txn_ref,
+                    so_tien_giam=so_tien_giam
                 )
-                
-                # Tạo URL VNPAY
-                payment_info = PaymentInformationModel(
-                    order_type="billpayment",
-                    amount=float(tong_tien),
-                    order_description=f"Thanh toan ve {txn_ref}",
-                    name=khach_hang.ten,
-                    order_id=txn_ref
-                )
-                
-                vnp_service = VnPayService()
-                payment_url = vnp_service.create_payment_url(payment_info, request)
-                
-                # ✅ TRANSACTION COMMIT TẠI ĐÂY (auto)
-                # Sau khi commit, Lock được giải phóng
-                
+                # ❌ BỎ DÒNG NÀY:
+                # voucher.da_su_dung += 1
+                # voucher.save()
+            
+            # Tạo Thanh Toán
+            ThanhToan.objects.create(
+                ve=ve,
+                so_tien=tong_tien,
+                phuong_thuc='VNPAY',
+                trang_thai='CHO_THANH_TOAN',
+                ma_giao_dich=txn_ref,
+            )
+            
+            # Tạo URL VNPAY
+            payment_info = PaymentInformationModel(
+                order_type="billpayment",
+                amount=float(tong_tien),
+                order_description=f"Thanh toan ve {txn_ref}",
+                name=khach_hang.ten,
+                order_id=txn_ref
+            )
+            
+            vnp_service = VnPayService()
+            payment_url = vnp_service.create_payment_url(payment_info, request)
+            
+            # ✅ TRANSACTION COMMIT TẠI ĐÂY (auto)
+            # Sau khi commit, Lock được giải phóng
+            
         except Chuyen.DoesNotExist:
             messages.error(request, '❌ Không tìm thấy chuyến xe.')
             return redirect('src:danh_sach_chuyen_xe')

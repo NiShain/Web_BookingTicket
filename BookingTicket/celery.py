@@ -15,7 +15,7 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'huy-ve-het-han-moi-phut': {
         'task': 'booking.tasks.huy_ve_het_han',
-        'schedule': crontab(minute='*/1'),  # Chạy mỗi 1 phút
+        'schedule': crontab(minute='*/5'),  # Chạy mỗi 1 phút
     },
 }
 

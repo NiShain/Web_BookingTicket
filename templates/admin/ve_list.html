@@ -5,70 +5,281 @@
     <h2>Quản lý Đặt Vé</h2>
 </div>
 
-<div class="card mb-4 bg-light">
-    <div class="card-body py-2">
-        <form method="get" class="row g-3 align-items-center">
-            <div class="col-auto">
-                <input type="text" name="q" class="form-control" placeholder="Tìm tên hoặc SĐT..." value="{{ request.GET.q }}">
+<!-- Tìm kiếm và lọc -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <form method="GET" action="" class="row g-3 align-items-center">
+            <div class="col-md-3">
+                <input 
+                    type="text" 
+                    name="q" 
+                    class="form-control" 
+                    placeholder="🔍 Tìm tên, SĐT khách hàng..." 
+                    value="{{ request.GET.q }}"
+                >
             </div>
-            <div class="col-auto">
+            <div class="col-md-2">
                 <select name="status" class="form-select">
                     <option value="">-- Tất cả trạng thái --</option>
                     {% for st in status_choices %}
-                        <option value="{{ st }}" {% if request.GET.status == st %}selected{% endif %}>{{ st }}</option>
+                        <option value="{{ st }}" {% if request.GET.status == st %}selected{% endif %}>
+                            {% if st == 'DA_THANH_TOAN' %}Đã thanh toán
+                            {% elif st == 'DA_HUY' %}Đã hủy
+                            {% elif st == 'CHO_THANH_TOAN' %}Chờ thanh toán
+                            {% elif st == 'HET_HAN' %}Hết hạn
+                            {% else %}{{ st }}
+                            {% endif %}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-primary">Lọc</button>
-                <a href="{% url 'admin_panel:admin_ve_list' %}" class="btn btn-outline-secondary">Reset</a>
+            <div class="col-md-2">
+                <input 
+                    type="date" 
+                    name="date" 
+                    class="form-control" 
+                    value="{{ request.GET.date }}"
+                    title="Lọc theo ngày đặt vé"
+                >
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Tìm kiếm
+                </button>
+                <a href="{% url 'admin_panel:admin_ve_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-redo"></i> Reset
+                </a>
             </div>
         </form>
     </div>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th>Mã Vé</th>
-                    <th>Khách hàng</th>
-                    <th>Chuyến</th>
-                    <th>Số ghế</th>
-                    <th>Trạng thái</th>
-                    <th>Chi tiết</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for ve in ves %}
-                <tr>
-                    <td>#{{ ve.id }}</td>
-                    <td>
-                        {{ ve.khach.ten }}<br>
-                        <small class="text-muted">{{ ve.khach.sdt }}</small>
-                    </td>
-                    <td>
-                        {{ ve.chuyen.tuyen.diem_di }} -> {{ ve.chuyen.tuyen.diem_den }}<br>
-                        <small>{{ ve.chuyen.ngay_gio_khoi_hanh|date:"H:i d/m" }}</small>
-                    </td>
-                    <td>{{ ve.so_luong }} vé</td>
-                    <td>
-                        {% if ve.trang_thai == 'DA_THANH_TOAN' %}
-                            <span class="badge bg-success">Đã thanh toán</span>
-                        {% elif ve.trang_thai == 'DA_HUY' %}
-                            <span class="badge bg-danger">Đã hủy</span>
-                        {% else %}
-                            <span class="badge bg-warning text-dark">Chờ thanh toán</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'admin_panel:admin_ve_detail' ve.pk %}" class="btn btn-sm btn-info text-white">Xem</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<!-- Thống kê nhanh -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Tổng vé</h5>
+                <h2>{{ paginator.count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Đã thanh toán</h5>
+                <h2>{{ tong_ve_thanh_toan|default:0 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Chờ thanh toán</h5>
+                <h2>{{ tong_ve_cho_thanh_toan|default:0 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Đã hủy</h5>
+                <h2>{{ tong_ve_da_huy|default:0 }}</h2>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Thông tin kết quả tìm kiếm -->
+<div class="mb-3">
+    <strong>Tổng số vé:</strong> {{ paginator.count }}
+    {% if request.GET.q %}
+        <span class="badge bg-info">Kết quả tìm kiếm: "{{ request.GET.q }}"</span>
+    {% endif %}
+    {% if request.GET.status %}
+        <span class="badge bg-secondary">Trạng thái: {{ request.GET.status }}</span>
+    {% endif %}
+    {% if request.GET.date %}
+        <span class="badge bg-secondary">Ngày: {{ request.GET.date }}</span>
+    {% endif %}
+</div>
+
+<!-- Bảng danh sách vé -->
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã Vé</th>
+                        <th>Khách hàng</th>
+                        <th>Chuyến xe</th>
+                        <th>Số ghế</th>
+                        <th>Vị trí ghế</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày đặt</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ve in ves %}
+                    <tr>
+                        <td>{{ forloop.counter|add:page_obj.start_index|add:"-1" }}</td>
+                        <td><strong>#{{ ve.id }}</strong></td>
+                        <td>
+                            <strong>{{ ve.khach.ten }}</strong><br>
+                            <small class="text-muted">
+                                <i class="fas fa-phone"></i> {{ ve.khach.sdt }}
+                            </small>
+                        </td>
+                        <td>
+                            <strong>{{ ve.chuyen.tuyen.diem_di }} → {{ ve.chuyen.tuyen.diem_den }}</strong><br>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar"></i> {{ ve.chuyen.ngay_gio_khoi_hanh|date:"d/m/Y H:i" }}
+                            </small>
+                        </td>
+                        <td><span class="badge bg-info">{{ ve.so_luong }} vé</span></td>
+                        <td>
+                            <small>
+                                {% for ghe in ve.vi_tri_ghe %}
+                                    <span class="badge bg-secondary">{{ ghe }}</span>
+                                {% endfor %}
+                            </small>
+                        </td>
+                        <td>
+                           {% if ve.thanh_toan %}
+                                <strong class="text-success">
+                                    {{ ve.thanh_toan.so_tien|floatformat:0 }}đ
+                                </strong>
+                                <br>
+                                <small class="text-muted">
+                                    {% if ve.thanh_toan.trang_thai == 'THANH_CONG' %}
+                                        <i class="fas fa-check-circle text-success"></i> Đã thanh toán
+                                    {% elif ve.thanh_toan.trang_thai == 'CHO_THANH_TOAN' %}
+                                        <i class="fas fa-clock text-warning"></i> Chờ thanh toán
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger"></i> Thất bại
+                                    {% endif %}
+                                </small>
+                            {% else %}
+                                <span class="text-muted">Chưa có thanh toán</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if ve.trang_thai == 'DA_THANH_TOAN' %}
+                                <span class="badge bg-success">✅ Đã thanh toán</span>
+                            {% elif ve.trang_thai == 'DA_HUY' %}
+                                <span class="badge bg-danger">❌ Đã hủy</span>
+                            {% elif ve.trang_thai == 'CHO_THANH_TOAN' %}
+                                <span class="badge bg-warning text-dark">⏳ Chờ thanh toán</span>
+                            {% elif ve.trang_thai == 'HET_HAN' %}
+                                <span class="badge bg-secondary">⌛ Hết hạn</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ ve.trang_thai }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small>{{ ve.ngay_dat|date:"d/m/Y H:i" }}</small>
+                        </td>
+                        <td>
+                            <a href="{% url 'admin_panel:admin_ve_detail' ve.pk %}" class="btn btn-sm btn-info text-white">
+                                <i class="fas fa-eye"></i> Chi tiết
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted">
+                            {% if request.GET.q or request.GET.status or request.GET.date %}
+                                ❌ Không tìm thấy vé nào phù hợp với điều kiện lọc
+                            {% else %}
+                                Chưa có vé nào được đặt.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Phân trang -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <!-- Nút Previous -->
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}">
+                        <i class="fas fa-chevron-left"></i> Trước
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-chevron-left"></i> Trước</span>
+                </li>
+                {% endif %}
+
+                <!-- Số trang -->
+                {% for num in paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Nút Next -->
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}">
+                        Sau <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Sau <i class="fas fa-chevron-right"></i></span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        <!-- Thông tin trang -->
+        <div class="text-center text-muted mt-2">
+            Trang {{ page_obj.number }} / {{ paginator.num_pages }}
+            (Hiển thị {{ page_obj.start_index }} - {{ page_obj.end_index }} / {{ paginator.count }} vé)
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .badge {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.6rem;
+    }
+    
+    .card {
+        border-radius: 10px;
+    }
+    
+    .table thead th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+</style>
 {% endblock %}

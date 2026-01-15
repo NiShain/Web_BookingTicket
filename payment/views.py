@@ -5,6 +5,13 @@ from .models import PaymentInformationModel
 from .services import VnPayService
 from booking.models import ThanhToan
 from django.contrib import messages
+from django.http import HttpResponse
+from django.db import transaction
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
+from booking.models import ThanhToan, Ve, VoucherSuDung
+from .services import VnPayService
 
 class PaymentController(View):
     # Tương ứng với action CreatePaymentUrlVnpay
@@ -59,3 +66,61 @@ class PaymentController(View):
         else:
             messages.error(request, "Giao dịch thanh toán bị hủy hoặc lỗi.")
             return redirect('home')      # <--- SỬA Ở ĐÂY (Bỏ 'src:')
+        
+@method_decorator(csrf_exempt, name='dispatch')
+class VNPayReturnView(View):
+    """Xử lý callback từ VNPAY sau khi thanh toán"""
+    
+    def get(self, request):
+        vnp_service = VnPayService()
+        
+        # Lấy tất cả params từ VNPAY
+        input_data = request.GET
+        
+        # Validate chữ ký
+        if vnp_service.validate_response(input_data):
+            # Lấy thông tin giao dịch
+            vnp_ResponseCode = input_data.get('vnp_ResponseCode')
+            vnp_TxnRef = input_data.get('vnp_TxnRef')
+            
+            try:
+                with transaction.atomic():
+                    # Tìm thanh toán
+                    thanh_toan = ThanhToan.objects.select_for_update().get(
+                        ma_giao_dich=vnp_TxnRef
+                    )
+                    ve = thanh_toan.ve
+                    
+                    # ✅ THANH TOÁN THÀNH CÔNG
+                    if vnp_ResponseCode == '00':
+                        # Cập nhật trạng thái thanh toán
+                        thanh_toan.trang_thai = 'THANH_CONG'
+                        thanh_toan.save()
+                        
+                        # Cập nhật trạng thái vé
+                        ve.trang_thai = 'DA_THANH_TOAN'
+                        ve.save()
+                        
+                        # ✅ CHỈ BÂY GIỜ MỚI TĂNG voucher.da_su_dung
+                        voucher_su_dung = VoucherSuDung.objects.filter(ve=ve).first()
+                        if voucher_su_dung:
+                            voucher = voucher_su_dung.voucher
+                            voucher.da_su_dung += 1
+                            voucher.save()
+                        
+                        return redirect('src:payment_success')
+                    
+                    # ❌ THANH TOÁN THẤT BẠI
+                    else:
+                        # Hủy vé và hoàn ghế
+                        ve.huy_ve_het_han()
+                        
+                        thanh_toan.trang_thai = 'THAT_BAI'
+                        thanh_toan.save()
+                        
+                        return redirect('src:payment_failed')
+                        
+            except ThanhToan.DoesNotExist:
+                return HttpResponse('Transaction not found', status=404)
+        else:
+            return HttpResponse('Invalid signature', status=400)
