@@ -8,7 +8,10 @@ cd [...]/your_project
 python -m venv venv
 # activate venv (using terminal)
 venv\Scripts\activate.bat
+.\venv\Scripts\Activate.ps1
 # install all necessary lib 
 python -m pip install Django mysqlclient pillow redis==4.6.0 celery eventlet
 # run webapp
 .\start_celery.bat
+
+.\venv\Scripts\Activate.ps1

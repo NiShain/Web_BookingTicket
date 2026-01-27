@@ -6,25 +6,26 @@
 {% block extra_head %}
 <style>
       body {
-        background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf0 100%);
+        background: #f8f9fa;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       }
 
       .hero {
         background: linear-gradient(
             135deg,
-            rgba(44, 62, 80, 0.95) 0%,
-            rgba(52, 73, 94, 0.92) 50%,
-            rgba(41, 128, 185, 0.9) 100%
+            rgba(30, 60, 114, 0.97) 0%,
+            rgba(42, 82, 152, 0.95) 50%,
+            rgba(59, 130, 246, 0.93) 100%
           ),
-          url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%232c3e50" width="1200" height="600"/><circle cx="150" cy="100" r="80" fill="rgba(52,152,219,0.15)"/><circle cx="900" cy="150" r="100" fill="rgba(52,152,219,0.12)"/><circle cx="300" cy="400" r="60" fill="rgba(52,152,219,0.18)"/><circle cx="1000" cy="450" r="90" fill="rgba(52,152,219,0.1)"/><path d="M0,450 Q300,350 600,400 T1200,380 L1200,600 L0,600 Z" fill="rgba(52,152,219,0.08)"/></svg>');
+          url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%231e3c72" width="1200" height="600"/><circle cx="150" cy="100" r="80" fill="rgba(59,130,246,0.15)"/><circle cx="900" cy="150" r="100" fill="rgba(59,130,246,0.12)"/><circle cx="300" cy="400" r="60" fill="rgba(59,130,246,0.18)"/><circle cx="1000" cy="450" r="90" fill="rgba(59,130,246,0.1)"/><path d="M0,450 Q300,350 600,400 T1200,380 L1200,600 L0,600 Z" fill="rgba(59,130,246,0.08)"/></svg>');
         background-size: cover;
-        background-attachment: fixed;
-        padding: 6rem 0;
+        background-position: center;
+        padding: 4rem 0 8rem;
         text-align: center;
         color: white;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       }
 
       .hero::after {
@@ -34,7 +35,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, #3498db, #2ecc71, #3498db);
+        background: linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd);
       }
 
       .hero-content {
@@ -55,46 +56,66 @@
       }
 
       .hero h1 {
-        font-size: 3.8rem;
-        margin-bottom: 1.5rem;
-        font-weight: 800;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
         color: white;
-        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        line-height: 1.2;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        line-height: 1.3;
         letter-spacing: -0.5px;
       }
 
-      .hero h1 .emoji {
-        font-size: 4rem;
-        display: inline-block;
-        animation: bounce 2s infinite;
-      }
-
-      @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-10px); }
-      }
-
       .hero p {
-        font-size: 1.4rem;
-        margin-bottom: 2.5rem;
+        font-size: 1.2rem;
+        margin-bottom: 0;
         opacity: 0.95;
-        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-        max-width: 650px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        max-width: 600px;
         margin-left: auto;
         margin-right: auto;
         font-weight: 400;
       }
 
+      /* Trust indicators */
+      .trust-indicators {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        margin-top: 3rem;
+        flex-wrap: wrap;
+      }
+
+      .trust-item {
+        text-align: center;
+        animation: fadeInUp 0.8s ease-out;
+      }
+
+      .trust-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 0.3rem;
+        background: linear-gradient(135deg, #60a5fa, #93c5fd);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .trust-label {
+        font-size: 0.95rem;
+        opacity: 0.9;
+        font-weight: 500;
+      }
+
       .search-form {
         background: white;
         backdrop-filter: blur(20px);
-        padding: 2.5rem;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-        margin: -3.5rem auto 3rem;
-        max-width: 950px;
-        border: 1px solid rgba(52, 152, 219, 0.2);
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        margin: -5rem auto 4rem;
+        max-width: 1100px;
+        border: 1px solid rgba(59, 130, 246, 0.1);
         position: relative;
         z-index: 10;
         animation: slideUp 0.6s ease-out 0.3s both;
@@ -111,40 +132,26 @@
         }
       }
 
-      .search-form::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 5px;
-        background: linear-gradient(90deg, #2c3e50, #3498db, #2ecc71, #3498db, #2c3e50);
-        border-radius: 20px 20px 0 0;
-        background-size: 200% 100%;
-        animation: gradientShift 3s ease infinite;
-      }
-
-      @keyframes gradientShift {
-        0%, 100% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-      }
-
       .search-form h3 {
-        text-align: center;
-        color: #2c3e50;
-        font-size: 1.6rem;
-        margin-bottom: 1.8rem;
+        text-align: left;
+        color: #1e3c72;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
         font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
       }
 
       .search-form h3::before {
-        content: "🔍 ";
+        content: "🎫";
+        font-size: 1.8rem;
       }
 
       .search-row {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr auto;
-        gap: 1.2rem;
+        grid-template-columns: 2fr 2fr 1.5fr auto;
+        gap: 1rem;
         align-items: end;
       }
 
@@ -156,7 +163,7 @@
       .form-group label {
         margin-bottom: 0.6rem;
         font-weight: 600;
-        color: #2c3e50;
+        color: #1e3c72;
         font-size: 0.95rem;
         display: flex;
         align-items: center;
@@ -180,70 +187,127 @@
       }
 
       .form-group input {
-        padding: 0.85rem 1rem;
-        border: 2px solid #e8ecf0;
-        border-radius: 10px;
+        padding: 0.9rem 1.1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
         font-size: 1rem;
         transition: all 0.3s ease;
-        background: #f8f9fa;
+        background: white;
+        font-weight: 500;
       }
 
       .form-group input:focus {
         outline: none;
-        border-color: #3498db;
-        box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
-        transform: translateY(-2px);
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         background: white;
       }
 
       .form-group input::placeholder {
-        color: #95a5a6;
+        color: #9ca3af;
       }
 
       .btn-search {
-        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         color: white;
         border: none;
-        padding: 0.85rem 2.8rem;
+        padding: 0.9rem 2.5rem;
         border-radius: 12px;
-        font-size: 1.05rem;
+        font-size: 1rem;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 6px 20px rgba(52, 152, 219, 0.35);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         position: relative;
         overflow: hidden;
-        letter-spacing: 0.3px;
-      }
-
-      .btn-search::before {
-        content: "🚀 ";
-        position: relative;
-        z-index: 2;
-      }
-
-      .btn-search::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-        transition: left 0.5s;
+        white-space: nowrap;
       }
 
       .btn-search:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(52, 152, 219, 0.45);
-      }
-
-      .btn-search:hover::after {
-        left: 100%;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
       }
 
       .btn-search:active {
-        transform: translateY(-1px);
+        transform: translateY(0);
+      }
+
+      /* Quick search shortcuts */
+      .quick-searches {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .quick-search-tag {
+        background: #f3f4f6;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+      }
+
+      .quick-search-tag:hover {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      }
+
+      /* Why Choose Us Section */
+      .why-choose-us {
+        background: white;
+        padding: 4rem 0;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2.5rem;
+        margin-top: 3rem;
+      }
+
+      .feature-card {
+        text-align: center;
+        padding: 2rem 1.5rem;
+        border-radius: 16px;
+        background: #f9fafb;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+      }
+
+      .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+        border-color: #3b82f6;
+        background: white;
+      }
+
+      .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+      }
+
+      .feature-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1e3c72;
+        margin-bottom: 0.75rem;
+      }
+
+      .feature-desc {
+        color: #6b7280;
+        font-size: 0.95rem;
+        line-height: 1.6;
       }
 
       .section {
@@ -252,10 +316,10 @@
 
       .section h2 {
         text-align: center;
-        margin-bottom: 3rem;
-        font-size: 2.8rem;
-        color: #2c3e50;
-        font-weight: 800;
+        margin-bottom: 2.5rem;
+        font-size: 2.2rem;
+        color: #1e3c72;
+        font-weight: 700;
         position: relative;
         padding-bottom: 1rem;
       }
@@ -266,9 +330,9 @@
         bottom: 0;
         left: 50%;
         transform: translateX(-50%);
-        width: 80px;
-        height: 5px;
-        background: linear-gradient(90deg, #3498db, #2ecc71);
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
         border-radius: 3px;
       }
 
@@ -281,13 +345,14 @@
 
       .tuyen-card {
         background: white;
-        padding: 2rem;
-        border-radius: 15px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 2px solid transparent;
+        padding: 1.75rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #e5e7eb;
         position: relative;
         overflow: hidden;
+        cursor: pointer;
       }
 
       .tuyen-card::before {
@@ -296,16 +361,16 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #3498db, #2ecc71);
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
         transform: scaleX(0);
-        transition: transform 0.4s ease;
+        transition: transform 0.3s ease;
       }
 
       .tuyen-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
-        border-color: rgba(52, 152, 219, 0.2);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+        border-color: #3b82f6;
       }
 
       .tuyen-card:hover::before {
@@ -313,9 +378,9 @@
       }
 
       .tuyen-card h3 {
-        color: #2c3e50;
-        margin-bottom: 1.2rem;
-        font-size: 1.4rem;
+        color: #1e3c72;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
         font-weight: 700;
         display: flex;
         align-items: center;
@@ -324,7 +389,7 @@
 
       .tuyen-card h3::before {
         content: "🚌";
-        font-size: 1.5rem;
+        font-size: 1.4rem;
       }
 
       .tuyen-info {
@@ -337,21 +402,21 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        color: #555;
-        font-size: 0.95rem;
-        padding: 0.5rem;
-        background: #f8f9fa;
+        color: #6b7280;
+        font-size: 0.9rem;
+        padding: 0.6rem 0.8rem;
+        background: #f9fafb;
         border-radius: 8px;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
       }
 
       .tuyen-info span:hover {
-        background: #e8ecf0;
-        transform: translateX(5px);
+        background: #f3f4f6;
       }
 
       .tuyen-info span strong {
-        color: #2c3e50;
+        color: #1e3c72;
+        font-weight: 600;
       }
 
       .chuyens-table {
@@ -359,7 +424,7 @@
         border-radius: 18px;
         overflow: hidden;
         box-shadow: 0 12px 35px rgba(0, 0, 0, 0.1);
-        border: 2px solid rgba(52, 152, 219, 0.15);
+        border: 2px solid rgba(59, 130, 246, 0.15);
       }
 
       .chuyens-table table {
@@ -368,13 +433,13 @@
       }
 
       .chuyens-table th {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+        background: #1e3c72;
         color: white;
-        padding: 1.3rem 1.5rem;
+        padding: 1.2rem 1.5rem;
         text-align: left;
-        font-weight: 700;
-        font-size: 1rem;
-        letter-spacing: 0.5px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        letter-spacing: 0.3px;
         position: relative;
       }
 
@@ -384,86 +449,56 @@
         bottom: 0;
         left: 0;
         right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #3498db, #2ecc71, #3498db);
+        height: 2px;
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
       }
 
-      .chuyens-table td,
-      .search-results-table td {
+      .chuyens-table td {
         padding: 1.2rem 1.5rem;
         border-bottom: 1px solid #f0f0f0;
         text-align: left;
-        color: #555;
+        color: #6b7280;
         font-size: 0.95rem;
       }
 
-      .chuyens-table tbody tr,
-      .search-results-table tbody tr {
+      .chuyens-table tbody tr {
         transition: all 0.3s ease;
       }
 
-      .chuyens-table tbody tr:hover,
-      .search-results-table tbody tr:hover {
-        background: linear-gradient(90deg, rgba(52, 152, 219, 0.05), rgba(46, 204, 113, 0.05));
+      .chuyens-table tbody tr:hover {
+        background: linear-gradient(90deg, rgba(59, 130, 246, 0.05), rgba(96, 165, 250, 0.05));
         transform: scale(1.01);
       }
 
-      .search-results-table {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        margin-top: 1.5rem;
-        border: 2px solid rgba(52, 152, 219, 0.15);
-      }
-
-      .search-results-table th {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-        color: white;
-        padding: 1.2rem 1.5rem;
-        text-align: left;
-        font-weight: 700;
-        position: relative;
-      }
-
-      .search-results-table th::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #3498db, #2ecc71);
-      }
-
       .btn-book {
-        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: white;
-        padding: 0.6rem 1.3rem;
+        padding: 0.65rem 1.5rem;
         border: none;
         border-radius: 8px;
         text-decoration: none;
-        font-weight: 600;
+        font-weight: 700;
         transition: all 0.3s ease;
         display: inline-block;
-        box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        font-size: 0.9rem;
       }
 
       .btn-book:hover {
-        background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
         color: white;
         transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(46, 204, 113, 0.4);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
       }
 
       .price {
-        font-weight: 800;
-        color: #e74c3c;
-        font-size: 1.05rem;
+        font-weight: 700;
+        color: #dc2626;
+        font-size: 1.1rem;
       }
 
       .seats-available {
-        color: #2ecc71;
+        color: #10b981;
         font-weight: 600;
       }
 
@@ -482,333 +517,34 @@
         border: 1px solid #b1dfbb;
       }
 
-      .status-full {
-        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-        color: #721c24;
-        border: 1px solid #f1b0b7;
-      }
-
-      .highlight {
-        background-color: rgba(52, 152, 219, 0.2);
-        padding: 2px 4px;
-        border-radius: 3px;
-        font-weight: 600;
-      }
-
-      /* ===== STYLES CHO KẾT QUẢ TÌM KIẾM ===== */
-      #search-results {
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-        padding: 3rem 0 4rem;
-      }
-
-      #search-results h2 {
-        font-size: 2.5rem;
-        margin-bottom: 2rem;
-        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-
-      .search-info {
-        text-align: center;
-        margin-bottom: 2rem;
-        padding: 1.5rem 2rem;
-        background: linear-gradient(135deg, rgba(52, 152, 219, 0.08) 0%, rgba(46, 204, 113, 0.08) 100%);
-        border-radius: 15px;
-        border-left: 5px solid #3498db;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        position: relative;
-        overflow: hidden;
-      }
-
-      .search-info::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-        animation: shimmer 3s infinite;
-      }
-
-      @keyframes shimmer {
-        0% { left: -100%; }
-        100% { left: 100%; }
-      }
-
-      .search-info-content {
-        position: relative;
-        z-index: 2;
-      }
-
-      .search-criteria {
-        display: inline-flex;
-        flex-wrap: wrap;
-        gap: 0.8rem;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 0.8rem;
-      }
-
-      .search-tag {
-        background: white;
-        padding: 0.5rem 1.2rem;
-        border-radius: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        font-size: 0.95rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        border: 2px solid rgba(52, 152, 219, 0.2);
-        transition: all 0.3s ease;
-      }
-
-      .search-tag:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
-      }
-
-      .search-tag-icon {
-        font-size: 1.1rem;
-      }
-
-      .search-tag-label {
-        color: #7f8c8d;
-        font-weight: 500;
-      }
-
-      .search-tag-value {
-        color: #2c3e50;
-        font-weight: 700;
-      }
-
-      .search-count {
-        margin-top: 0.5rem;
-        font-size: 1.1rem;
-        font-weight: 700;
-        padding: 0.6rem 1.5rem;
-        border-radius: 25px;
-        display: inline-block;
-        animation: fadeIn 0.5s ease;
-      }
-
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      .search-count.success {
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-        color: #155724;
-        border: 2px solid #b1dfbb;
-      }
-
-      .search-count.error {
-        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-        color: #721c24;
-        border: 2px solid #f1b0b7;
-      }
-
-      .search-results-table {
-        background: white;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
-        border: 2px solid rgba(52, 152, 219, 0.1);
-        animation: slideUp 0.5s ease-out;
-        width: 100%; /* Đảm bảo div bao ngoài full width */
-      }
-
-      .search-results-table table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed; /* QUAN TRỌNG: Giúp chia cột theo % chính xác */
-      }
-
-      .search-results-table thead {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
-      }
-
-      .search-results-table th {
-        color: white;
-        padding: 1.3rem 0.5rem; /* Giảm padding trái phải để tiết kiệm chỗ */
-        font-weight: 700;
-        font-size: 0.9rem; /* Giảm nhẹ size chữ để vừa vặn hơn */
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        position: relative;
-        text-align: center; /* Mặc định căn giữa tiêu đề */
-        white-space: nowrap; /* Không cho tiêu đề xuống dòng */
-        vertical-align: middle;
-      }
-
-      /* Tùy chỉnh độ rộng từng cột để trải dài hợp lý */
-      /* Cột 1: Tuyến xe (Cần dài nhất) - 30% */
-      .search-results-table th:nth-child(1) {
-        width: 30%;
-        text-align: left; /* Riêng tuyến xe căn trái */
-        padding-left: 1.5rem;
-      }
-
-      /* Cột 2: Loại xe - 15% */
-      .search-results-table th:nth-child(2) {
-        width: 15%;
-      }
-
-      /* Cột 3, 4: Ngày, Giờ - 10% mỗi cột */
-      .search-results-table th:nth-child(3),
-      .search-results-table th:nth-child(4) {
-        width: 10%;
-      }
-
-      /* Cột 5: Giá vé - 10% */
-      .search-results-table th:nth-child(5) {
-        width: 10%;
-      }
-
-      /* Cột 6: Chỗ trống - 10% */
-      .search-results-table th:nth-child(6) {
-        width: 10%;
-      }
-
-      /* Cột 7: Thao tác - 15% */
-      .search-results-table th:nth-child(7) {
-        width: 15%;
-      }
-
-      .search-results-table th::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #3498db, #2ecc71, #3498db);
-        background-size: 200% 100%;
-        animation: gradientMove 3s ease infinite;
-      }
-
-      .search-results-table td {
-        padding: 1.2rem 0.5rem;
-        border-bottom: 1px solid #f0f0f0;
-        color: #555;
-        font-size: 0.95rem;
-        vertical-align: middle;
-        text-align: center; /* Mặc định căn giữa nội dung cho đẹp */
-      }
-
-      /* Riêng nội dung cột Tuyến xe căn trái */
-      .search-results-table td:first-child {
-        text-align: left;
-        padding-left: 1.5rem;
-      }
-
-      .route-text {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 700;
-        color: #2c3e50;
-        font-size: 1.05rem;
-      }
-
-      .route-arrow {
-        color: #3498db;
-        font-size: 1.2rem;
-      }
-
-      .vehicle-type {
-        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-        color: #2e7d32;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-weight: 600;
-        display: inline-block;
-        border: 1px solid #a5d6a7;
-      }
-
-      .date-badge, .time-badge {
-        background: #f8f9fa;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-weight: 600;
-        display: inline-block;
-        border: 1px solid #e8ecf0;
-      }
-
-      .time-badge {
-        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-        color: #856404;
-        border-color: #ffeeba;
-      }
-
-      #no-results {
-        text-align: center;
-        padding: 4rem 2rem;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e8ecf0 100%);
-      }
-
-      #no-results::before {
-        content: "😔";
-        display: block;
-        font-size: 5rem;
-        margin-bottom: 1rem;
-        animation: bounce 2s infinite;
-      }
-
-      #no-results p:first-of-type {
-        font-size: 1.3rem;
-        color: #2c3e50;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-      }
-
-      #no-results p:last-of-type {
-        color: #7f8c8d;
-        font-size: 1rem;
-      }
-
       @media (max-width: 768px) {
         .search-row {
           grid-template-columns: 1fr;
         }
 
         .hero h1 {
-          font-size: 2.5rem;
+          font-size: 2rem;
         }
 
         .hero p {
-          font-size: 1.1rem;
+          font-size: 1rem;
         }
 
         .search-form {
           margin: -2.5rem auto 2rem;
-          padding: 1.8rem;
-          border-radius: 15px;
+          padding: 1.5rem;
         }
 
         .section h2 {
-          font-size: 2rem;
+          font-size: 1.8rem;
         }
 
         .tuyens-grid {
           grid-template-columns: 1fr;
         }
 
-        .chuyens-table {
-          overflow-x: auto;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .hero h1 {
-          font-size: 2rem;
-        }
-
-        .btn-search {
-          padding: 0.75rem 2rem;
+        .trust-indicators {
+          gap: 1.5rem;
         }
       }
 </style>
@@ -818,15 +554,34 @@
     <section class="hero">
       <div class="container">
         <div class="hero-content">
-          <h1><span class="emoji">🚌</span> Đặt Vé Xe Khách Online</h1>
-          <p>Hệ thống đặt vé xe khách hiện đại, nhanh chóng và tiện lợi - Kết nối mọi hành trình!</p>
+          <h1>Đặt Vé Xe Khách Dễ Dàng & Nhanh Chóng</h1>
+          <p>Tìm kiếm và đặt vé xe khách trên toàn quốc với giá tốt nhất</p>
+          
+          <div class="trust-indicators">
+            <div class="trust-item">
+              <span class="trust-number">500+</span>
+              <span class="trust-label">Tuyến đường</span>
+            </div>
+            <div class="trust-item">
+              <span class="trust-number">50K+</span>
+              <span class="trust-label">Khách hàng</span>
+            </div>
+            <div class="trust-item">
+              <span class="trust-number">100+</span>
+              <span class="trust-label">Đối tác</span>
+            </div>
+            <div class="trust-item">
+              <span class="trust-number">4.8★</span>
+              <span class="trust-label">Đánh giá</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
     <div class="container">
       <div class="search-form">
-        <h3>Tìm Chuyến Xe Của Bạn</h3>
+        <h3>Tìm chuyến xe phù hợp</h3>
         <form method="GET" action="{% url 'home' %}">
           <div class="search-row">
             <div class="form-group">
@@ -835,7 +590,7 @@
                 type="text"
                 id="diem_di"
                 name="diem_di"
-                placeholder="Nhập điểm đi"
+                placeholder="Thành phố khởi hành"
                 value="{{ search_params.diem_di|default:'' }}"
                 autocomplete="off"
               />
@@ -846,7 +601,7 @@
                 type="text"
                 id="diem_den"
                 name="diem_den"
-                placeholder="Nhập điểm đến"
+                placeholder="Thành phố đến"
                 value="{{ search_params.diem_den|default:'' }}"
                 autocomplete="off"
               />
@@ -860,133 +615,53 @@
                 value="{{ search_params.ngay_gio_khoi_hanh|default:'' }}"
               />
             </div>
-            <button type="submit" class="btn-search">Tìm kiếm</button>
+            <button type="submit" class="btn-search">🔍 Tìm kiếm</button>
           </div>
         </form>
-        <p style="text-align: center; margin-top: 1rem; color: #7f8c8d; font-size: 0.9rem;">
-          💡 Nhập ít nhất 1 trường để tìm kiếm
-        </p>
+        
+        <div class="quick-searches">
+          <span style="color: #6b7280; font-size: 0.85rem; font-weight: 600;">Tìm kiếm phổ biến:</span>
+          <div class="quick-search-tag" onclick="quickSearch('Đà Nẵng', 'Hà Nội')">Đà Nẵng → Hà Nội</div>
+          <div class="quick-search-tag" onclick="quickSearch('TP.HCM', 'Đà Lạt')">TP.HCM → Đà Lạt</div>
+          <div class="quick-search-tag" onclick="quickSearch('Hà Nội', 'Hải Phòng')">Hà Nội → Hải Phòng</div>
+          <div class="quick-search-tag" onclick="quickSearch('Huế', 'Đà Nẵng')">Huế → Đà Nẵng</div>
+        </div>
       </div>
     </div>
 
-    <!-- Kết quả tìm kiếm -->
-    {% if is_searching %}
-    <section class="section" id="search-results">
+    <!-- Why Choose Us -->
+    <section class="why-choose-us">
       <div class="container">
-        <h2>🔍 Kết Quả Tìm Kiếm</h2>
-        
-        <!-- Thông tin tìm kiếm -->
-        <div class="search-info">
-          <div class="search-info-content">
-            <div class="search-criteria">
-              {% if search_params.diem_di %}
-              <div class="search-tag">
-                <span class="search-tag-icon">📍</span>
-                <span class="search-tag-label">Điểm đi:</span>
-                <span class="search-tag-value">{{ search_params.diem_di }}</span>
-              </div>
-              {% endif %}
-              
-              {% if search_params.diem_den %}
-              <div class="search-tag">
-                <span class="search-tag-icon">🎯</span>
-                <span class="search-tag-label">Điểm đến:</span>
-                <span class="search-tag-value">{{ search_params.diem_den }}</span>
-              </div>
-              {% endif %}
-              
-              {% if search_params.ngay_di %}
-              <div class="search-tag">
-                <span class="search-tag-icon">📅</span>
-                <span class="search-tag-label">Ngày đi:</span>
-                <span class="search-tag-value">{{ search_params.ngay_di }}</span>
-              </div>
-              {% endif %}
-            </div>
-
-            {% if search_results %}
-            <div class="search-count success">
-              ✅ Tìm thấy {{ search_results|length }} chuyến xe phù hợp
-            </div>
-            {% else %}
-            <div class="search-count error">
-              ❌ Không tìm thấy chuyến xe nào
-            </div>
-            {% endif %}
+        <h2>Tại sao chọn chúng tôi?</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <span class="feature-icon"></span>
+            <div class="feature-title">Đặt vé nhanh chóng</div>
+            <div class="feature-desc">Chỉ mất 2 phút để hoàn tất đặt vé với giao diện đơn giản, dễ sử dụng</div>
           </div>
-        </div>
-
-        <div class="search-results-table">
-          {% if search_results %}
-          <table>
-            <thead>
-              <tr>
-                <th>Tuyến xe</th>
-                <th>Loại xe</th>
-                <th>Ngày đi</th>
-                <th>Giờ đi</th>
-                <th>Giá vé</th>
-                <th>Số ghế trống</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for chuyen in search_results %}
-              <tr>
-                <td>
-                  <div class="route-text">
-                    {% if search_params.diem_di and search_params.diem_di|lower in chuyen.tuyen.diem_di|lower %}
-                      <span class="highlight">{{ chuyen.tuyen.diem_di }}</span>
-                    {% else %}
-                      {{ chuyen.tuyen.diem_di }}
-                    {% endif %}
-                    <span class="route-arrow">→</span>
-                    {% if search_params.diem_den and search_params.diem_den|lower in chuyen.tuyen.diem_den|lower %}
-                      <span class="highlight">{{ chuyen.tuyen.diem_den }}</span>
-                    {% else %}
-                      {{ chuyen.tuyen.diem_den }}
-                    {% endif %}
-                  </div>
-                </td>
-                <td>
-                  <span class="vehicle-type">{{ chuyen.xe.loai_xe }}</span>
-                </td>
-                <td>
-                  <span class="date-badge">
-                    {% if search_params.ngay_di and search_params.ngay_di == chuyen.ngay_gio_khoi_hanh|date:"Y-m-d" %}
-                      <span class="highlight">{{ chuyen.ngay_gio_khoi_hanh|date:"d/m/Y" }}</span>
-                    {% else %}
-                      {{ chuyen.ngay_gio_khoi_hanh|date:"d/m/Y" }}
-                    {% endif %}
-                  </span>
-                </td>
-                <td>
-                  <span class="time-badge">{{ chuyen.ngay_gio_khoi_hanh|date:"H:i" }}</span>
-                </td>
-                <td class="price">{{ chuyen.gia_ve|floatformat:0 }}đ</td>
-                <td class="seats-available">{{ chuyen.tong_so_ve }} chỗ trống</td>
-                <td>
-                  <a href="{% url 'src:chon_ghe' chuyen.id %}" class="btn-book">Đặt vé</a>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          {% else %}
-          <div id="no-results">
-            <p>Không tìm thấy chuyến xe phù hợp</p>
-            <p>Hãy thử tìm kiếm với từ khóa khác hoặc điều chỉnh bộ lọc</p>
+          <div class="feature-card">
+            <span class="feature-icon"></span>
+            <div class="feature-title">Giá tốt nhất</div>
+            <div class="feature-desc">So sánh giá từ nhiều nhà xe, đảm bảo bạn nhận được mức giá ưu đãi nhất</div>
           </div>
-          {% endif %}
+          <div class="feature-card">
+            <span class="feature-icon"></span>
+            <div class="feature-title">An toàn & Bảo mật</div>
+            <div class="feature-desc">Thanh toán trực tuyến an toàn với công nghệ mã hóa hiện đại</div>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon"></span>
+            <div class="feature-title">Vé điện tử</div>
+            <div class="feature-desc">Nhận vé điện tử ngay lập tức qua email, không cần in vé giấy</div>
+          </div>
         </div>
       </div>
     </section>
-    {% endif %}
 
     <!-- Tuyến Xe Phổ Biến -->
-    <section class="section">
+    <section class="section" style="background: #f9fafb;">
       <div class="container">
-        <h2>🔥 Tuyến Xe Phổ Biến</h2>
+        <h2>Tuyến xe phổ biến</h2>
         <div class="tuyens-grid">
           {% for tuyen in tuyen_popular %}
           <div class="tuyen-card">
@@ -997,8 +672,8 @@
             </div>
           </div>
           {% empty %}
-          <div style="text-align: center; padding: 2rem; color: #7f8c8d; grid-column: 1/-1;">
-            <p style="font-size: 1.1rem;">Chưa có tuyến xe nào.</p>
+          <div style="text-align: center; padding: 2rem; color: #6b7280; grid-column: 1/-1;">
+            <p style="font-size: 1rem;">Chưa có tuyến xe nào.</p>
           </div>
           {% endfor %}
         </div>
@@ -1006,9 +681,9 @@
     </section>
 
     <!-- Chuyến Xe Sắp Tới -->
-    <section class="section" style="background: linear-gradient(135deg, #f8f9fa 0%, #e8ecf0 100%); padding: 4rem 0;">
+    <section class="section" style="background: white; padding: 4rem 0;">
       <div class="container">
-        <h2>⏰ Chuyến Xe Sắp Tới</h2>
+        <h2>Chuyến xe sắp khởi hành</h2>
         <div class="chuyens-table">
           <table>
             <thead>
@@ -1033,8 +708,8 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="6" style="text-align: center; padding: 2.5rem; color: #7f8c8d;">
-                  <p style="font-size: 1.1rem;">Chưa có chuyến xe nào sắp tới.</p>
+                <td colspan="6" style="text-align: center; padding: 2.5rem; color: #6b7280;">
+                  Chưa có chuyến xe nào trong thời gian tới
                 </td>
               </tr>
               {% endfor %}
@@ -1046,19 +721,17 @@
 
     <script>
       // Set ngày mặc định
-      document.getElementById("ngay_di").valueAsDate = new Date();
+      const ngayDiInput = document.getElementById("ngay_di");
+      if (ngayDiInput && !ngayDiInput.value) {
+        ngayDiInput.valueAsDate = new Date();
+      }
 
-      // Scroll to kết quả nếu có tìm kiếm
-      {% if is_searching %}
-      document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(() => {
-          document.getElementById('search-results').scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'start'
-          });
-        }, 300);
-      });
-      {% endif %}
+      // Quick search function
+      function quickSearch(from, to) {
+        document.getElementById('diem_di').value = from;
+        document.getElementById('diem_den').value = to;
+        document.getElementById('ngay_di').valueAsDate = new Date();
+      }
     </script>
 
     <script src="{% static 'js/session-manager.js' %}"></script>

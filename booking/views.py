@@ -151,57 +151,150 @@ class ChonGheView(LoginRequiredMixin, TemplateView):
         
         return booked_seats
 
+    def _find_optimal_layout(self, total_seats, seats_per_row, back_range, ideal_back):
+        """
+        Tìm layout tối ưu cho ghế xe bus.
+        
+        Args:
+            total_seats: Tổng số ghế
+            seats_per_row: Số ghế mỗi hàng thường
+            back_range: Tuple (min, max) số ghế hàng cuối
+            ideal_back: Số ghế hàng cuối lý tưởng
+            
+        Returns:
+            Tuple (normal_rows, last_row_seats)
+        """
+        min_back, max_back = back_range
+        best_layout = None
+        min_waste = float('inf')
+        
+        # Thử tìm layout chia hết hoàn toàn
+        for back_seats in range(max_back, min_back - 1, -1):
+            if back_seats > total_seats:
+                continue
+                
+            normal_rows_needed = (total_seats - back_seats) / seats_per_row
+            if normal_rows_needed == int(normal_rows_needed) and normal_rows_needed >= 1:
+                return (int(normal_rows_needed), back_seats)
+        
+        # Nếu không chia hết, tìm layout gần nhất với lý tưởng
+        for back_seats in range(min_back, max_back + 1):
+            if back_seats > total_seats:
+                continue
+                
+            normal_rows_needed = (total_seats - back_seats) // seats_per_row
+            remaining = total_seats - (normal_rows_needed * seats_per_row + back_seats)
+            
+            if remaining >= 0 and normal_rows_needed >= 1:
+                # Tính "độ lãng phí": ghế dư + khoảng cách với lý tưởng
+                waste = remaining + abs(back_seats - ideal_back) * 0.5
+                if waste < min_waste:
+                    min_waste = waste
+                    best_layout = (normal_rows_needed, back_seats)
+        
+        # Fallback cuối cùng nếu không tìm được
+        if best_layout is None:
+            normal_rows = max(1, total_seats // (seats_per_row + 1))
+            last_seats = total_seats - (normal_rows * seats_per_row)
+            # Đảm bảo last_seats trong range hợp lý
+            last_seats = max(min_back, min(max_back, last_seats))
+            best_layout = (normal_rows, last_seats)
+            
+        return best_layout
+
     def _generate_seat_layout(self, so_ghe):
-        """Internal method: Generate seat layout structure."""
+        """Internal method: Generate seat layout structure following real bus layout."""
+        if so_ghe <= 0:
+            return []
+            
         rows = []
         row_labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-        if so_ghe <= 16:
-            seats_per_row = 2
-            layout_pattern = [0, None, 1]
-            last_row_seats = min(4, so_ghe)
-        elif so_ghe <= 30:
-            seats_per_row = 3
-            layout_pattern = [0, 1, None, 2]
-            last_row_seats = min(4, so_ghe)
+        seat_counter = 1
+        
+        # Logic tổng quát và hợp lý cho mọi số lượng ghế (6-49 ghế)
+        if so_ghe <= 5:
+            # Xe quá nhỏ: 1 hàng đơn giản
+            normal_rows = 0
+            seats_per_normal_row = 0
+            normal_pattern = []
+            last_row_seats = so_ghe
+            
+        elif so_ghe <= 12:
+            # Xe mini (6-12 chỗ): 2-3 ghế/hàng, hàng cuối 3-4 ghế
+            seats_per_normal_row = 2 if so_ghe <= 8 else 3
+            normal_pattern = [0, 1] if seats_per_normal_row == 2 else [0, 1, None, 2]
+            
+            # Tìm layout tối ưu
+            best_layout = self._find_optimal_layout(so_ghe, seats_per_normal_row, (3, 6), 4)
+            normal_rows, last_row_seats = best_layout
+                
+        elif so_ghe <= 20:
+            # Xe nhỏ (13-20 chỗ): 3-4 ghế/hàng, hàng cuối 4-5 ghế
+            seats_per_normal_row = 3 if so_ghe <= 16 else 4
+            normal_pattern = [0, 1, None, 2] if seats_per_normal_row == 3 else [0, 1, None, 2, 3]
+            
+            # Tìm layout tối ưu
+            best_layout = self._find_optimal_layout(so_ghe, seats_per_normal_row, (3, 6), 5)
+            normal_rows, last_row_seats = best_layout
+                
         else:
-            seats_per_row = 4
-            layout_pattern = [0, 1, None, 2, 3]
-            last_row_seats = min(4, so_ghe)
-
-        normal_rows_seats = (so_ghe - last_row_seats) if so_ghe > last_row_seats else 0
-        normal_rows_count = normal_rows_seats // seats_per_row
-        remaining_for_last = so_ghe - (normal_rows_count * seats_per_row)
-
-        row_index = 0
-        seat_index = 0
-
-        while seat_index < normal_rows_count * seats_per_row:
+            # Xe lớn (21-49 chỗ): 4 ghế/hàng, hàng cuối linh hoạt
+            seats_per_normal_row = 4
+            normal_pattern = [0, 1, None, 2, 3]
+            
+            # Xác định khoảng hàng cuối phù hợp theo size xe
+            if so_ghe <= 30:
+                back_range = (4, 6)
+                ideal_back = 5
+            elif so_ghe <= 40:
+                back_range = (4, 7) 
+                ideal_back = 6
+            else:
+                back_range = (5, 8)
+                ideal_back = 6
+            
+            best_layout = self._find_optimal_layout(so_ghe, seats_per_normal_row, back_range, ideal_back)
+            normal_rows, last_row_seats = best_layout
+        
+        # Tạo các hàng bình thường
+        for row_index in range(normal_rows):
+            if seat_counter > so_ghe:
+                break
+                
+            row_label = row_labels[row_index] if row_index < len(row_labels) else f'R{row_index + 1}'
             row = []
-            row_label = row_labels[row_index] if row_index < len(row_labels) else f'R{row_index}'
-
-            for pos in layout_pattern:
+            
+            # Tạo hàng theo pattern bình thường
+            seats_added = 0
+            for pos in normal_pattern:
                 if pos is None:
-                    row.append(None)
-                elif seat_index < normal_rows_count * seats_per_row:
-                    seat_label = f'{row_label}{pos + 1}'
-                    row.append(seat_label)
-                    seat_index += 1
+                    row.append(None)  # Lối đi
                 else:
-                    row.append(None)
-
-            if any(seat for seat in row if seat):
-                rows.append(row)
-            row_index += 1
-
-        if remaining_for_last > 0:
+                    if seat_counter <= so_ghe and seats_added < seats_per_normal_row:
+                        seat_label = f'{row_label}{seats_added + 1}'
+                        row.append(seat_label)
+                        seat_counter += 1
+                        seats_added += 1
+                    else:
+                        row.append(None)  # Ghế trống nếu không đủ
+            
+            rows.append(row)
+        
+        # Tạo hàng cuối (hàng dài ở phía sau)
+        if last_row_seats > 0 and seat_counter <= so_ghe:
+            row_index = len(rows)
+            row_label = row_labels[row_index] if row_index < len(row_labels) else f'R{row_index + 1}'
             last_row = []
-            row_label = row_labels[row_index] if row_index < len(row_labels) else f'R{row_index}'
-            for col in range(1, remaining_for_last + 1):
-                seat_label = f'{row_label}{col}'
-                last_row.append(seat_label)
+            
+            # Tạo hàng cuối với 4-5 ghế liên tiếp (không có lối đi)
+            for i in range(last_row_seats):
+                if seat_counter <= so_ghe:
+                    seat_label = f'{row_label}{i + 1}'
+                    last_row.append(seat_label)
+                    seat_counter += 1
+            
             rows.append(last_row)
-
+        
         return rows
 
     def get(self, request, *args, **kwargs):

@@ -360,7 +360,17 @@
                     <div class="muted">{{ ve.so_luong }} vé — {{ ve.thoi_gian_dat|date:'d/m/Y H:i' }}</div>
                   </div>
                   <div>
-                    <span class="badge">{{ ve.trang_thai }}</span>
+                    {% if ve.trang_thai == 'DA_THANH_TOAN' %}
+                      <span class="badge" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">✅ Đã thanh toán</span>
+                    {% elif ve.trang_thai == 'CHO_THANH_TOAN' %}
+                      <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">⏳ Chờ thanh toán</span>
+                    {% elif ve.trang_thai == 'DA_HUY' %}
+                      <span class="badge" style="background: linear-gradient(135deg, #6b7280, #4b5563); color: white;">🚫 Đã hủy</span>
+                    {% elif ve.trang_thai == 'HET_HAN' %}
+                      <span class="badge" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white;">⌛ Hết hạn</span>
+                    {% else %}
+                      <span class="badge">{{ ve.trang_thai }}</span>
+                    {% endif %}
                   </div>
                 </div>
               </li>

@@ -360,7 +360,17 @@
                     {{ ve.chuyen.ngay_gio_khoi_hanh|date:"d/m/Y H:i" }} • {{ ve.so_luong }} vé
                   </div>
                 </div>
-                <span class="ticket-status status-{{ ve.trang_thai|lower }}">{{ ve.trang_thai }}</span>
+                {% if ve.trang_thai == 'DA_THANH_TOAN' %}
+                  <span class="ticket-status status-confirmed">✅ Đã thanh toán</span>
+                {% elif ve.trang_thai == 'CHO_THANH_TOAN' %}
+                  <span class="ticket-status status-pending">⏳ Chờ thanh toán</span>
+                {% elif ve.trang_thai == 'DA_HUY' %}
+                  <span class="ticket-status status-cancelled">🚫 Đã hủy</span>
+                {% elif ve.trang_thai == 'HET_HAN' %}
+                  <span class="ticket-status status-cancelled">⌛ Hết hạn</span>
+                {% else %}
+                  <span class="ticket-status status-{{ ve.trang_thai|lower }}">{{ ve.trang_thai }}</span>
+                {% endif %}
               </li>
             {% endfor %}
           </ul>
